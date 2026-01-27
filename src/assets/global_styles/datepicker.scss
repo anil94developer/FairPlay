@@ -1,0 +1,55 @@
+.MuiPickersBasePicker-container {
+  background: var(--date-picker-container-background);
+  color: var(--ion-text-color-contrast);
+
+  .MuiPickersBasePicker-pickerView {
+    .MuiPickersCalendarHeader-switchHeader {
+      margin: 0px;
+      padding: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      line-height: 22px;
+      text-align: center;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(var(--ion-text-color-contrast-rgb), 0.1);
+
+      .MuiPickersCalendarHeader-iconButton {
+        background: var(--date-picker-header-button-background) !important;
+        color: black !important;
+        opacity: 1;
+        border-radius: 4px;
+      }
+      .MuiTypography-root {
+        color: black;
+      }
+    }
+
+    .MuiPickersCalendarHeader-daysHeader {
+      .MuiPickersCalendarHeader-dayLabel {
+        padding-top: 16px;
+        font-weight: 600;
+        font-size: 14px;
+        line-height: 22px;
+        text-transform: capitalize;
+        color: var(--date-picker-selected-bg) !important;
+      }
+    }
+
+    .MuiPickersCalendar-transitionContainer {
+      .MuiIconButton-root {
+        color: black !important;
+        opacity: 1;
+        border-radius: 4px;
+      }
+
+      .MuiPickersDay-hidden {
+        color: var(--ion-text-color) !important;
+      }
+
+      .MuiPickersDay-daySelected {
+        background: var(--date-picker-selected-bg) !important;
+        color: var(--ion-text-light) !important;
+      }
+    }
+  }
+}

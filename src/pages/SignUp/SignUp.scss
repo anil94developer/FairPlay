@@ -1,0 +1,668 @@
+.sign-up-ctn {
+  background-image: url("../../assets/images/common/signup-background.webp");
+  background: var(--signup-bg);
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  overflow-y: scroll;
+
+  .arrow-clr {
+    color: #fff;
+  }
+
+  .back-icon-mob {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    margin-left: 10px;
+
+    .back-text {
+      margin-bottom: 4px;
+      margin-left: 2px;
+      font-family: Lato;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 18.9px;
+      text-align: left;
+      color: #fff;
+    }
+  }
+
+  .card-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    .MuiSvgIcon-root {
+      color: #fff;
+      width: 2rem;
+      margin-top: 5px;
+      cursor: pointer;
+
+      &.no-margin {
+        margin-top: 2px;
+        color: #757575;
+      }
+    }
+
+    .title-row {
+      display: flex;
+      flex-direction: column;
+      padding-top: 10px;
+      align-items: center;
+      cursor: pointer;
+
+      .logo {
+        max-height: var(--logo-xl-height);
+        margin-bottom: 10px;
+      }
+    }
+
+    .card-bg {
+      background: var(--signup-card-background-color);
+      // linear-gradient(var(--ion-nav-card-text), var(--ion-color-primary));
+      position: relative;
+      overflow: hidden;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      border-radius: 10px;
+      margin-top: 5px;
+      border: 1px solid var(--form-ctn-border);
+
+      // background-image: url('../../assets/images/signupBGImage.png');
+      .card-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 431px;
+        width: 408px;
+        border-radius: 10px;
+
+        .card {
+          display: flex;
+          flex-direction: column;
+          padding-top: 15px;
+          width: 85%;
+
+          .phone-col {
+            display: flex !important;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 5px;
+          }
+
+          .tabs-section {
+            display: flex;
+            justify-content: center;
+
+            .MuiTabs-root {
+              width: 100%;
+            }
+
+            .steps {
+              @media screen and (max-width: 720px) {
+                .MuiTabs-root {
+                  min-height: 0px;
+                }
+              }
+
+              .MuiTabs-flexContainer {
+                display: flex;
+                border: 1px solid #fff;
+                margin-top: 10px;
+                border-radius: 6px;
+              }
+
+              .MuiTab-root {
+                min-height: 27px;
+                padding: 4px 10px;
+                color: #fff;
+                font-family: General Sans !important;
+                font-size: 12px;
+                font-weight: 600;
+                line-height: 16.2px;
+                text-align: center;
+                text-transform: capitalize;
+                width: 50%;
+                width: 50%;
+              }
+
+              .MuiTab-textColorPrimary.Mui-selected {
+                background: var(--ion-color-primary);
+                border-radius: 6px 0 0 6px;
+                color: var(--ion-text-dark);
+
+                &:last-child {
+                  border-radius: 0 6px 6px 0;
+                }
+              }
+            }
+          }
+
+          .back-icon {
+            display: flex;
+            margin-left: -25px;
+
+            @media screen and (max-width: 721px) and (max-width: 1200px) {
+              margin-left: 0;
+            }
+
+            .back-text {
+              display: flex;
+              align-items: center;
+              font-family: Lato;
+              font-size: 14px;
+              font-weight: 600;
+              line-height: 18.9px;
+              text-align: left;
+              color: #fff;
+            }
+          }
+
+          .cross-icon {
+            display: flex;
+            flex-direction: row-reverse;
+            .bet-del-btn {
+              color: var(--ion-background-color) !important;
+              background: #fff !important;
+              border-radius: 100%;
+              height: 26px;
+              width: 26px;
+              opacity: 1;
+              .close-icon {
+                width: 20px;
+                height: 26px;
+                color: #000;
+                margin-top: 0px !important;
+              }
+            }
+          }
+
+          .stepper {
+            padding: 6px;
+          }
+
+          .page-title {
+            font-size: 32px;
+            color: var(--ion-text-light);
+            text-align: center;
+
+            font-family: Lato;
+            font-weight: 700;
+            line-height: 43.2px;
+          }
+
+          .signup-text {
+            // width: 70%;
+            display: flex;
+            justify-content: center;
+            color: #e0e0e0;
+            font-family: Lato;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 21.6px;
+            text-align: center;
+            padding-bottom: 18px;
+          }
+
+          .react-tel-input {
+            height: 48px;
+            background-color: #eaeef3;
+            border: 1px solid #eaeef3;
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--input-text-color) !important;
+            width: unset;
+          }
+
+          .react-tel-input .form-control {
+            background: var(--ion-color-light);
+            border: 1px solid var(--ion-color-light);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--input-text-color) !important;
+            height: 48px !important;
+            padding-left: 38px !important;
+            padding-bottom: 0;
+
+            @media screen and (max-width: 720px) {
+              height: 48px !important;
+            }
+          }
+
+          .react-tel-input .country-list .country-name {
+            color: var(--ion-color-dark);
+          }
+
+          .react-tel-input .flag-dropdown {
+            background: var(--ion-color-light);
+            border: 1px solid var(--ion-color-light);
+            border-radius: 3px;
+            font-size: 12px;
+            height: 48px;
+          }
+
+          .number-input {
+            margin-top: 0px;
+          }
+
+          .MuiFormGroup-root {
+            margin-top: 10px;
+
+            .MuiCheckbox-root {
+              padding: 0;
+            }
+
+            &.mt-0 {
+              margin-top: 0px;
+            }
+
+            .MuiTypography-body1 {
+              font-size: 12px;
+              margin-top: 6px;
+              color: var(--signup-font-color);
+            }
+          }
+
+          .info {
+            font-size: 12px;
+            // padding: 15px;
+            color: #fff;
+            opacity: 0.7;
+            margin-top: 15px;
+          }
+
+          .btn-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+
+            .btn {
+              width: 100%;
+              background: var(--custom-btn-bg-variant-2);
+              color: var(--active-text-color);
+              height: 44px;
+              border-radius: 100px;
+              border: 1px solid var(--custom-btn-border-variant-2);
+              text-transform: capitalize;
+              font-family: Lato;
+              font-size: 16px;
+              font-weight: 700;
+              line-height: 21.6px;
+              text-align: center;
+              opacity: 0.75;
+
+              &:not(.MuiButton-contained.Mui-disabled) {
+                font-weight: bold;
+                // background: var(--ion-button-color);
+                opacity: 0.95;
+              }
+            }
+          }
+
+          .otp-btn {
+            display: flex;
+            flex-direction: column;
+            width: 20%;
+            .btn {
+              height: 48px;
+              border-radius: 8px;
+              font-size: 18px;
+            }
+          }
+
+          .msg-row {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            .msg {
+              color: rgba(255, 255, 255, 0.6) !important;
+              margin-top: 10px;
+              text-align: center;
+              color: #ffffff99;
+              font-size: 13px;
+              // opacity: 0.7;
+              cursor: pointer;
+              padding-bottom: 23px;
+
+              .back-to-home {
+                color: white;
+              }
+            }
+          }
+
+          .login-btn {
+            margin-top: 20px;
+          }
+
+          .input-row {
+            // justify-content: space-around;
+            &.mt-15 {
+              margin-top: 15px;
+
+              @media screen and (max-width: 920px) {
+                margin-top: 8px;
+              }
+            }
+
+            &.flex-column {
+              display: flex;
+              flex-direction: column;
+            }
+
+            .label {
+              color: var(--signup-font-color);
+              font-size: 14px;
+              margin-bottom: 6px;
+              display: flex;
+              flex-direction: row;
+              justify-content: flex-start;
+              align-items: center;
+
+              .whatsapp-signup {
+                margin-left: 6px;
+                border-radius: 50%;
+              }
+
+              &.link {
+                font-size: 10px;
+                text-decoration: underline;
+                margin-top: 5px;
+                color: rgba(255, 255, 255, 0.6);
+                float: right;
+                margin-left: auto;
+                cursor: pointer;
+              }
+
+              &.verify-text {
+                margin-top: -15px;
+                font-size: x-large;
+                font-weight: bold;
+                text-align: center;
+              }
+            }
+
+            .MuiFormControl-root {
+              width: unset;
+              font-size: 12px;
+              color: #fff !important;
+              border-radius: 8px;
+              width: 100%;
+
+              .MuiFormHelperText-contained {
+                color: #ffadbc;
+              }
+            }
+
+            .MuiInputBase-root {
+              font-size: 12px !important;
+              color: var(--input-text-color) !important;
+              border: 0px;
+              background: none !important;
+              padding: 0;
+              border-radius: 8px;
+              height: inherit;
+            }
+
+            .MuiInputBase-root .MuiInputBase-input,
+            .MuiInputBase-root .MuiOutlinedInput-input {
+              padding: 16px 16px;
+              font-size: 12px !important;
+              background-color: #eaeef3;
+              border: 1px solid #eaeef3;
+              border-radius: 6px;
+              // border: 1px solid var(--ion-color-dark);
+            }
+
+            .MuiOutlinedInput-adornedEnd {
+              background: var(--ion-color-light) !important;
+            }
+          }
+
+          .phone {
+            width: 75%;
+          }
+
+          .button-row {
+            // margin-top: 40px;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+
+            .back-form-btn {
+              width: 120px;
+              margin-bottom: 20px;
+              margin-right: 10px;
+              background: var(--ion-background);
+            }
+
+            .signup-btn {
+              width: 100%;
+              margin-bottom: 25px;
+              font-weight: bold;
+              color: var(--active-text-color);
+              background: var(--custom-btn-bg-variant-2);
+              border-radius: 100px;
+              border: 1px solid var(--custom-btn-border-variant-2);
+
+              &:not(.MuiButton-contained.Mui-disabled) {
+                font-weight: bold;
+                color: var(--ion-color-dark);
+                background: var(--ion-button-color);
+              }
+            }
+          }
+
+          .form-control {
+            height: fit-content !important;
+            width: 100% !important;
+            padding-bottom: 16px;
+
+            @media screen and (max-width: 720px) {
+              height: fit-content !important;
+            }
+          }
+        }
+
+        .main-card {
+          align-items: center;
+        }
+      }
+    }
+
+    .social-media-signup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 5px;
+
+      .sm-new-ctn {
+        background: none;
+        border: none;
+
+        .sm-new-links {
+          .sm-new-link {
+            margin: 0px 0px;
+          }
+        }
+      }
+    }
+
+    .disclaimer-section {
+      color: #fff;
+      margin-top: 20px;
+      text-align: center;
+      display: flex;
+      width: 30%;
+      font-size: 12px;
+
+      @media screen and (max-width: 720px) {
+        font-size: 10px;
+        width: 100%;
+      }
+    }
+  }
+}
+
+@media screen and (min-width: 721px) and (max-width: 1200px) {
+  .sign-up-ctn {
+    .card-col {
+      .card-bg {
+        .card-section {
+          width: 650px;
+        }
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .sign-up-ctn {
+    background-image: url("../../assets/images/signUpBGMob.webp") !important;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow-y: scroll;
+
+    .card-col {
+      display: block;
+      margin-top: 0;
+      justify-content: center;
+      align-items: center;
+
+      .card-bg {
+        background-size: cover;
+        display: block;
+        margin: 0 11px;
+
+        .card-section {
+          min-height: 375px;
+          width: 100%;
+          border-radius: 10px;
+          z-index: 6;
+
+          .card {
+            display: flex;
+            flex-direction: column;
+            padding-top: 5px;
+            width: 100%;
+            padding: 0 15px;
+            padding-top: 12px;
+            border-radius: 10px;
+
+            .input-col {
+              display: flex;
+              justify-content: center;
+
+              @media screen and (max-width: 720px) {
+                justify-content: flex-start;
+              }
+            }
+
+            .phone-col {
+              display: flex !important;
+              flex-direction: row;
+              justify-content: space-between;
+              gap: 5px;
+            }
+
+            .input-row {
+              display: flex;
+              justify-content: center;
+              flex-direction: column;
+              margin-top: 2px;
+              width: 100%;
+
+              .label {
+                color: var(--signup-font-color);
+                font-size: 12px;
+                margin-bottom: 3px;
+                margin-left: 0px;
+              }
+            }
+
+            .phone {
+              width: 80%;
+            }
+
+            .btn-section {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              margin-top: 5px;
+
+              .btn {
+                font-weight: bold;
+              }
+            }
+
+            .otp-btn {
+              display: flex;
+              flex-direction: column;
+              width: 20%;
+              .btn {
+                height: 48px;
+                border-radius: 8px;
+                font-size: 18px;
+              }
+            }
+
+            .button-row {
+              display: flex;
+              flex-direction: row;
+              justify-content: center;
+
+              .back-form-btn {
+                width: 120px;
+                margin-bottom: 20px;
+                margin-right: 10px;
+                background: var(--ion-background);
+              }
+
+              .signup-btn {
+                width: 100%;
+                margin-bottom: 15px;
+                font-weight: bold;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.sign-up-ctn .card-col {
+  .MuiPaper-root {
+    background: none !important;
+  }
+
+  .MuiStepLabel-label.MuiStepLabel-alternativeLabel {
+    color: var(--signup-font-color);
+  }
+
+  .MuiSvgIcon-root {
+    color: var(--ion-text-light);
+
+    .MuiStepIcon-text {
+      color: #000;
+    }
+  }
+}
+
+.MuiFormControlLabel-root {
+  // margin-left: -20px !important;
+}

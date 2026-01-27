@@ -1,0 +1,61 @@
+.input-template {
+  color: white;
+  margin: 40px 0px;
+  position: relative;
+
+  .it-label {
+    width: 230px;
+    text-transform: capitalize;
+    padding: 0px 0px 0px 15px;
+    border-radius: 30px;
+    border: 1px solid var(--input-label-border);
+    // background: var(--table-header-background);
+    background: var(--input-label-bg);
+    position: absolute;
+    left: 15px;
+    top: -10px;
+    font-family: var(--headers-font-family) !important;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    textarea {
+      color: #ff0000;
+    }
+
+    &.it-disabled {
+      color: rgb(185, 185, 185);
+      background: var(--table-header-background);
+    }
+  }
+
+  .it-input {
+    width: 100%;
+    outline: none;
+    border-radius: 50px;
+    border: none;
+    padding: 12px 30px;
+    color: var(--input-template-color);
+    font-family: var(--headers-font-family);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16.2px;
+    text-align: left;
+    background: var(--input-template-bg);
+    &.it-input-diabled {
+      color: rgb(160, 160, 160);
+    }
+  }
+
+  .it-input::placeholder {
+    text-transform: capitalize;
+    color: var(--input-template-color);
+  }
+}
+
+.otp-input {
+  width: 40%;
+
+  .it-label {
+    width: 80px;
+  }
+}

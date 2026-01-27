@@ -1,0 +1,54 @@
+.sitemap-ctn {
+  max-width: 1120px;
+  margin: auto;
+  margin-bottom: 2.4rem;
+  .sitemap-title {
+    font-size: 32px;
+    font-weight: 600;
+    padding-bottom: 12px;
+  }
+  .sports-betting-ctn,
+  .company-info-ctn {
+    margin-top: 16px;
+    .sports-cards {
+      display: grid;
+      grid-template-columns: auto auto auto auto;
+      gap: 20px;
+    }
+    .sport-card {
+      background: var(--ion-header-background);
+      color: var(--ion-text-light);
+      text-transform: capitalize;
+      padding: 8px;
+      text-align: center;
+      font-size: 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+
+  @media screen and (max-width: 920px) {
+    margin: 0 10px 16px 10px;
+
+    .sitemap-title {
+      font-size: 20px;
+      padding-bottom: 10px;
+    }
+
+    .sports-betting-ctn,
+    .company-info-ctn {
+      margin-top: 10px;
+
+      .sports-cards {
+        grid-template-columns: auto auto auto;
+      }
+
+      .sport-card {
+        font-size: 14px;
+      }
+    }
+  }
+}

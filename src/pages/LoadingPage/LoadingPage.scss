@@ -1,0 +1,33 @@
+.loading-page-ctn {
+  background: var(--ion-background);
+  height: 100%;
+  width: 100%;
+  max-height: fit-content;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  overflow-y: hidden;
+  padding-top: 16%;
+  padding-bottom: 50%;
+  .item-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 8px;
+    .title-img {
+      width: var(--logo-xl-width);
+      height: var(--logo-xl-height);
+    }
+    .loading-page-spinner {
+      --color: var(--ion-color-primary);
+    }
+  }
+}
+
+@media only screen and (max-width: 1120px) {
+  .loading-page-ctn {
+    padding-top: 50%;
+  }
+}

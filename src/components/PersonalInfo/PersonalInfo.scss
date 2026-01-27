@@ -1,0 +1,42 @@
+.pi-ctn {
+  width: 100%;
+  margin-top: 10px;
+
+  .mp-error-save {
+    display: flex;
+    justify-content: space-between;
+
+    .mp-reset-save-btn {
+      display: flex;
+    }
+
+    // .mp-btn {
+    //   margin: 0px 5px;
+    //   height: 40px;
+    //   width: 100px;
+    //   border-radius: 30px;
+    //   text-transform: capitalize;
+    //   color: black;
+    //   border: 1px solid white;
+    //   font-size: 16px;
+    //   font-weight: 600;
+    // }
+
+    // .mp-save-btn {
+    //   background: var(--ion-button-color);
+    // }
+
+    // .mp-reset-btn {
+    //   background: var(--ion-color-primary);
+    //   color: white;
+    // }
+  }
+
+  .input-template {
+    margin: 20px 0px;
+  }
+}
+
+.error {
+  color: red;
+}

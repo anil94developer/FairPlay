@@ -1,0 +1,341 @@
+.exch-inplay-events-view {
+  .inplay-bg {
+    width: 100%;
+    height: 100%;
+
+    &.lottie-carousel {
+      height: 272px;
+
+      @media screen and (max-width: 1300px) {
+        height: 220px;
+      }
+    }
+  }
+
+  .eam-teams-name {
+    display: none !important;
+  }
+
+  .p-relative {
+    position: relative;
+
+    .animation-gif {
+      position: absolute;
+      height: -webkit-fill-available;
+      top: 0;
+      right: 100px;
+    }
+  }
+
+  .banner-card-div {
+    height: fit-content;
+    display: flex;
+    position: relative;
+    height: 100%;
+
+    &.mob-banners {
+      gap: 6px;
+      padding: 0 6px 4px 6px;
+
+      .banner-image {
+        flex: 0 0 50%;
+      }
+    }
+
+    .animation-gif {
+      position: absolute;
+      height: inherit;
+      top: 0;
+      right: 100px;
+    }
+  }
+
+  .mt-12 {
+    margin-top: 12px;
+  }
+
+  .exch-inplay-competitions-menu-section,
+  .exch-inplay-events-table-section {
+    background: var(--background-ctn-gradient) !important;
+    border-radius: 15px;
+  }
+
+  .exch-inplay-events-table-section {
+    margin-top: 10px;
+    margin-left: 0;
+    margin-right: 4px;
+    margin-bottom: 70px;
+
+    @media screen and (max-width: 920px) {
+      margin-bottom: -40px;
+    }
+
+    .noti-header {
+      display: flex;
+      width: 100%;
+      padding-bottom: 4px;
+      justify-content: space-between;
+      align-items: center;
+
+      .animation-notifi {
+        background: var(--notification-bg);
+        width: 60%;
+        height: 35px;
+        border-radius: 20px;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+
+        .notifi-mssage {
+          text-wrap: nowrap;
+          color: var(--ion-text-notification);
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        .notifi-scroll-icon {
+          height: 20px;
+          width: 50px;
+          margin: 5px;
+        }
+      }
+
+      .marquee-new {
+        display: flex;
+        align-items: center;
+        animation: marquee 20s linear infinite;
+      }
+
+      .notifi-item {
+        display: flex;
+        align-items: center;
+        margin-right: 40px;
+        margin-left: 60px;
+      }
+
+      @keyframes marquee {
+        0% {
+          transform: translateX(60%);
+        }
+
+        100% {
+          transform: translateX(-100%);
+        }
+      }
+
+      @media screen and (max-width: 920px) {
+        .animation-notifi {
+          width: 60%;
+        }
+      }
+    }
+  }
+
+  .search-tab {
+    display: flex;
+    justify-content: flex-end;
+    width: 39%;
+
+    .search-games-ctn {
+      display: flex;
+      align-items: center;
+      position: relative;
+      margin-right: 2px;
+      width: 100%;
+      background: var(--ion-color-primary) !important;
+      border-radius: 100px;
+
+      .MuiSvgIcon-root {
+        position: absolute;
+        right: 0px;
+        color: #fff;
+      }
+    }
+
+    .gradient-border {
+      background: var(--background-ctn-gradient) !important;
+      border: none;
+      margin: 1px;
+    }
+
+    .search-games-input {
+      height: unset;
+      border-radius: 40px;
+      font-size: 13px;
+      padding: 4px 8px;
+      color: #fff;
+      width: 100%;
+
+      @media screen and (max-width: 920px) {
+        font-size: 12px;
+      }
+    }
+  }
+
+  .notifi-live-upcoming-tabs {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 8px 0px 8px;
+    max-height: 40px;
+
+    @media screen and (max-width: 920px) {
+      margin-top: 0;
+    }
+
+    .time-tabs {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+    }
+
+    .MuiTabs-root {
+      max-height: unset;
+      min-height: fit-content;
+      padding-bottom: 8px;
+      padding-top: 4px;
+    }
+
+    .inplay-status-tabs {
+      margin-bottom: 10px;
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+
+      @media screen and (max-width: 920px) {
+        margin-bottom: 0;
+      }
+
+      .inplay-tab {
+        margin-right: 5px;
+        border-radius: 20px;
+        padding: 10px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: var(--tab-passive-text);
+        background: var(--tab-passive-bg);
+        border: 1px solid var(--tab-passive-border);
+        text-transform: capitalize;
+        display: flex;
+        align-items: center;
+
+        .sub-header-icons {
+          height: 20px;
+          width: 18px;
+          margin-right: 4px;
+        }
+
+        @media screen and (max-width: 720px) {
+          margin-right: 5px;
+        }
+
+        &.selected-inplay-tab {
+          background: var(--tab-active-bg);
+          color: var(--tab-active-text);
+          border: 1px solid var(--tab-active-bg);
+          font-weight: 900;
+          padding: 11px 12px;
+          letter-spacing: 0.02em;
+        }
+      }
+    }
+
+    @media screen and (max-width: 920px) {
+      margin-top: 0;
+      margin-left: 0;
+      margin-right: 0;
+      padding-left: 0;
+      padding-right: 0;
+      padding-bottom: 0;
+    }
+
+    // @media screen and (max-width: 720px) {
+    //   background: transparent !important;
+    // }
+  }
+
+  .exch-inplay-competitions-menu-section {
+    max-width: 260px;
+    margin-right: 0px;
+    margin-left: -10px;
+  }
+}
+
+@media (max-width: 1120px) {
+  .exch-inplay-events-view {
+    .exch-inplay-competitions-menu-section {
+      display: none;
+    }
+  }
+}
+
+.live-events-ctn {
+  padding: 0px 6px;
+
+  @media screen and (max-width: 920px) {
+    padding: 0 8px;
+  }
+}
+
+@-moz-keyframes scroll-left {
+  0% {
+    -moz-transform: translateX(100%);
+  }
+
+  100% {
+    -moz-transform: translateX(-100%);
+  }
+}
+
+@-webkit-keyframes scroll-left {
+  0% {
+    -webkit-transform: translateX(100%);
+  }
+
+  100% {
+    -webkit-transform: translateX(-100%);
+  }
+}
+
+@keyframes scroll-left {
+  0% {
+    -moz-transform: translateX(100%);
+    -webkit-transform: translateX(100%);
+    transform: translateX(100%);
+  }
+
+  100% {
+    -moz-transform: translateX(-100%);
+    -webkit-transform: translateX(-100%);
+    transform: translateX(-100%);
+  }
+}
+
+.inplay-social-media {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  padding-bottom: 10px;
+
+  .sm-new-ctn {
+    width: 95%;
+    border-radius: 15px;
+
+    .sm-new-links {
+      .sm-new-link {
+        margin: 0px 2px;
+      }
+    }
+  }
+}
+
+.cup-winner-markets-ip {
+  .eam-ctn {
+    padding-bottom: unset;
+  }
+}

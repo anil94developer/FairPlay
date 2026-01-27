@@ -1,0 +1,1056 @@
+.home-page-ctn {
+  color: #fff;
+
+  .leaderboard-paper {
+    color: #fff;
+
+    .MuiTypography-root {
+      border-bottom: 1px solid #8f8f8f4d;
+    }
+  }
+}
+
+.carousel-button {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.carousel .slide img {
+  width: 100%;
+}
+
+.carousel .control-arrow,
+.carousel.carousel-slider .control-arrow {
+  opacity: 0.7;
+}
+
+.carousel .control-dots {
+  display: none;
+}
+
+.section-paper {
+  padding: 16px;
+  text-align: center;
+}
+
+.carousel .slide img {
+  width: 100%;
+}
+
+.carousel .control-arrow,
+.carousel.carousel-slider .control-arrow {
+  opacity: 0.7;
+}
+
+.leaderboard-paper {
+  padding: 16px;
+  text-align: center;
+}
+
+.live-casino img {
+  width: 100%;
+  height: auto;
+}
+
+.deposit-button {
+  margin-top: 20px;
+}
+
+.payment-options {
+  width: 100%;
+  height: auto;
+}
+
+.providers {
+  // width: 100%;
+  height: auto;
+}
+
+.footer {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.site-card-content {
+  font-weight: 400;
+  color: #97a5a5;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+@keyframes opacity-keyframes {
+  0% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
+
+.site-card-img {
+  width: 100%;
+
+  .MuiSkeleton-pulse {
+    transform: unset;
+    animation: opacity-keyframes 1.5s ease-in-out 0.5s infinite;
+  }
+
+  svg {
+    border-radius: 16px;
+
+    @media screen and (max-width: 920px) {
+      border-radius: 8px;
+    }
+  }
+
+  img {
+    width: 100%;
+  }
+}
+
+.home-container {
+  margin: 0 24px;
+
+  @media screen and (max-width: 920px) {
+    margin: 0 10px;
+  }
+}
+
+.deposit-info-ctn {
+  // background: linear-gradient(189.99deg, #01575E 12.16%, #01FAFE 57.65%, #025962 96.22%), url('../../assets/images/home_page/deposit_info/deposit_banner.png') center center no-repeat;
+
+  background: var(--deposit_web_banner) no-repeat center;
+  background-size: 100% 100%;
+  display: flex;
+  border-radius: 12px;
+  flex-direction: row;
+  background-color: transparent;
+
+  @media screen and (max-width: 920px) {
+    background: var(--deposit_mob_banner) no-repeat center;
+    background-size: 100% 100%;
+  }
+
+  /* Default to row layout */
+
+  .deposit-info-text {
+    flex: 1 1 50%;
+    padding: 40px 2px 40px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    border-radius: 0 12px 12px 0;
+
+    .get-started {
+      font-family: Open Sans;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 30px;
+      text-align: left;
+      margin-bottom: 24px;
+
+      span {
+        color: #fdc667;
+        font-weight: bold;
+      }
+    }
+
+    .deposit-btn {
+      width: 134px;
+      height: 35px;
+      font-size: 15px;
+      font-weight: 700;
+      background: var(--bet-slip-btn);
+      text-transform: capitalize;
+      border-radius: 40px;
+
+      .MuiButton-label {
+        font-weight: 700;
+      }
+    }
+  }
+
+  .payment-providers {
+    display: flex;
+    padding: 40px 30px 0px 30px;
+    // gap: 20px;
+  }
+
+  .payment-providers-tabs {
+    display: flex;
+    justify-content: center;
+    // gap: 20px;
+    padding-bottom: 20px;
+  }
+}
+
+@media (max-width: 920px) {
+  .deposit-info-ctn {
+    flex-direction: column;
+    // padding: 20px;
+    border-radius: 12px;
+
+    .deposit-info-text {
+      flex: 1 1 100%;
+      padding: 20px;
+      border-radius: 12px 12px 0 0;
+      align-items: center;
+      /* Center align text and button */
+      text-align: center;
+
+      /* Center text */
+      .get-started {
+        font-size: 19px;
+        line-height: 24px;
+        font-weight: 400;
+        text-align: center;
+      }
+
+      .deposit-btn {
+        width: 120px;
+        height: 36px;
+        font-size: 16px;
+
+        .MuiButton-label {
+          font-weight: 700;
+        }
+      }
+    }
+
+    .payment-providers {
+      padding: 14px 20px;
+      display: flex;
+      justify-content: center;
+      // gap: 20px;
+
+      img {
+        width: 64px;
+      }
+    }
+
+    .payment-providers-tabs {
+      img {
+        width: 52px;
+      }
+    }
+  }
+}
+
+.leaderboard-img {
+  border-radius: 12px;
+
+  img {
+    border-radius: 12px;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.leaderboard-ctn {
+  display: flex;
+  position: relative;
+
+  img {
+    border-radius: 12px;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      /* your overlay color and opacity */
+      pointer-events: none;
+      /* allows clicks to pass through the overlay */
+    }
+  }
+
+  .scrollable-box-avatars {
+    background: var(--scrollable-box);
+  }
+
+  @media screen and (max-width: 920px) {
+    .MuiBox-root {
+      gap: 8px;
+    }
+  }
+}
+
+.providers-ctn {
+  background: var(--provider-banner) center center no-repeat;
+  background-size: cover;
+  margin-top: 20px;
+
+  @media screen and (max-width: 920px) {
+    margin-top: 12px;
+  }
+
+  .trusted-by-providers {
+    font-family: Lato;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 46px;
+    text-align: center;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    color: #ffffff80;
+
+    @media screen and (max-width: 920px) {
+      padding-top: 12px;
+      font-size: 10px;
+      line-height: 16px;
+    }
+  }
+
+  .providers {
+    display: flex;
+    gap: 10px;
+    padding-bottom: 30px;
+    margin-left: 5vw;
+    margin-right: 5vw;
+
+    @media screen and (max-width: 920px) {
+      gap: 20px 20px;
+      padding-bottom: 10px;
+      display: grid;
+      grid-template-columns: auto auto auto;
+      margin-left: 10px;
+      margin-right: 10px;
+    }
+
+    .provider {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex: 1 1 16.66%;
+      max-width: 16.66%;
+
+      @media screen and (max-width: 920px) {
+        max-width: unset;
+      }
+
+      .csb-indv-provider {
+        background: transparent !important;
+        width: 80% !important;
+        max-height: 50px;
+        min-height: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid var(--ion-color-primary);
+        border-radius: 6px;
+
+        @media screen and (max-width: 920px) {
+          max-height: 40px;
+          min-height: 40px;
+          width: 100% !important;
+        }
+      }
+    }
+  }
+
+  .middle-row {
+    margin-left: 15vw;
+    margin-right: 15vw;
+
+    .provider {
+      flex: 1 1 15%;
+      max-width: 15%;
+    }
+  }
+}
+
+.home-casino-img {
+  // width: 92%;
+  border-radius: 12px;
+  display: block;
+  &.mb-4 {
+    margin-bottom: 4px;
+    width: unset;
+
+    @media screen and (min-width: 920px) {
+      margin-bottom: 8px;
+    }
+  }
+}
+.home-casino-img-slider {
+  width: 94%;
+  border-radius: 12px;
+
+  &.mb-4 {
+    margin-bottom: 4px;
+    width: unset;
+
+    @media screen and (min-width: 920px) {
+      margin-bottom: 8px;
+    }
+  }
+}
+
+.home-footer {
+  background: url(../../assets/images/home_page/HomeFooterBg.webp) center center
+    no-repeat;
+  background-size: cover;
+
+  .home-footer-heading {
+    font-family: Lato;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 20px;
+    text-align: left;
+    padding-bottom: 40px;
+  }
+
+  .MuiLink-root {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 20px;
+    color: #ffffff80;
+    display: block;
+  }
+
+  .footer-divider {
+    background: #7f7f8080;
+    margin-top: 2rem;
+  }
+
+  .pb-16 {
+    padding-bottom: 22px;
+  }
+
+  @media screen and (max-width: 920px) {
+    .home-footer-heading {
+      font-size: 18px;
+      padding-bottom: 12px;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .MuiLink-root {
+      font-size: 16px;
+    }
+
+    .pb-16 {
+      padding-bottom: 16px;
+    }
+  }
+}
+
+.game-carousel-ctn {
+  margin-top: 6px;
+
+  &.mt-5 {
+    margin-top: -5px;
+  }
+  &.mt-20 {
+    margin-top: -20px;
+    @media screen and (max-width: 920px) {
+      margin-top: -16px;
+    }
+  }
+  &.mb-30 {
+    margin-bottom: 40px;
+
+    @media screen and (max-width: 920px) {
+      margin-bottom: 10px;
+    }
+  }
+
+  .trending-games-slider {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    scroll-snap-type: x mandatory;
+    height: 180px;
+    scrollbar-width: none;
+
+    @media screen and (max-width: 920px) {
+      gap: 8px;
+      height: 170px;
+    }
+
+    @media screen and (max-width: 380px) {
+      gap: 8px;
+      height: 160px;
+    }
+
+    @media screen and (max-width: 360px) {
+      gap: 8px;
+      height: 150px;
+    }
+  }
+
+  .mob-casino-lobby {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 8px 0;
+    margin: auto;
+  }
+
+  .provider-box {
+    .provider-img-box {
+      width: 92%;
+      position: relative;
+    }
+
+    .play-now {
+      display: flex;
+      position: absolute;
+      transform: translateZ(0);
+      width: fit-content;
+      bottom: 0;
+      right: 0;
+      background: linear-gradient(0deg, #000, #272727);
+      font-size: 10px;
+      border-top-left-radius: 4px;
+      border-bottom-right-radius: 8px;
+
+      &::after,
+      &::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          45deg,
+          #fff,
+          #c1c1ec,
+          #c3c8fc,
+          #1e1c36,
+          #000,
+          #131329,
+          #d3fcd3,
+          #fcfcd3,
+          #fff
+        );
+        background-size: 400%;
+        width: calc(100% + 2px);
+        height: calc(100% + 2px);
+        z-index: -1;
+        animation: steam 20s linear infinite;
+        border-top-left-radius: 4px;
+        border-bottom-right-radius: 8px;
+      }
+
+      .play-now-text {
+        font-weight: bold;
+        background: black;
+        width: 100%;
+        height: 100%;
+        padding: 2px 6px;
+      }
+    }
+
+    .play-animated {
+      font-weight: 700;
+      position: absolute;
+      padding: 3px 6px;
+      color: #000;
+      text-decoration: none;
+      overflow: hidden;
+      border-radius: 0 0 9px 9px;
+      background: #fff;
+      right: 0;
+      bottom: 0;
+      font-size: 10px;
+      width: 100%;
+      text-align: end;
+      // animation: zoom-in-zoom-out 1s ease-out infinite;
+
+      div:first-child {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 3px;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #fff400, #fff);
+        animation: animate1 2s linear infinite;
+      }
+
+      div:nth-child(2) {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: 3px;
+        background: linear-gradient(180deg, #05fb33, #fff);
+        animation: animate2 2s linear infinite;
+        animation-delay: 1s;
+      }
+
+      div:nth-child(3) {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(270deg, #ff7d88, #fff);
+        animation: animate3 2s linear infinite;
+      }
+
+      div:nth-child(4) {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 45%;
+        background: linear-gradient(0deg, #05d8fb, #fff);
+        animation: animate4 2s linear infinite;
+        animation-delay: 1s;
+      }
+    }
+  }
+
+  @keyframes animate1 {
+    0% {
+      transform: translateX(-100%);
+    }
+
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes animate2 {
+    0% {
+      transform: translateY(-100%);
+    }
+
+    100% {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes animate3 {
+    0% {
+      transform: translateX(100%);
+    }
+
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+  @keyframes animate4 {
+    0% {
+      transform: translateY(100%);
+    }
+
+    100% {
+      transform: translateY(-100%);
+    }
+  }
+
+  @keyframes steam {
+    0% {
+      background-position: 0 0;
+    }
+
+    50% {
+      background-position: 400% 0;
+    }
+
+    100% {
+      background-position: 0 0;
+    }
+  }
+
+  @keyframes blink {
+    0% {
+      background: #f8f8f8;
+    }
+
+    50% {
+      background: var(--ion-color-primary);
+    }
+
+    100% {
+      background: #f8f8f8;
+    }
+  }
+
+  .slick-prev {
+    left: unset !important;
+    top: -35px !important;
+    right: 55px !important;
+
+    @media screen and (max-width: 920px) {
+      right: 30px !important;
+      top: -30px !important;
+    }
+  }
+
+  .slick-next {
+    right: 0px !important;
+    top: -35px !important;
+
+    @media screen and (max-width: 920px) {
+      top: -30px !important;
+    }
+  }
+
+  .slick-prev,
+  .slick-next {
+    height: 50px;
+    width: 50px;
+    border-radius: 8px;
+    background: #212e44;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .MuiSvgIcon-root {
+      height: 12px;
+    }
+
+    &::before {
+      display: none;
+      color: #fff;
+    }
+
+    @media screen and (max-width: 920px) {
+      height: 26px;
+      width: 26px;
+    }
+  }
+
+  @media screen and (max-width: 920px) {
+    margin-top: 0px;
+  }
+}
+
+.border-shadow-container {
+  position: relative;
+  display: inline-block;
+  font-size: 2rem;
+  color: white;
+  margin-bottom: 22px;
+  width: 100%;
+
+  &.trending-border-games {
+    margin-bottom: 0;
+    @media screen and (max-width: 920px) {
+      margin-bottom: 14px;
+    }
+  }
+  .text {
+    position: relative;
+    z-index: 1;
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 33.6px;
+    text-transform: uppercase;
+    font-family: "Sofia Sans", sans-serif !important;
+    font-style: italic;
+
+    .games-text {
+      font-family: Satoshi;
+      font-size: 28px;
+      font-style: italic;
+      font-weight: 300;
+      line-height: 37.8px;
+      text-align: left;
+      color: #ffffff99;
+    }
+  }
+
+  @media screen and (max-width: 920px) {
+    margin-bottom: 16px;
+
+    .text {
+      font-size: 20px;
+      line-height: 24px;
+
+      .games-text {
+        font-size: 20px;
+        line-height: 24px;
+      }
+    }
+  }
+}
+
+.border-shadow-container::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  /* Adjust the height of the normal line */
+  background: var(--bet-slip-btn);
+  /* Color of the normal line */
+  z-index: 0;
+  opacity: 0.6;
+}
+
+.border-shadow-container::before {
+  content: "";
+  position: absolute;
+  bottom: -10.7px;
+  left: 0;
+  width: 44px;
+  height: 2px;
+  background: var(--bet-slip-btn);
+  box-shadow: 0 0 0px 1px var(--bet-slip-btn);
+  z-index: 0;
+  border-radius: 4px;
+}
+
+.site-info-grid {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  margin-top: 20px;
+  gap: 0 15px;
+
+  &.mt-6 {
+    margin-top: -20px;
+  }
+
+  .site-info-card {
+    // width: 25%;
+    cursor: pointer;
+
+    .MuiCard-root {
+      box-shadow: none;
+    }
+
+    .MuiCardContent-root {
+      padding: 10px 13px;
+    }
+  }
+
+  .site-card-title {
+    font-size: 24px;
+    line-height: 28px;
+    font-weight: 700;
+  }
+}
+
+@media screen and (max-width: 920px) {
+  .site-info-grid {
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 2px;
+
+    &.mt-6 {
+      margin-top: -6px;
+    }
+
+    .site-info-card {
+      flex: 1 1 40%;
+    }
+
+    .site-card-title {
+      font-size: 14px;
+      line-height: 16px;
+      font-weight: 700;
+    }
+  }
+}
+
+.home-banner-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 16px 0 32px 0;
+
+  .carousel-container {
+    flex: 1 1 60%;
+  }
+
+  .banners {
+    display: flex;
+    width: 35%;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .banner {
+    position: relative;
+    text-align: center;
+  }
+
+  .banner img {
+    width: 100%;
+    height: auto;
+  }
+
+  .explore-button {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    background-color: #000;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 920px) {
+  .home-banner-container {
+    gap: 8px;
+    padding: 12px 0;
+
+    .carousel-container {
+      flex: 1 1 100%;
+      order: 1;
+    }
+
+    .banners {
+      flex: 1 1 100%;
+      flex-direction: row;
+      order: 2;
+      gap: 8px;
+    }
+
+    .banner {
+      margin: 5px 0;
+      width: 50%;
+    }
+  }
+}
+
+.banner-container {
+  // background: var(--webkit-gradient-background-2);
+  background: none;
+  width: 100%;
+  height: auto;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 6px;
+  align-items: center;
+  // border-radius: 6px;
+  overflow: hidden;
+  font-family: var(--headers-font-family);
+  cursor: default;
+  padding: 12px 0 0 0;
+
+  @media screen and (max-width: 920px) {
+    grid-template-columns: none;
+    padding: 12px 0 0 0;
+
+    &.pb-0 {
+      padding-bottom: 0;
+    }
+  }
+
+  .banner-cards {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 6px;
+    height: 100%;
+
+    .deposit-btn {
+      background-color: #008000;
+      color: #fff;
+      border: 1px solid #fff;
+      padding: 0;
+
+      img {
+        padding-right: 4px;
+      }
+
+      .MuiButton-label {
+        font-weight: bold;
+      }
+    }
+
+    .withdraw-btn {
+      background-color: #fe6201;
+      color: #fff;
+      border: 1px solid #fff;
+      padding: 0;
+
+      img {
+        padding-right: 4px;
+      }
+
+      .MuiButton-label {
+        font-weight: bold;
+      }
+    }
+
+    .banner-image {
+      border-radius: 10px;
+      cursor: pointer;
+
+      svg {
+        border-radius: 10px;
+
+        @media screen and (max-width: 920px) {
+          border-radius: 8px;
+        }
+      }
+    }
+
+    @media screen and (max-width: 920px) {
+      gap: 6px;
+    }
+  }
+
+  &.mt-14 {
+    margin-top: 14px;
+
+    @media screen and (min-width: 920px) {
+      margin-top: 0;
+    }
+  }
+
+  .banner-image {
+    width: inherit;
+    // height: 100%;
+    height: 100%;
+
+    svg {
+      border-radius: 10px;
+
+      @media screen and (max-width: 920px) {
+        border-radius: 8px;
+      }
+    }
+  }
+
+  .sport-image {
+    height: 140px;
+    margin-left: 5%;
+
+    &.inplay-image {
+      height: 80px;
+    }
+  }
+
+  .eventType-name {
+    font-family: var(--headers-font-family);
+    font-style: normal;
+    font-weight: normal;
+    font-size: 82px;
+    line-height: 98px;
+    letter-spacing: 0.1em;
+    color: #f8f8f8;
+    margin-left: 12%;
+    margin-right: 22%;
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .inplay-live-icon {
+      height: 58px;
+      width: 58px;
+      margin-right: 21px;
+      margin-top: -8px;
+    }
+  }
+}

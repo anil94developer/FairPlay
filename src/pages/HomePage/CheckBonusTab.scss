@@ -1,0 +1,60 @@
+.check-bonus-tab {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  background: var(--ion-button-bg-2);
+  /* Bright and eye-catching */
+  height: 6vh;
+  margin: 10px 5px;
+  border: 2px solid var(--tab-active-border);
+  /* Gold-like border for premium look */
+  border-radius: 10px;
+  color: var(--custom-btn-text-variant-2);
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  /* Subtle shadow */
+  transition: transform 0.3s, box-shadow 0.3s;
+  /* Smooth hover effects */
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0px;
+}
+
+.check-bonus-tab:hover {
+  transform: scale(1.05);
+  /* Slight zoom-in effect on hover */
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+  /* Bigger shadow on hover */
+}
+
+.check-bonus-tab:before {
+  // content: "🎉";
+  content: "   ";
+  /* Celebration icon */
+  font-size: 40px;
+  margin-right: 10px;
+}
+
+.check-bonus-tab .bonus-content {
+  display: flex;
+  align-items: center;
+}
+.check-bonus-tab .check-bonus-btn {
+  color: black;
+  font-weight: bold;
+  border: none;
+  padding: 10px 10px;
+  margin-left: 20px;
+  margin-right: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.check-bonus-tab .check-bonus-btn:hover {
+  background-color: blue;
+  animation: none;
+}

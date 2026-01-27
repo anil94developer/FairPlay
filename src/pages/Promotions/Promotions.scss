@@ -1,0 +1,34 @@
+.promotions-page {
+  background: var(--background-ctn-gradient);
+  border-radius: 10px;
+  margin: 12px 24px;
+  padding: 16px 12px;
+  height: 90vh;
+}
+
+.promotion-card-ctn {
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.promotions-modal-ctn {
+  padding: 20px;
+  background: black !important;
+}
+
+@media (max-width: 768px) {
+  .promotions-page {
+    padding: 10px;
+    margin: 0;
+    background: transparent;
+    background: var(--ion-background-color);
+  }
+
+  .promotion-card-ctn {
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: repeat(1, 1fr);
+  }
+}

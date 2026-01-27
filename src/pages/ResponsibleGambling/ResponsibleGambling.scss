@@ -1,0 +1,58 @@
+.odds-terms-condi-ctn {
+    height: 520px;
+    max-height: 520px;
+    padding: 10px 3px 10px 10px;
+  }
+  .odds-terms-condi-ctn .terms-conditions-ctn {
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--background-ctn-gradient);
+  }
+  .odds-terms-condi-ctn .conditions-paragraph-title {
+    font-weight: 900;
+    color: var(--ion-heading-color);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0 !important;
+    margin-top: 10px !important;
+  }
+  .odds-terms-condi-ctn .conditions-paragraph {
+    color: #fff;
+    font-size: 13px;
+  }
+  .odds-terms-condi-ctn .sub-header {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .odds-terms-condi-ctn .note {
+    background: var(--ion-button-bg-2);
+    color: var(--active-text-color);
+    font-size: 13px;
+    padding: 5px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    border-radius: 10px;
+    margin-top: 10px;
+  }
+  .odds-terms-condi-ctn .rules-accordion .MuiPaper-root .MuiAccordionDetails-root {
+    display: grid;
+  }
+  .odds-terms-condi-ctn .MuiAccordion-root .MuiAccordionSummary-root {
+    background: var(--ion-background) !important;
+  }
+  .odds-terms-condi-ctn .MuiAccordion-root .MuiAccordionSummary-root .MuiTypography-root {
+    color: #fff !important;
+    font-family: var(--headers-font-family);
+    font-size: 20px;
+  }
+  .odds-terms-condi-ctn .MuiAccordion-root .MuiAccordionDetails-root {
+    display: grid;
+  }
+  
+  @media screen and (max-width: 720px) {
+    .odds-terms-condi-ctn {
+      padding: 0;
+    }
+  }

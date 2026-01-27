@@ -1,0 +1,61 @@
+.payment-ctn {
+  .header-ctn {
+    ion-row {
+      justify-content: flex-start !important;
+    }
+  }
+  .MuiTabs-flexContainer {
+    padding: 10px 2px 8px;
+    .MuiTab-root {
+      opacity: 0.9;
+      background-color: #404e76;
+      border-radius: 5px;
+      margin-right: 10px;
+      border-radius: 5px;
+      min-width: 90px !important;
+      min-height: 30px;
+      margin-left: 10px;
+      &.Mui-selected {
+        opacity: 1;
+        border-bottom: transparent;
+        border: 2px solid var(--ion-nav-card-background);
+        .MuiTab-root {
+          border: 2px solid var(--ion-nav-card-background);
+        }
+      }
+
+      .MuiTab-wrapper {
+        font-style: normal;
+        font-weight: normal;
+        font-size: 24px;
+        line-height: 26px;
+        letter-spacing: 0.08em;
+        color: #f8f8f8;
+        text-transform: capitalize !important;
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .payment-ctn {
+    .MuiTabs-flexContainer {
+      background: var(--linear-gradient-background-1);
+      padding: 6px 2px 5px;
+      margin-top: 10px;
+      .MuiTab-root {
+        opacity: 0.9;
+        background-color: #404e76;
+        border-radius: 5px;
+        margin-right: 4px;
+        min-width: 60px !important;
+        min-height: 30px;
+        margin-left: 5px;
+
+        .MuiTab-wrapper {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+}

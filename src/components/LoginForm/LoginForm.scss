@@ -1,0 +1,773 @@
+.login-form-page {
+  @media screen and (min-width: 720px) {
+    .socialMedia-mob {
+      display: none;
+    }
+
+    .disclaimer-mob {
+      display: none;
+    }
+  }
+
+  .MuiFormHelperText-root.Mui-error {
+    font-size: 11px;
+  }
+
+  .download-apk {
+    background-color: #66bb6a;
+    cursor: pointer;
+    width: 400px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    margin-top: 20px;
+    .android-icon {
+      color: #fff;
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+    .donwload-txt {
+      color: #fff;
+      font-weight: bold;
+    }
+    .donwload-icon {
+      color: #fff;
+      width: 10px;
+      height: 20px;
+      margin-left: 10px;
+    }
+  }
+
+  .socialMedia-login {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 5px;
+
+    .sm-new-ctn {
+      background: none;
+      border: none;
+
+      .sm-new-links {
+        .sm-new-link {
+          margin: 0px 0px;
+        }
+      }
+    }
+  }
+
+  .disclaimer-ctn-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+
+    .disclaimer-width {
+      color: #ece7f1;
+      width: 60%;
+      font-family: General Sans;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 17.56px;
+      text-align: center;
+      margin-top: 15px;
+
+      @media screen and (max-width: 720px) {
+        font-family: General Sans;
+        font-size: 10px;
+        font-weight: 400;
+        line-height: 14.63px;
+        text-align: center;
+        margin-bottom: 15px;
+        width: 80%;
+      }
+    }
+  }
+
+  .back-icon {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    color: #fff;
+
+    .back {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+
+      a {
+        color: #ffffff;
+      }
+
+      .arrow-clr {
+        color: #fff;
+        width: 0.7em;
+      }
+
+      .back-text {
+        margin-left: 3px;
+        font-family: var(--headers-font-family);
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 18.9px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+      }
+    }
+
+    .demo {
+      .login-form-btn-demo {
+        background: var(--custom-btn-bg-variant-2);
+        margin-top: 0px !important;
+        padding: 2px 12px !important;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        color: var(--active-text-color);
+        .MuiButton-label {
+          text-transform: none !important;
+        }
+      }
+    }
+  }
+
+  .account-SignUp {
+    width: 400px;
+    background: var(--ion-background-color);
+    text-align: center;
+    padding: 10px 0px;
+    border: 2px solid var(--form-ctn-border);
+    border-top-width: 1px;
+    margin-top: -2px;
+    border-radius: 0px 0px 16px 16px;
+    font-family: var(--headers-font-family);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 17.55px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .account-dontHaveAccount {
+      color: var(--form-ctn-no-account-text);
+    }
+
+    .back-to-SignUp {
+      text-decoration: underline;
+      margin-left: 3px;
+      color: #fff;
+    }
+  }
+
+  .bottom-link {
+    color: var(--ion-text-light);
+    text-align: center;
+    padding-top: 10px;
+    text-decoration: underline;
+  }
+
+  .red-text {
+    color: red;
+  }
+
+  .title-row {
+    display: flex;
+    justify-content: center;
+    margin-top: 50px;
+
+    .logo {
+      width: 130px;
+    }
+  }
+
+  .login-form-ctn {
+    width: 400px;
+    max-height: unset;
+    display: flex;
+    padding: 20px 20px 5px 20px;
+    flex-direction: column;
+    background: var(--ion-background-color);
+    border-radius: 16px 16px 0px 0px;
+    border: 2px solid var(--form-ctn-border);
+    border-bottom: none;
+
+    .card-title {
+      color: #fff;
+      font-family: var(--headers-font-family);
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 43.2px;
+      text-align: center;
+    }
+
+    .card-login-here {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 21.6px;
+      text-align: center;
+      font-family: var(--headers-font-family) !important;
+      color: #e0e0e0;
+
+      @media screen and (max-width: 720px) {
+        font-size: 12px;
+      }
+    }
+
+    .social-media-login {
+      display: flex;
+      justify-content: flex-start;
+      width: fit-content;
+      margin-bottom: 14px;
+    }
+
+    .sign-up-title {
+      font-weight: 400;
+      font-size: 20px;
+      line-height: 150%;
+      margin-bottom: 50px;
+
+      .sign-up-color {
+        color: var(--ion-color-primary);
+        text-decoration: underline;
+      }
+    }
+
+    .page-title {
+      display: flex;
+      justify-content: center;
+      font-size: 24px;
+      line-height: 24px;
+      color: var(--ion-color-secondary-contrast);
+      font-family: var(--headers-font-family);
+    }
+
+    .usr-input,
+    .code-input,
+    .pwd-input {
+      display: inline-grid;
+      margin-top: 5px;
+
+      .input-labell {
+        font-weight: 600;
+        font-size: 16px;
+        line-height: 150%;
+        margin-bottom: 7px;
+        color: #e0e0e0 !important;
+      }
+    }
+
+    .pwd-input {
+      margin-top: 10px;
+    }
+
+    .form-control {
+      margin: 10px 0;
+
+      .MuiFormControl-root {
+        background: #1f2e52 !important;
+
+        .MuiInputBase-root {
+          background: #1f2e52 !important;
+          color: #fff !important;
+          border-radius: 10px;
+        }
+      }
+    }
+
+    .MuiInputBase-root {
+      border-radius: 8px;
+      background-color: #fff !important;
+      border: 0;
+    }
+
+    .MuiInputBase-input {
+      font-size: 16px;
+      font-family: "Lato";
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+      border: 1px solid #eaeef3;
+      border-radius: 10px;
+      border: 0;
+      padding: 10px 7px;
+    }
+
+    .MuiOutlinedInput-notchedOutline {
+      border: 0;
+    }
+
+    .MuiIconButton-root {
+      padding: 0;
+      opacity: 0.4;
+    }
+
+    .login-err-msg {
+      color: red;
+      text-align: center;
+      max-width: unset;
+    }
+
+    .user-name,
+    .pwd-field {
+      max-width: 100%;
+      height: 48px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--input-bg-color);
+
+      .input-label {
+        color: #fff !important;
+      }
+    }
+
+    .login-demologin-btns {
+      display: flex;
+      justify-content: space-between;
+
+      .login-form-btn-demo {
+        margin-top: 15px !important;
+        margin-bottom: 20px;
+        width: 48%;
+        // height: 44px;
+        font-size: 13px;
+        border-radius: 100px;
+        background: var(--custom-btn-bg-variant-1);
+        color: var(--custom-btn-text-variant-1) !important;
+        font-weight: bold;
+        box-shadow: none;
+
+        .MuiButton-label {
+          text-transform: none !important;
+          color: var(--custom-btn-text-variant-1) !important;
+          font-family: var(--headers-font-family) !important;
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 21.6px;
+          text-align: center;
+        }
+      }
+
+      .login-form-btn {
+        margin-top: 15px !important;
+        margin-bottom: 20px;
+        width: 48%;
+        height: 44px;
+        font-size: 13px;
+        border-radius: 100px;
+        background: var(--custom-btn-bg-variant-2);
+        color: var(--custom-btn-text-variant-2) !important;
+        font-weight: bold;
+        border: 1px solid var(--custom-btn-border-variant-2);
+        box-shadow: none;
+
+        @media screen and (max-width: 720px) {
+          border-radius: 100px;
+        }
+
+        .MuiButton-label {
+          // text-transform: capitalize;
+          color: var(--custom-btn-text-variant-2) !important;
+          font-family: var(--headers-font-family) !important;
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 21.6px;
+          text-align: center;
+        }
+      }
+    }
+
+    .login-demologin-btns {
+      display: flex;
+      justify-content: space-around;
+
+      .login-form-btn-without-demologin {
+        margin-bottom: 20px;
+        width: 100%;
+        height: 44px;
+        font-size: 13px;
+        border-radius: 100px;
+        background: var(--custom-btn-bg-variant-1);
+        color: #1e1e1e !important;
+        font-weight: bold;
+        border: 1px solid #ffffff;
+        box-shadow: none;
+
+        .MuiButton-label {
+          font-weight: 700;
+          font-size: 16px;
+          line-height: 150%;
+          // text-transform: capitalize;
+
+          // @media screen and (max-width: 720px) {
+          //   font-size: 12px;
+          // }
+        }
+      }
+    }
+
+    .forgot-pwd {
+      text-align: right;
+      cursor: pointer;
+      font-family: var(--headers-font-family);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 18.9px;
+      color: #ffffff;
+      margin: 12px 0 12px 0;
+
+      a {
+        text-decoration: none;
+        color: #ffffff;
+      }
+
+      .reset-2fa-link {
+        color: #ff6b6b;
+        font-size: 13px;
+        margin-top: 8px;
+        display: inline-block;
+
+        &:hover {
+          text-decoration: underline;
+          color: #ff5252;
+        }
+      }
+    }
+
+    .reset-2fa-link-section {
+      text-align: center;
+      margin-top: 16px;
+
+      .reset-2fa-link {
+        background: none;
+        border: none;
+        color: #ff6b6b;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: underline;
+
+        &:hover {
+          color: #ff5252;
+        }
+      }
+    }
+
+    .bottom-link {
+      display: flex;
+      justify-content: center;
+      margin-top: 24px;
+      margin-bottom: 6px;
+      font-size: 16px;
+      color: var(--ion-color-secondary-contrast);
+      text-align: center;
+      text-decoration: underline;
+      cursor: pointer;
+
+      .register-link {
+        color: var(--ion-color-secondary-contrast);
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .login-form-page .login-form-ctn .user-name,
+  .login-form-page .login-form-ctn .pwd-field {
+    height: 40px;
+
+    .MuiInputBase-root {
+      height: 40px;
+    }
+  }
+
+  .login-ctn .title-row .logo {
+    max-width: 160px !important;
+    min-width: 160px;
+    min-height: unset !important;
+  }
+
+  .login-form-page {
+    // width: 100vw;
+    padding: 0px 20px;
+
+    .bottom-link {
+      margin-top: 8px;
+      text-decoration: underline;
+    }
+
+    .login-form-ctn {
+      .forgot-pwd-link {
+        font-size: 12px;
+        margin-bottom: 0;
+      }
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 30px;
+
+      .logo {
+        width: 130px;
+      }
+    }
+
+    .account-SignUp {
+      width: 100%;
+      padding: 12px 20px;
+    }
+
+    .download-apk {
+      width: 100% !important;
+      padding: 20px 20px !important;
+    }
+
+    .login-form-ctn {
+      width: 100% !important;
+      // margin-top: 6rem;
+      padding: 20px 20px !important;
+
+      .login-form-btn-demo {
+        margin-top: 20px;
+        // height: 44px;
+        border-radius: 8px;
+
+        .MuiButton-label {
+          font-size: 16px;
+        }
+      }
+
+      .login-form-btn {
+        margin-top: 20px;
+        height: 44px;
+        border-radius: 8px;
+
+        .MuiButton-label {
+          font-size: 16px;
+        }
+      }
+
+      .card-title {
+        margin-bottom: 0;
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 43.2px;
+        text-align: center;
+      }
+
+      .sign-up-title {
+        font-size: 14px;
+        margin-bottom: 34px;
+      }
+
+      .usr-input,
+      .pwd-input {
+        .input-labell {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+
+@media only screen and (device-width: 360px) {
+  .login-form-page {
+    .login-form-ctn {
+      margin-top: 17rem;
+      padding: 10px 18px !important;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+}
+
+@media only screen and (device-width: 411px) and (device-height: 823px) {
+  .login-form-page {
+    .login-form-ctn {
+      margin-top: 10rem;
+      padding: 10px 18px !important;
+    }
+  }
+}
+
+@media only screen and (device-width: 375px) {
+  .login-form-page {
+    .login-form-ctn {
+      margin-top: 24rem;
+      padding: 10px 18px !important;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+}
+
+@media only screen and (device-width: 375px) and (device-height: 667px) {
+  .login-form-page {
+    .login-form-ctn {
+      margin-top: 24rem;
+      padding: 10px 18px !important;
+    }
+  }
+}
+
+@media only screen and (max-device-width: 320px) {
+  .login-form-page {
+    .title-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 35px;
+
+      .logo {
+        width: 130px;
+      }
+    }
+
+    .account-SignUp {
+      width: 250px !important;
+    }
+
+    .download-apk {
+      min-width: 250px !important;
+      max-width: 250px !important;
+    }
+
+    .login-form-ctn {
+      min-width: 250px !important;
+      max-width: 250px !important;
+      margin-top: 31rem;
+      padding: 10px 18px !important;
+
+      .page-title {
+        font-size: 16px;
+        line-height: 16px;
+      }
+
+      .MuiInputBase-input {
+        font-size: 13px;
+        font-family: "Lato";
+      }
+
+      .user-name,
+      .pwd-field {
+        height: 38px;
+      }
+
+      .login-form-btn-demo {
+        height: 30px;
+        font-size: 13px;
+      }
+
+      .login-form-btn {
+        height: 30px;
+        font-size: 13px;
+      }
+    }
+  }
+}
+
+@media only screen and (max-device-width: 1023px) and (min-device-width: 769px) {
+  .login-form-page {
+    .account-SignUp {
+      min-width: 550px !important;
+      max-width: 550px !important;
+    }
+
+    .download-apk {
+      min-width: 550px !important;
+      max-width: 550px !important;
+    }
+
+    .login-form-ctn {
+      min-width: 550px !important;
+      max-width: 550px !important;
+      margin-top: 2rem;
+      padding: 10px 18px !important;
+
+      .page-title {
+        font-size: 16px;
+        line-height: 16px;
+      }
+
+      .MuiInputBase-input {
+        font-size: 13px;
+        font-family: "Lato";
+      }
+
+      .user-name,
+      .pwd-field {
+        height: 38px;
+      }
+
+      .login-form-btn-demo {
+        height: 60px;
+        font-size: 5px;
+      }
+
+      .login-form-btn {
+        height: 60px;
+        font-size: 5px;
+      }
+    }
+  }
+}
+
+@media only screen and (max-device-width: 440px) {
+  .login-form-page {
+    .login-form-ctn {
+      .login-demologin-btns {
+        display: flex;
+        flex-direction: row;
+
+        .login-form-btn-demo {
+          width: 100%;
+          height: 35px;
+          margin-top: 9px !important;
+          margin-bottom: 10px !important;
+          border-radius: 100px;
+          margin-right: 10px;
+
+          .MuiButton-label {
+            font-size: 12px;
+            text-transform: none !important;
+          }
+        }
+
+        .login-form-btn {
+          width: 100%;
+          height: 35px;
+          margin-top: 10px !important;
+          margin-bottom: 10px !important;
+          border-radius: 100px;
+
+          .MuiButton-label {
+            font-size: 13px;
+          }
+        }
+      }
+    }
+
+    .disclaimer-mob {
+      color: #fff;
+      display: flex;
+      text-align: center;
+      justify-content: center;
+      align-items: center;
+      font-family: General Sans;
+      font-size: 10px;
+      font-weight: 400;
+      line-height: 14.63px;
+      text-align: center;
+    }
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .login-form-page {
+    .login-form-ctn {
+      margin-top: 400px;
+    }
+  }
+}

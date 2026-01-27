@@ -1,0 +1,171 @@
+// Fix iphone-X device
+.user-pl-stmt-ctn {
+  .img-page-title-row {
+    margin-top: 15px;
+    margin-bottom: 16px;
+  }
+
+  .filters-row {
+    .to-date-filter {
+      margin-left: 6px;
+    }
+  }
+
+  .MuiTableCell-root {
+    padding: 6px;
+  }
+
+  .total-pl {
+    padding: 8px 8px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-start;
+    font-size: 16px;
+    font-weight: bold;
+    color: #0f2327 !important;
+  }
+
+  .MuiTableHead-root {
+    .MuiTableRow-root {
+      background: var(--accoridan-summary-background);
+    }
+
+    .MuiTableCell-root {
+      padding: 13px 6px;
+      font-weight: 600;
+      font-size: 16px;
+      line-height: 23px;
+      color: var(--ion-text-light);
+      font-family: Lato;
+    }
+  }
+
+  .MuiTableBody-root {
+    .date-label {
+      font-weight: 600;
+    }
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .user-pl-stmt-ctn {
+    margin-top: 0 !important;
+
+    .pl-content-ctn {
+      @media screen and (max-width: 920px) {
+        .pl-filters-row {
+          margin-top: 10px;
+          display: grid;
+          grid-template-columns: auto auto;
+
+          .MuiFormControl-root {
+            border: 1px solid #d3d3d3;
+            border-radius: 6px;
+          }
+        }
+      }
+    }
+
+    .img-page-title-row {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+    .filters-row {
+      justify-content: space-between !important;
+      padding: 0 6px;
+
+      .MuiFormControl-root {
+        max-width: 180px !important;
+        margin: 0;
+      }
+    }
+
+    .pl-mob-div {
+      margin-top: 20px;
+
+      &.pl-mob-div-ctn {
+        margin-top: 0;
+        border: 1px solid #d9d9d9;
+        font-size: 12px;
+
+        .heading {
+          background: #d9d9d9;
+          color: var(--ion-text-color-contrast);
+          font-size: 12px;
+          font-weight: 600;
+          border-radius: 0;
+          margin-top: 0;
+          height: 28px;
+
+          .date {
+            opacity: 0.4;
+          }
+        }
+      }
+
+      .heading {
+        display: flex;
+        justify-content: space-between;
+        background: var(--table-header-background);
+        align-items: center;
+        height: 40px;
+        padding: 0 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ion-text-light);
+
+        .pl {
+          display: flex;
+        }
+
+        .loss,
+        .profit {
+          font-weight: 600;
+        }
+
+        .date {
+          display: flex;
+          align-items: center;
+        }
+      }
+
+      .pl-content {
+        .bet-into {
+          border: 1px solid #d9d9d9;
+
+          .MuiButtonBase-root {
+            color: #000 !important;
+          }
+
+          @media screen and (max-width: 920px) {
+            .fs-12 {
+              font-size: 12px;
+            }
+
+            .link {
+              font-size: 14px;
+            }
+          }
+
+          background-color: #e1f2ff;
+          // margin-bottom: 4px;
+        }
+      }
+    }
+  }
+}
+
+.betting-pl-ctn {
+  margin: 12px 24px;
+  background: var(--background-ctn-gradient);
+  padding: 16px 12px;
+  border-radius: 10px;
+  min-height: 80vh;
+
+  @media screen and (max-width: 720px) {
+    margin: 8px 0px;
+    margin-top: 0px;
+    background: none;
+  }
+}

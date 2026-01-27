@@ -1,0 +1,139 @@
+.accept-terms-form-ctn {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: --ion-color-primary;
+
+  .first-name-input,
+  .last-name-input,
+  .dob-input,
+  .accept-terms-input {
+    display: inline-grid;
+    margin-top: 40px;
+  }
+
+  .accept-terms-input {
+    .MuiFormControlLabel-root {
+      margin-left: 0px;
+      margin-right: 0px;
+      align-items: flex-start;
+
+      .MuiFormControlLabel-label {
+        margin-left: 10px;
+        color: var(--ion-text-color);
+      }
+    }
+
+    .accept-terms-checkbox {
+      color: var(--ion-text-color) !important;
+      position: relative !important;
+    }
+  }
+
+  .submit-form-btn-accept-terms {
+    margin-top: 20px !important;
+    margin-bottom: 20px;
+    width: 60%;
+    max-width: 341px;
+    height: 48px;
+    font-family: 'Lato';
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 19px;
+  }
+
+  ion-item {
+    border-radius: 9px !important;
+    border: 1px solid #ffffff;
+  }
+
+  .MuiFormControl-root,
+  .MuiOutlinedInput-root {
+    border-radius: 4px;
+  }
+
+  .MuiInputBase-root {
+    color: #ffffff;
+    font-family: 'Lato';
+    font-size: 14px;
+    height: 48px;
+  }
+
+  // .MuiInputBase-input {
+  //   font-size: 16px;
+  //  font-family: 'Lato';
+  // }
+
+  .MuiIconButton-root {
+    padding: 0;
+    opacity: 0.4;
+    color: #ffffff;
+  }
+}
+
+.error-msg {
+  color: var(--ion-color-danger);
+  margin-top: 20px;
+  text-align: center;
+}
+
+.my-helper-text {
+  color: var(--ion-text-color-contrast);
+}
+
+.success-msg {
+  color: var(--ion-color-success);
+  margin-top: 20px;
+  text-align: center;
+}
+
+// @media (min-width: 721px) {
+
+.first-name-field {
+  // background: #202d57;
+  max-width: 341px;
+  height: 48px;
+}
+
+.last-name-field {
+  // background: #202d57;
+  max-width: 341px;
+  height: 48px;
+}
+
+.dob-field {
+  // background: #202d57;
+  max-width: 341px;
+  height: 48px;
+}
+
+.accept-terms-field {
+  max-width: 341px;
+  height: 48px;
+  color: #ffffff;
+}
+
+.MuiInputBase-root {
+  color: #ffffff;
+  height: 48px;
+}
+
+@media (min-width: 481px) and (max-width: 1024px) {
+  .first-name-field,
+  .last-name-field,
+  .dob-field,
+  .accept-terms-field,
+  .submit-form-btn-accept-terms {
+    width: 298px !important;
+  }
+}
+
+@media (min-width: 320px) and (max-width: 480px) {
+  .first-name-field,
+  .last-name-field,
+  .dob-field,
+  .accept-terms-field,
+  .submit-form-btn-accept-terms {
+    width: 250px !important;
+  }
+}

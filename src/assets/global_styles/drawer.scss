@@ -1,0 +1,18 @@
+.MuiDrawer-root {
+  .MuiDrawer-paper {
+    background: var(--drawer-background);
+    width: 60%;
+    max-width: 300px;
+    .drawer-header-row {
+      background: var(--ion-background);
+      border-bottom: 1px solid rgba(var(--ion-text-color-contrast-rgb), 0.3);
+      align-items: baseline;
+      .close-btn {
+        color: var(--ion-text-light) !important;
+        margin: 12px;
+        margin-right: 0px;
+        opacity: 1;
+      }
+    }
+  }
+}

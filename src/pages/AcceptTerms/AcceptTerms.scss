@@ -1,0 +1,21 @@
+.MuiPaper-root {
+  .MuiDialog-paper {
+    margin: 0px;
+    background: #ffffff;
+  }
+}
+
+.at-ctn {
+  .accept-terms-title {
+    color: #fff !important;
+  }
+  .MuiDialog-paperFullWidth {
+    background: var(--ion-background-color) !important;
+  }
+  .MuiDialogTitle-root {
+    background: var(--ion-background-color) !important;
+  }
+  .modal-content-ctn {
+    background: var(--ion-background-color) !important;
+  }
+}

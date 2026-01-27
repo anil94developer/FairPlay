@@ -1,0 +1,472 @@
+.affiliate-page {
+  background: var(--background-ctn-gradient);
+  border-radius: 10px;
+  margin: 12px 24px;
+  padding: 16px 12px;
+  height: 90vh;
+  overflow: scroll;
+}
+
+.r-copy-btn-div {
+  height: fit-content;
+  padding-top: 14px;
+
+  .r-copy-btn {
+    background-color: white;
+    padding: 4px;
+    height: 32px;
+    width: 32px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+  }
+}
+
+@keyframes disclaimer-msg-blink {
+  0% {
+    color: white;
+  }
+  50% {
+    color: orange;
+  }
+  100% {
+    color: white;
+  }
+}
+
+.disclaimer-msg {
+  color: orange;
+  font-size: small;
+  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  margin: 8px auto;
+  animation: disclaimer-msg-blink 2s infinite;
+}
+
+.withdraw-btn-ctn {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  .resend-msg {
+    color: orange;
+    font-size: 12px;
+  }
+}
+
+.withdraw-modal-ctn {
+  height: 200px;
+  width: 400px;
+}
+
+.com-tab {
+  min-width: 72px;
+  font-weight: 600;
+  font-size: 13px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  background: transparent;
+  margin-right: 10px;
+  min-height: 36px;
+  opacity: 1;
+  color: var(--ion-text-light);
+  min-height: 30px;
+  max-height: 30px;
+  border: 1px solid #ffffff99;
+  border-radius: 20px;
+  &.Mui-selected {
+    border: 0;
+    color: var(--active-text-color);
+  }
+}
+.affiliate-page {
+  .MuiTabs-root {
+    border-bottom: 1px solid var(--section-border);
+    margin-bottom: 12px;
+  }
+}
+
+.Mui-selected {
+  background: var(--ion-button-color);
+  color: #000000 !important;
+  font-weight: 900;
+}
+
+.MuiTabs-scroller {
+  overflow: scroll;
+}
+
+.affiliate-cards-ctn {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.affiliate-cards-list-ctn {
+  // padding-right: 10px;
+  // padding-left: 10px;
+}
+
+.list-card-ctn {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: var(--referral-card-bg);
+  padding: 20px;
+  box-sizing: border-box;
+  border-radius: 15px;
+  cursor: pointer;
+  color: var(--ion-arrow);
+
+  .title {
+    font-size: 1.2em;
+  }
+  .number-ctn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .number {
+    font-size: 1.2em;
+    margin-right: 10px;
+  }
+}
+
+.affiliate-info-card-ctn {
+  flex: 0 1 23.4%;
+  height: 100px;
+  background-image: url("../../assets//images//common/affiliate-card-bg.svg");
+  background: var(--campaign-card-bg);
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px;
+}
+
+.affiliate-info-card {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.affiliate-link-Card-ctn {
+  margin-top: 10px;
+  display: flex;
+  gap: 40px;
+  justify-content: space-between;
+}
+
+.affiliate-link-Card {
+  flex: 1;
+  height: 120px;
+  margin-top: 10px;
+  background: var(--referral-card-bg);
+  display: flex;
+  border-radius: 12px;
+  padding: 10px;
+  justify-content: space-between;
+  color: var(--ion-text-light);
+}
+
+.affiliate-link-Card-two {
+  flex: 1;
+}
+
+.affiliate-link-title {
+  font-weight: 600;
+  margin: 0;
+}
+
+.affiliate-link-text {
+  font-weight: 600;
+  margin: 0;
+  text-decoration: underline;
+}
+
+.affiliate-link-ctn {
+  color: var(--ion-arrow);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.unit-text,
+.unit-name {
+  text-align: center;
+  margin: 0;
+  margin-top: 4px;
+  color: #fff;
+  font-weight: bold;
+}
+
+.unit-name {
+  font-size: 10px;
+}
+
+.dialog-title {
+  color: var(--reports-header-color);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.affiliate-input {
+  background-color: #f1dcfe;
+}
+
+.affiliate-input-ctn {
+  width: 414px;
+  margin: 20px 0 !important;
+}
+
+.dialog-content {
+  padding: 10px;
+  background: black !important;
+}
+
+.dialog-title-ctn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.commission-formula-card {
+  width: 440px;
+  height: 98px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--referral-card-bg);
+  border-radius: 16px;
+  padding: 10px;
+  color: var(--ion-arrow);
+}
+
+.overview-description-ctn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.overview-description-card-ctn {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  margin-right: 100px;
+}
+
+.overview-description-text {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 21.6px;
+  flex: 1;
+  min-width: 300px;
+}
+
+.overview-title {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 22px;
+}
+
+.formula-text {
+  max-width: 70%;
+  font-weight: 400;
+  // color: #000;
+}
+
+.top-spacing {
+  margin-top: 10px;
+}
+
+.game-rules-drawer {
+  .MuiDrawer-paper {
+    background-color: #fff !important;
+    min-width: 450px;
+
+    @media only screen and (max-width: 400px) {
+      min-width: 100%;
+    }
+  }
+
+  &.mob-view {
+    .MuiDrawer-paper {
+      min-width: 100vw;
+
+      .odds-terms-condi-ctn {
+        padding: 10px 16px 0 16px;
+
+        .MuiAccordion-root .MuiAccordionSummary-root {
+          background: var(--table-header-background) !important;
+
+          .MuiTypography-root {
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 20px;
+          }
+        }
+      }
+    }
+  }
+}
+
+.affiliate-overview-ctn {
+  display: flex;
+  flex-direction: row;
+
+  .col-1,
+  .col-2 {
+    flex: 1;
+  }
+}
+
+.affiliate-overview-video-ctn {
+  width: 600px;
+  height: 300px;
+  background: #f1dcfe;
+  margin-top: 10px;
+}
+
+.affiliate-overview-title {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 32.4px;
+  letter-spacing: 5px;
+}
+
+.affiliate-overview-desc {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 21.6px;
+}
+
+.close-icon-ctn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  background: #757575;
+  border-radius: 100px;
+}
+
+.close-icon {
+  color: #fff;
+}
+
+.MuiDialogTitle-root {
+  background: #202d57; //--ion-card-background;
+  color: #ffffff; //--ion-text-light;
+  height: 40px !important;
+  text-align: center;
+
+  .MuiTypography-root {
+    font-family: "Lato";
+    font-style: normal;
+    font-weight: 600;
+    font-size: 24px;
+  }
+
+  .MuiDialog-paper {
+    border-radius: 6px;
+    background-color: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .affiliate-info-card-ctn {
+    flex: 0 1 30.8%;
+  }
+
+  .affiliate-overview-desc {
+    font-size: 14px;
+  }
+
+  .overview-title {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 900;
+    line-height: 22px;
+  }
+
+  .affiliate-overview-title {
+    font-size: 20px;
+  }
+
+  .overview-description-text {
+    font-size: 14px;
+  }
+
+  .affiliate-page {
+    padding: 10px;
+    margin: 0;
+    background: transparent;
+    background: var(--ion-background-color);
+  }
+
+  .affiliate-input-ctn {
+    width: 100%;
+    margin: 20px 0 !important;
+  }
+
+  .commission-formula-card {
+    width: 100%;
+    min-width: 500px;
+  }
+
+  .overview-description-card-ctn {
+    margin-right: 0;
+  }
+
+  .affiliate-overview-video-ctn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 1208px) {
+  .affiliate-info-card-ctn {
+    flex: 0 1 23%;
+  }
+}
+
+@media (max-width: 480px) {
+  .affiliate-cards-ctn {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .affiliate-info-card-ctn {
+    flex: 0 0 31.4%;
+    height: 80px;
+  }
+
+  .unit-name {
+    font-size: 9px;
+  }
+
+  .commission-formula-card {
+    width: 100%;
+    min-width: 300px;
+  }
+
+  .unit-text {
+    font-size: 14px;
+  }
+}

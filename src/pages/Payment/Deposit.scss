@@ -1,0 +1,573 @@
+.account-details-ctn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .actions-list {
+    display: flex;
+
+    .btn-and-qrcode {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: space-evenly;
+
+      .account-detail {
+        display: block;
+        background-color: #eee;
+        margin-right: 8px;
+        padding: 8px 15px;
+        text-transform: capitalize;
+        margin-bottom: 10px;
+        height: fit-content;
+        align-self: center;
+
+        .account {
+          .account-name {
+            width: 100px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+          }
+        }
+
+        &.active {
+          background: var(--ion-color-secondary);
+          color: #fff;
+        }
+      }
+
+      .account {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+    }
+  }
+}
+
+.btn-and-qrcode {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-direction: row-reverse;
+  justify-content: space-evenly;
+
+  .account-detail {
+    display: block;
+    background-color: #eee;
+    margin-right: 8px;
+    padding: 8px 15px;
+    text-transform: capitalize;
+    margin-bottom: 10px;
+    height: fit-content;
+    align-self: center;
+
+    .account {
+      .account-name {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+    }
+
+    &.active {
+      background: var(--ion-color-secondary);
+      color: #fff;
+    }
+  }
+
+  .account {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .copy-btn {
+      display: flex;
+      justify-content: center;
+      padding: 3px;
+      border-radius: 3px;
+      margin-left: 3px;
+
+      .content-copy {
+        height: 15px;
+        width: 15px;
+      }
+    }
+
+    .copy-btn:hover {
+      background-color: rgb(208, 208, 208);
+    }
+  }
+}
+
+.account-inputs {
+  .MuiTabs-flexContainer {
+    display: flex;
+    overflow: auto;
+  }
+  .account-label,
+  .account-input-title {
+    color: #fff;
+  }
+
+  .submit-ctn {
+    .reset-payment-btn {
+      color: #ffffff;
+    }
+  }
+
+  .account-input {
+    margin-top: 10px;
+
+    .bonus-type {
+      margin: 30px 0px;
+    }
+
+    .payment-detail {
+      padding-bottom: 10px;
+      font-size: 14px;
+
+      @media screen and (max-width: 720px) {
+        font-size: 14px;
+      }
+
+      .payment-detail-input {
+        background: var(--ion-color-primary);
+        color: #000;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 2px 10px;
+        font-weight: 600;
+        margin-left: 10px;
+
+        @media screen and (max-width: 600px) {
+          padding: 2px 10px;
+          font-weight: 600;
+          margin-left: 2px;
+          font-size: 14px;
+        }
+      }
+    }
+
+    .upi_id {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      margin: 10px auto;
+      color: #fff;
+      .payment-detail-input {
+        background: var(--ion-button-color);
+        color: #000;
+      }
+    }
+
+    .account-label {
+      font-size: 13px;
+    }
+
+    .deposit-image {
+      width: 50%;
+    }
+
+    .acc-input {
+      border: 0;
+      background-color: #eee;
+      border-radius: 10px;
+      padding: 14px;
+      min-width: 100%;
+
+      &.disabled {
+        opacity: 0.5;
+      }
+
+      &.MuiFormControl-root {
+        padding: 0;
+
+        .MuiInputBase-root {
+          &::before {
+            border-bottom: 0;
+          }
+        }
+      }
+    }
+  }
+
+  .MuiTab-textColorInherit {
+    height: auto !important;
+  }
+
+  .MuiTab-wrapper {
+    font-weight: bolder;
+  }
+
+  @keyframes blink-btn {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .whatsapp-payment-btn {
+    margin-right: 10px;
+    padding: 5px 9px;
+    min-height: 40px;
+    min-width: 72px;
+    border-radius: 0px;
+    color: black;
+    .MuiTab-wrapper {
+      font-size: 10px;
+      font-weight: bolder;
+    }
+    background-color: #1eb355;
+    border: 1.5px solid #fff;
+    animation: blink-btn 1s infinite;
+  }
+
+  .upload-btn {
+    background: var(--ion-color-secondary);
+    color: #fff;
+    text-transform: capitalize;
+    margin-top: 8px;
+
+    @media screen and (min-width: 920px) {
+      min-width: 120px;
+      margin-bottom: 10px;
+      padding: 4px;
+    }
+  }
+
+  .submit-deposit-btns {
+    display: flex;
+    justify-content: flex-end;
+
+    .submit-deposit-btn {
+      margin: 10px;
+      padding: 5px 15px;
+      background: var(--ion-color-primary);
+      color: white;
+      text-transform: capitalize;
+      border-radius: 20px;
+      font-size: 16px;
+      font-weight: 600;
+      border: 1px solid #ffffff;
+    }
+  }
+}
+
+.deposit-form-ctn {
+  @keyframes blink {
+    0% {
+      color: red;
+    }
+    50% {
+      color: orange;
+    }
+    100% {
+      color: red;
+    }
+  }
+  @keyframes disclaimer-msg-blink {
+    0% {
+      color: white;
+    }
+    50% {
+      color: orange;
+    }
+    100% {
+      color: white;
+    }
+  }
+  .pg-down-msg {
+    color: red;
+    font-size: medium;
+    display: block;
+    margin: 0;
+    padding: 0;
+    line-height: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    margin: 8px auto;
+    font-size: 20px;
+    animation: blink 1s infinite;
+  }
+  .disclaimer-msg {
+    color: orange;
+    font-size: small;
+    display: block;
+    margin: 0;
+    padding: 0;
+    line-height: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    margin: 8px auto;
+    animation: disclaimer-msg-blink 2s infinite;
+  }
+  .MuiTab-textColorInherit {
+    border-radius: 32px;
+    height: fit-content;
+    min-height: fit-content;
+    border: 1px solid #fff;
+    color: #fff;
+    margin-right: 6px;
+    margin-top: 10px;
+
+    &.Mui-selected {
+      font-weight: bolder;
+      border: 0;
+      color: #000;
+      background: var(--ion-button-color);
+    }
+  }
+
+  .account-mt-10 {
+    margin-top: 10px;
+    color: white;
+  }
+
+  .payment-options {
+    // margin: 12px 0 20px 0;
+    width: 100%;
+
+    .payment-btn {
+      margin-right: 10px;
+      padding: 5px 9px;
+      min-height: 40px;
+      min-width: 72px;
+      border-radius: 0px;
+      color: white;
+    }
+
+    .phonepe-mob {
+      @media screen and (max-width: 720px) {
+        background-color: white;
+        border-radius: 10px;
+      }
+    }
+
+    .active {
+      // background: var(--ion-color-secondary);
+      background: var(--ion-color-primary);
+      border-radius: 20px;
+      color: black;
+    }
+  }
+}
+
+.payment-deposit-ctn {
+  margin: 12px 24px !important;
+  background: var(--background-ctn-gradient);
+  padding: 12px 16px;
+  border-radius: 10px;
+
+  @media screen and (max-width: 720px) {
+    margin: 10px 8px !important;
+    background: none !important;
+    padding: 0px;
+  }
+
+  .img-page-title-row.mob-view {
+    margin-bottom: 12px;
+  }
+
+  .withdraw-deposit-btn {
+    color: #fff;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--ion-color-primary);
+  }
+
+  // .payment-option-title,
+  .account-details-title,
+  .uploaded-image-title {
+    display: inline-grid;
+    width: 100%;
+    font-size: 15px;
+    line-height: 19px;
+    padding-bottom: 6px;
+    font-weight: bold;
+
+    &.mt-10 {
+      margin-top: 10px;
+    }
+  }
+
+  .payment-option-title {
+    display: flex !important;
+    align-items: center;
+
+    .payment-method-deposit {
+      background: var(--table-header-background);
+      width: 200px;
+      border: 1px solid var(--border-color);
+      padding: 10px 0px 10px 10px;
+      border-radius: 100px;
+      font-family: var(--headers-font-family);
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 16.2px;
+      text-align: left;
+
+      @media screen and (max-width: 720px) {
+        width: 110px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        font-size: 12px;
+      }
+    }
+  }
+
+  .account-input-title {
+    display: inline-grid;
+    width: 100%;
+    font-size: 15px;
+    line-height: 19px;
+    font-weight: bold;
+  }
+
+  .payment-form-divider {
+    height: 1px;
+    background: rgb(212, 211, 211);
+    margin: 5px 0px;
+  }
+}
+
+.deposit-form-ctn .MuiTab-textColorInherit {
+  color: #fff;
+}
+
+.deposit-ctn-new {
+  background: var(--background-ctn-gradient);
+  margin: 12px 24px;
+  min-height: 80vh;
+  border-radius: 15px;
+  padding: 12px 16px;
+  position: relative;
+
+  @media screen and (max-width: 720px) {
+    margin: 0px;
+    padding: 8px;
+  }
+
+  .report-header {
+    .report-filters {
+      justify-content: flex-start;
+
+      @media screen and (max-width: 720px) {
+        padding: 0px;
+      }
+
+      .deposit-header-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: white;
+        margin: 9px 32px;
+        text-transform: capitalize;
+
+        @media screen and (max-width: 720px) {
+          font-size: 10px;
+          font-weight: 600;
+          margin: 5px 36px;
+        }
+      }
+    }
+  }
+
+  .floating-whatsapp-btn {
+    position: absolute;
+    bottom: 10px;
+    z-index: 11;
+    right: 10px;
+    background: transparent;
+    width: fit-content;
+    height: fit-content;
+    min-width: fit-content;
+    min-height: fit-content;
+    background: #1eb355;
+    border-radius: 20px;
+
+    img {
+      border-radius: 45px;
+      height: 45px;
+      width: 45px;
+    }
+
+    .whatsapp-btn-text {
+      color: #fff;
+      max-width: 200px;
+      text-transform: none;
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 14px;
+      text-align: start;
+      padding: 6px 8px 8px 6px;
+      white-space: nowrap;
+      box-sizing: border-box;
+    }
+
+    .whatsapp-icon {
+      color: #fff;
+      margin-left: 6px;
+    }
+
+    .close-floating-btn {
+      background-color: #045716;
+      color: #fff;
+      position: absolute;
+      top: -7px;
+      right: -7px;
+      border-radius: 20px;
+      height: 18px;
+      width: 18px;
+    }
+  }
+}
+
+.payment-option-title {
+  &.mt-10 {
+    color: white;
+  }
+}
+
+.account-inputs {
+  .submit-btn-disabled {
+    background: var(--btn-disable-bg) !important;
+  }
+
+  .submit-payment-btn {
+    background: var(--custom-btn-bg-variant-1);
+    color: var(--custom-btn-text-variant-1);
+    border: 1px solid var(--custom-btn-border-variant-1);
+    height: 44px;
+    padding: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 15px;
+    width: 120px;
+    font-family: Lato;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 21.6px;
+    text-align: center;
+    border-radius: 100px;
+    text-transform: capitalize;
+    margin: 5px;
+
+    @media screen and (max-width: 720px) {
+      min-width: 38%;
+    }
+  }
+}
+.radio {
+  color: white;
+}
+.uploaded-image-heading {
+  color: white !important;
+}

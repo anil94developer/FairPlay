@@ -1,0 +1,58 @@
+.MuiAccordion-root {
+  background: none;
+
+  .MuiAccordionSummary-root {
+    font-family: "Lato";
+    font-style: normal;
+    box-sizing: border-box;
+    color: var(--ion-text-color) !important;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 19px;
+    text-transform: capitalize;
+    align-items: center;
+    background: var(--accordion-summary-root-background);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    padding: 12px 20px;
+    margin-top: 4px;
+    height: 38px !important;
+    min-height: 38px !important;
+
+    &.Mui-expanded {
+      background: var(--accordion-summary-root-expanded-background);
+      border-bottom-left-radius: 0px;
+      border-bottom-right-radius: 0px;
+    }
+  }
+
+  .MuiAccordionDetails-root {
+    padding: 12px 20px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+  }
+}
+
+@media only screen and (max-width: 700px) {
+  .MuiAccordion-root {
+    .MuiAccordionSummary-root {
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+      border-bottom-left-radius: 4px;
+      border-bottom-right-radius: 4px;
+      padding: 8px 12px;
+      font-size: 14px;
+      line-height: 17px;
+      height: 36px !important;
+      min-height: 36px !important;
+    }
+
+    .MuiAccordionDetails-root {
+      padding: 8px 12px;
+      border-bottom-left-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+  }
+}

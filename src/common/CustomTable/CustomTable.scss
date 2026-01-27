@@ -1,0 +1,91 @@
+.wct-ctn {
+  .wct {
+    .wct-h {
+      height: 32px;
+      display: flex;
+      color: white;
+      background: var(--table-header-background);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--reports-header-border);
+      margin: 8px 0px;
+
+      @media screen and (max-width: 920px) {
+        font-size: 11px;
+      }
+
+      .wct-h-c {
+        // white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-transform: uppercase;
+        border-left: 1px solid var(--reports-header-border);
+      }
+      .wct-h-c0 {
+        border-left: 0px;
+      }
+    }
+
+    .wct-b {
+      .wct-r {
+        height: 32px;
+        border-radius: 20px;
+        display: flex;
+        margin: 1px 0px;
+        // white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border: 1px solid var(--custom-table-body-border);
+        .wct-b-c {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 10px;
+          font-weight: 600;
+          color: var(--custom-table-body-color);
+          background: var(--custom-table-body-row);
+          border-left: 1px solid var(--custom-table-body-border);
+          // white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+
+          @media screen and (max-width: 920px) {
+            font-size: 9px;
+          }
+
+          &.wct-b-c0 {
+            border: none;
+          }
+        }
+      }
+
+      .wct-no-data {
+        height: 32px;
+        background: var(--custom-table-body-row);
+        border: 1px solid var(--custom-table-body-border);
+        color: var(--custom-table-body-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+.modal-content-ctn {
+  @media screen and (max-width: 920px) {
+    .wct-ctn {
+      .wct-h,
+      .wct-b {
+        width: 200%;
+      }
+    }
+  }
+}

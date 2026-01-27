@@ -1,0 +1,301 @@
+.top-matches-ctn {
+  margin-top: 4px;
+
+  @media screen and (max-width: 920px) {
+    margin-top: 0px;
+  }
+
+  .top-matches-slider {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+
+    @media screen and (max-width: 920px) {
+      gap: 8px;
+    }
+  }
+  // Fix first slide cutoff issue - simple approach
+  .slick-slider {
+    margin: 0 !important;
+
+    .slick-list {
+      overflow: hidden;
+    }
+
+    .slick-track {
+      margin-left: 0;
+    }
+
+    .slick-slide {
+      padding: 0 8px 0 0;
+
+      @media screen and (max-width: 920px) {
+        padding: 0 6px 0 0;
+      }
+    }
+  }
+
+  .top-matches-scroll-container {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+
+    @media screen and (max-width: 920px) {
+      gap: 6px;
+    }
+  }
+
+  .top-match-card {
+    background: var(--table-bg);
+    // border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 10px 10px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 136px;
+    // width: 100% !important;
+    flex-direction: column;
+    min-width: 30%;
+
+    @media screen and (max-width: 1120px) {
+      min-width: 40%;
+    }
+    @media screen and (max-width: 800px) {
+      padding: 4px 8px 8px 8px;
+      align-items: flex-start;
+      gap: 8px;
+      min-width: 60%;
+    }
+    @media screen and (max-width: 600px) {
+      min-width: 78%;
+    }
+    @media screen and (max-width: 380px) {
+      min-width: 82%;
+    }
+
+    .live-img-top-matches {
+      width: 32px;
+      position: relative;
+      top: -4px;
+    }
+    .match-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      margin-bottom: 6px;
+
+      .category-and-live {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: space-between;
+
+        .category-name-container {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          width: 100%;
+          .sport-icon-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+          }
+
+          .sport-name-top-matches {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--ion-color-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+        .category-name {
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--ion-text-light);
+          text-transform: capitalize;
+          letter-spacing: 0.5px;
+        }
+
+        .live-badge {
+          background: var(--ion-color-danger);
+          color: white;
+          font-size: 9px;
+          font-weight: 700;
+          padding: 2px 6px;
+          border-radius: 3px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      }
+
+      .competition-name-top-matches {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ion-color-primary);
+        text-transform: capitalize;
+        letter-spacing: 0.5px;
+        text-wrap: nowrap;
+      }
+
+      .event-details {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+
+        .event-name-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .team-names {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ion-text-light);
+            line-height: 1.2;
+
+            @media screen and (max-width: 920px) {
+              font-size: 12px;
+            }
+          }
+        }
+
+        .event-time-top-matches {
+          .date-display-top-matches {
+            font-size: 10px;
+            color: var(--ion-text-light);
+            display: flex;
+            gap: 3px;
+            font-weight: 600;
+          }
+
+          .live-img-display {
+            width: 32px;
+            height: 16px;
+          }
+        }
+      }
+
+      .market-types {
+        display: flex;
+      }
+    }
+
+    .odds-section {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      width: 100%;
+      justify-content: space-between;
+
+      @media screen and (max-width: 920px) {
+        gap: 5px;
+      }
+
+      .team-odds {
+        display: flex;
+        width: 100%;
+        .exch-odd-view {
+          min-width: unset !important;
+          width: unset !important;
+          @media screen and (max-width: 720px) {
+            min-width: unset !important;
+          }
+          .exch-odd-button-content {
+            min-width: unset !important;
+          }
+          .back-odd {
+            border-radius: 30px 0 0 30px !important;
+          }
+          .lay-odd {
+            border-radius: 0 30px 30px 0 !important;
+          }
+          .back-odd,
+          .lay-odd {
+            min-width: 100%;
+            max-width: 60px;
+            height: 35px;
+            border-radius: 0;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            @media screen and (max-width: 920px) {
+              min-width: 100%;
+              max-width: 55px;
+              height: 32px;
+              font-size: 9px;
+            }
+
+            &.back-odd {
+              background: var(--back-odd-background);
+              border: 1px solid var(--back-odd-background-light);
+
+              &:hover:not(.disabled) {
+                background: var(--back-odd-background-light);
+              }
+            }
+
+            &.lay-odd {
+              background: var(--lay-odd-background);
+              border: 1px solid var(--lay-odd-background-light);
+
+              &:hover:not(.disabled) {
+                background: var(--lay-odd-background-light);
+              }
+            }
+
+            // &.disabled {
+            //   background: var(--btn-disable-bg);
+            //   border-color: var(--btn-disable-bg);
+            //   opacity: 0.6;
+            //   cursor: not-allowed;
+
+            //   .lock-icon {
+            //     color: var(--ion-text-light);
+            //     font-size: 14px;
+            //   }
+            // }
+
+            .exch-odd-button-content {
+              text-align: center;
+
+              .price {
+                font-weight: 700;
+                color: var(--ion-text-dark);
+                font-size: 11px;
+                line-height: 1;
+
+                @media screen and (max-width: 920px) {
+                  font-size: 10px;
+                }
+              }
+
+              .size {
+                font-size: 8px;
+                color: var(--ion-text-dark);
+                opacity: 0.8;
+                line-height: 1;
+                margin-top: 1px;
+
+                @media screen and (max-width: 920px) {
+                  font-size: 7px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

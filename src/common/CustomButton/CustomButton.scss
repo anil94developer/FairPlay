@@ -1,0 +1,50 @@
+.cb {
+  padding: 7px 20px;
+  margin: 5px;
+  text-transform: capitalize;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+
+  &.cb-variant-2 {
+    background: var(--custom-btn-bg-variant-2);
+    border: 1px solid var(--custom-border-variant-2);
+    color: var(--custom-btn-text-variant-2);
+  }
+
+  &.cb-variant-1 {
+    background: var(--custom-btn-bg-variant-1);
+    color: var(--custom-btn-text-variant-1);
+  }
+}
+
+.dialog-footer {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.footer-action-btn {
+  background: var(--custom-btn-bg-variant-2) !important;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: capitalize;
+  flex: 1;
+  border-radius: 20px;
+  color: var(--custom-btn-text-variant-2);
+
+  @media screen and (max-width: 720px) {
+    font-size: 12px;
+  }
+
+  &:first-child {
+    margin-right: 10px;
+  }
+}
+
+.withdraw-yes-btn {
+  flex: 1;
+  background: var(--custom-btn-bg-variant-1);
+  color: var(--custom-btn-text-variant-1);
+}

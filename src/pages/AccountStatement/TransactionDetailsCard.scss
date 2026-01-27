@@ -1,0 +1,420 @@
+.transaction-details-card {
+  padding: 0;
+  border-radius: 8px;
+
+  .transaction-card-header {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-radius: 8px 8px 0 0;
+    padding: 10px;
+    margin: 0;
+    border-bottom: 1px solid #90caf9;
+
+    .event-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1565c0;
+      text-align: center;
+    }
+  }
+
+  // Sports Bet Details Section
+  .bet-details-section {
+    padding: 16px 0 0 0;
+    border-bottom: 1px solid #5f5f5f;
+    background: var(--table-bg);
+
+    .bet-details-header {
+      .bet-header-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #fff;
+        text-align: center;
+        border-bottom: 2px solid #e0e0e0;
+        padding: 0 8px;
+        padding-bottom: 8px;
+
+        .header-cell:first-child {
+          text-align: left;
+        }
+      }
+    }
+
+    .bet-row {
+      padding: 0 8px;
+      border-bottom: 1px dashed black;
+      background: #ffffff;
+      &.back-bet-row {
+        background: var(--back-odd-background);
+      }
+      &.lay-bet-row {
+        background: var(--lay-odd-background);
+      }
+      .bet-row-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 8px;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid #5d5d5d;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .bet-selection {
+          text-align: left;
+          font-weight: bold;
+          color: #000;
+          font-size: 14px;
+
+          @media screen and (max-width: 920px) {
+            font-size: 12px;
+          }
+
+          .bet-side {
+            font-size: 13px;
+            color: #000;
+            font-weight: bolder;
+            margin-top: 4px;
+          }
+        }
+
+        .rate-value,
+        .amount-value {
+          text-align: center;
+          font-weight: bolder;
+          color: #000;
+          font-size: 14px;
+
+          @media screen and (max-width: 920px) {
+            font-size: 12px;
+          }
+        }
+
+        .wl-value {
+          text-align: center;
+          font-weight: 600;
+          font-size: 14px;
+
+          &.profit {
+            color: #4caf50;
+          }
+
+          &.loss {
+            color: #f44336;
+          }
+          @media screen and (max-width: 920px) {
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
+
+  // Casino Details Section
+  .casino-details-section {
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+    background: var(--dialog-header-bg);
+
+    .casino-header {
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #fff;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 8px;
+    }
+
+    .casino-row {
+      margin-bottom: 12px;
+
+      .casino-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+
+        .casino-field {
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px solid #5d5d5d;
+
+          .field-label {
+            font-weight: 500;
+            color: #fff;
+          }
+
+          .field-value {
+            color: #fff;
+
+            &.profit {
+              color: #4caf50;
+              font-weight: 600;
+            }
+
+            &.loss {
+              color: #f44336;
+              font-weight: 600;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Deposit/Withdrawal Details Section
+  .deposit-details-section {
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: #000;
+
+    .deposit-header {
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #fff;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 8px;
+    }
+
+    .deposit-row {
+      .deposit-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+
+        .deposit-field {
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px solid #5d5d5d;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          .field-label {
+            font-weight: 500;
+            color: #fff;
+            min-width: 120px;
+          }
+
+          .field-value {
+            color: #fff;
+            text-align: right;
+          }
+        }
+      }
+    }
+  }
+
+  // Additional Info Section
+  .additional-info-section {
+    padding: 16px;
+    background: var(--dialog-header-bg);
+    border-radius: 0 0 8px 8px;
+
+    .info-grid {
+      display: grid;
+      gap: 8px;
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 8px 0;
+        border-bottom: 1px solid #5f5f5f;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .info-label {
+          font-weight: 600;
+          color: #fff;
+          min-width: 100px;
+          flex-shrink: 0;
+          font-size: 14px;
+        }
+
+        .info-value {
+          font-size: 14px;
+          color: #fff;
+          text-align: right;
+          word-break: break-word;
+        }
+      }
+    }
+  }
+}
+
+// Mobile Responsive Design
+@media screen and (max-width: 768px) {
+  .transaction-details-card {
+    .transaction-card-header {
+      padding: 8px;
+
+      .event-title {
+        font-size: 14px;
+      }
+    }
+
+    .bet-details-section {
+      padding: 12px 0 0 0;
+
+      .bet-details-header .bet-header-grid {
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        font-size: 12px;
+        gap: 4px;
+      }
+
+      .bet-row .bet-row-grid {
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 4px;
+        font-size: 12px;
+
+        .bet-selection .bet-side {
+          font-size: 10px;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .casino-details-section {
+      padding: 12px;
+      font-size: 80%;
+
+      .casino-row .casino-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+
+        .casino-field {
+          flex-direction: row;
+          align-items: flex-start;
+          gap: 4px;
+        }
+      }
+    }
+
+    .deposit-details-section {
+      padding: 12px;
+
+      .deposit-row .deposit-grid .deposit-field {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 4px;
+
+        .field-value {
+          text-align: left;
+        }
+      }
+    }
+
+    .additional-info-section {
+      padding: 12px;
+
+      .info-grid .info-row {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 4px;
+
+        .info-value {
+          text-align: left;
+        }
+      }
+    }
+  }
+}
+
+// Dark Mode Support
+.dark-theme {
+  .transaction-details-card {
+    background: var(--ion-card-background);
+
+    .transaction-card-header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      border-bottom-color: #3b82f6;
+
+      .event-title {
+        color: #ffffff;
+      }
+    }
+
+    .bet-details-section,
+    .casino-details-section,
+    .deposit-details-section {
+      background: var(--table-bg);
+      border-bottom-color: var(--ion-border-color);
+
+      .bet-details-header .bet-header-grid,
+      .casino-header,
+      .deposit-header {
+        color: var(--ion-text-color);
+        border-bottom-color: var(--ion-border-color);
+      }
+
+      .bet-row .bet-row-grid,
+      .casino-row .casino-grid .casino-field,
+      .deposit-row .deposit-grid .deposit-field {
+        border-bottom-color: var(--ion-border-color);
+
+        .field-label {
+          color: var(--ion-text-color);
+        }
+
+        .field-value {
+          color: var(--ion-text-color-secondary);
+        }
+      }
+
+      .rate-value,
+      .amount-value {
+        color: var(--ion-text-color);
+      }
+    }
+
+    .additional-info-section {
+      background: var(--ion-background-secondary);
+
+      .info-grid .info-row {
+        border-bottom-color: var(--ion-border-color);
+
+        .info-label {
+          color: var(--ion-text-color);
+        }
+
+        .info-value {
+          color: var(--ion-text-color-secondary);
+        }
+      }
+    }
+  }
+}
+
+// Print Styles
+@media print {
+  .transaction-details-card {
+    background: white !important;
+    box-shadow: none !important;
+
+    .transaction-card-header {
+      background: #f5f5f5 !important;
+      color: black !important;
+    }
+
+    .wl-value {
+      &.profit {
+        color: black !important;
+        font-weight: bold;
+      }
+
+      &.loss {
+        color: black !important;
+        font-weight: bold;
+        text-decoration: line-through;
+      }
+    }
+  }
+}

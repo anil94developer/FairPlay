@@ -1,0 +1,157 @@
+.bonus-information-container {
+  padding: 0.75rem 0.5rem; /* px-3 py-2 approx, adjusting for sidebar context */
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.5rem; /* gap-2 */
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.625rem; /* gap-x-2.5 */
+
+    .title {
+      font-family: "Lato", sans-serif; /* font-lato-bold - assuming Lato is available */
+      font-weight: 600; /* font-semibold */
+      font-size: 0.875rem; /* text-sm */
+      color: var(
+        --text-color-primary1,
+        #000
+      ); /* Fallback to black if var not defined */
+
+      @media (min-width: 480px) {
+        /* xs breakpoint assumption */
+        font-size: 1rem; /* text-base */
+      }
+    }
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* grid-cols-2 */
+    gap: 2px; /* gap-0.5 is 2px usually (0.125rem) */
+    width: 100%;
+
+    .stat-box {
+      display: flex;
+      width: 100%;
+      grid-column: span 1 / span 1;
+      flex-direction: column;
+      border-radius: 0.25rem; /* rounded */
+      align-items: flex-start;
+      background-color: #f2f2f2;
+      border: 1px solid #e5e7eb; /* border - standard tailwind gray-200 assumption or similar */
+      padding: 4px 8px; /* px-2 py-1 */
+
+      .label {
+        text-transform: uppercase;
+        font-weight: 400; /* font-normal */
+        font-size: 10px; /* text-xxs */
+      }
+
+      .value {
+        font-family: "Lato", sans-serif;
+        font-size: 0.875rem; /* text-sm */
+
+        &.ternary {
+          color: var(--text-color-ternary, #6b7280);
+        }
+        &.danger {
+          color: var(--text-color-danger, #ef4444);
+        }
+      }
+
+      &.full-width {
+        grid-column: span 2 / span 2;
+        padding: 0;
+      }
+
+      .bonus-btn {
+        line-height: normal;
+        position: relative;
+        overflow: hidden;
+        transition: all 150ms ease-in-out;
+        display: flex;
+        background: none;
+        border: none;
+        box-shadow: none;
+        width: 100%;
+        cursor: pointer;
+        padding: 0;
+
+        .btn-content {
+          color: var(--text-Quaternary, #fff); /* text-text_Quaternary */
+          text-transform: capitalize;
+          border: 1px solid var(--depositBtn, transparent); /* border-depositBtn */
+          display: flex;
+          border-radius: 0.25rem;
+          padding: 4px 12px; /* px-3 py-1 */
+          flex-direction: column;
+          font-size: 10px;
+          width: 100%;
+          font-weight: 600;
+          align-items: center;
+          justify-content: center;
+          background-color: var(
+            --ion-button-bg-2
+          ); /* bg-bg_HomeDepositBtnBgColor */
+          gap: 4px;
+
+          &:hover {
+            opacity: 1;
+          }
+        }
+      }
+    }
+  }
+}
+
+.common-dialog-bg {
+  background: var(--background-ctn-gradient) !important;
+  color: white !important;
+  width: 100% !important;
+
+  h2,
+  p {
+    color: white !important;
+  }
+
+  .MuiTypography-root {
+    color: white !important;
+  }
+
+  .MuiDialogTitle-root {
+    text-align: center;
+    background: transparent !important;
+    height: auto !important;
+  }
+
+  .bonus-content {
+    padding: 20px 24px !important;
+    text-align: center;
+  }
+  .MuiDialogContent-root.bonus-content {
+    .MuiDialogContentText-root {
+      color: white !important;
+      margin-bottom: 0;
+    }
+  }
+
+  .MuiDialogActions-root {
+    justify-content: center;
+    background: transparent !important;
+    position: absolute;
+    top: 20px;
+    right: 12px;
+    padding: 0;
+
+    button {
+      color: white !important;
+      padding: 0;
+      min-width: auto;
+    }
+  }
+}

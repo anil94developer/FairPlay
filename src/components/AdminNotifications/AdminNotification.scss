@@ -1,0 +1,74 @@
+.notifi-ctn {
+  margin: 20px;
+  font-family: "Lato";
+  font-size: 13px;
+  font-weight: 900;
+
+  .notifi-accordion {
+    border-radius: 20px;
+
+    .Mui-expanded {
+      background: var(--ion-background-color);
+      color: white !important;
+      border-radius: 20px;
+    }
+
+    .MuiAccordionSummary-root {
+      background: var(--ion-background-color);
+      color: white !important;
+      border-radius: 20px;
+    }
+
+    .notifi-expand-more-title {
+      display: flex;
+
+      .notifi-expand-btn {
+        position: relative;
+        left: -21px;
+        display: flex;
+        align-items: center;
+        background-color: transparent;
+
+        .notifi-expand-more {
+          height: 30px;
+          width: 30px;
+          rect {
+            fill: var(--accordian-arrow-bg);
+          }
+          path {
+            fill: var(--accordian-arrow-text);
+          }
+        }
+
+        .notifi-expand-less {
+          height: 30px;
+          width: 30px;
+          transform: rotate(180deg);
+          rect {
+            fill: var(--accordian-arrow-bg);
+          }
+          path {
+            fill: var(--accordian-arrow-text);
+          }
+        }
+      }
+
+      .notifi-title-time {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .date-title {
+          padding: 5px;
+        }
+      }
+    }
+
+    .MuiAccordionDetails-root {
+      font-weight: 400;
+    }
+    .indv-notification {
+      color: var(--accordian-arrow-text);
+    }
+  }
+}

@@ -1,0 +1,212 @@
+// ResetTwoFactor uses the same .login-form-ctn class from LoginForm
+// Enhanced styling for better UI
+
+.login-form-ctn {
+  .method-selection-container {
+    margin: 20px 0 0 0;
+    width: 100%;
+
+    .method-tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+
+      .method-tab {
+        flex: 1;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.7);
+        font-family: var(--headers-font-family);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.9);
+        }
+
+        &.active {
+          background: var(--ion-color-primary);
+          color: var(--active-text-color);
+          box-shadow: 0 2px 8px rgba(79, 209, 197, 0.3);
+        }
+      }
+    }
+  }
+
+  .input-container {
+    margin-top: 16px;
+    width: 100%;
+  }
+
+  // Enhanced button styling
+  .login-demologin-btns {
+    .login-form-btn-without-demologin {
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      text-transform: none;
+      box-shadow: 0 4px 12px rgba(79, 209, 197, 0.3);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(79, 209, 197, 0.4);
+      }
+
+      &:disabled {
+        transform: none;
+        box-shadow: none;
+        opacity: 0.6;
+      }
+    }
+  }
+
+  // Enhanced input styling
+  .usr-input {
+    width: 100%;
+    .input-labell {
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .login-input-field {
+      .MuiOutlinedInput-root {
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.95);
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        &.Mui-focused {
+          box-shadow: 0 0 0 3px rgba(79, 209, 197, 0.2);
+        }
+      }
+    }
+  }
+
+  // Enhanced error message styling
+  .login-err-msg {
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #fca5a5;
+  }
+
+  // Responsive design
+  @media screen and (max-width: 768px) {
+    .method-selection-container {
+      .method-tabs {
+        .method-tab {
+          padding: 10px 12px;
+          font-size: 13px;
+        }
+      }
+    }
+
+    .login-demologin-btns {
+      .login-form-btn-without-demologin {
+        height: 44px;
+        font-size: 15px;
+      }
+    }
+  }
+
+  @media screen and (max-width: 480px) {
+    .method-selection-container {
+      .method-tabs {
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px;
+
+        .method-tab {
+          padding: 12px;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+  .react-tel-input {
+    .form-control {
+      width: 100%;
+      height: 48px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--input-bg-color);
+      color: #000;
+      font-size: 16px;
+      padding-left: 60px;
+      transition: all 0.3s;
+
+      &:focus {
+        border-color: var(--ion-color-primary);
+        outline: none;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+      }
+    }
+
+    .flag-dropdown {
+      background: var(--input-bg-color);
+      border: 1px solid var(--border-color);
+      border-right: none;
+      border-radius: 8px 0 0 8px;
+
+      .selected-flag {
+        padding: 0 0 0 12px;
+
+        &:hover,
+        &:focus {
+          background: var(--input-bg-color);
+        }
+      }
+
+      .country-list {
+        background: var(--ion-background-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-top: 4px;
+
+        .country {
+          color: #fff;
+          padding: 10px 12px;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+          }
+
+          &.highlight {
+            background: rgba(255, 255, 255, 0.1);
+          }
+        }
+      }
+    }
+  }
+}

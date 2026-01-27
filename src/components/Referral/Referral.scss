@@ -1,0 +1,113 @@
+.referral-ctn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+
+  .r-text1 {
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .social-media-referral {
+    height: 44px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .sm-new-ctn {
+      background: none;
+      border: none;
+      .sm-new-text {
+        display: none;
+      }
+    }
+  }
+
+  .r-text2 {
+    font-weight: 400;
+    font-size: 14px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    @media screen and (max-width: 720px) {
+      width: 95%;
+    }
+  }
+
+  .r-text3 {
+    font-weight: 400;
+    font-size: 16px;
+
+    @media screen and (max-width: 720px) {
+      margin: 0px 12px;
+    }
+  }
+
+  .r-referral-code {
+    width: 40%;
+    padding: 0;
+    margin: 10px;
+    margin-top: 0;
+    border-radius: 16px;
+    background: var(--referral-card-bg);
+    display: flex;
+    padding: 5px 10px;
+    justify-content: space-between;
+
+    @media screen and (max-width: 720px) {
+      margin-top: 10px;
+    }
+
+    .r-text4 {
+      font-weight: 400;
+      font-size: 16px;
+      color: var(--referral-card-text);
+      width: 75%;
+      text-wrap: wrap;
+
+      @media screen and (max-width: 720px) {
+        font-size: 14px;
+        margin-top: 10px;
+      }
+    }
+
+    .underline {
+      margin-top: 10px;
+      text-decoration: underline;
+    }
+
+    .r-copy-btn-div {
+      height: fit-content;
+      padding-top: 14px;
+
+      .r-copy-btn {
+        background-color: white;
+        padding: 4px;
+        height: 32px;
+        width: 32px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+      }
+    }
+
+    @media screen and (max-width: 1320px) {
+      width: 70%;
+    }
+
+    @media screen and (max-width: 1020px) {
+      width: 80%;
+    }
+
+    @media screen and (max-width: 720px) {
+      width: 100%;
+    }
+  }
+}

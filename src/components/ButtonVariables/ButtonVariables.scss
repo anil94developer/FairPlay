@@ -1,0 +1,213 @@
+.stake-settings {
+  margin: 12px 24px;
+  padding: 16px 12px;
+  background: var(--background-ctn-gradient);
+  border-radius: 10px;
+  font-family: Lato;
+  font-size: 16px;
+  font-weight: 600;
+
+  @media screen and (max-width: 920px) {
+    background: transparent;
+    margin: 0px 8px;
+    padding: 0px;
+    padding-bottom: 8px;
+  }
+
+  .report-header {
+    .report-img-title {
+      .report-img-div {
+        @media screen and (max-width: 720px) {
+          margin-right: 8px;
+        }
+      }
+
+      .report-title {
+        @media screen and (max-width: 720px) {
+          margin-left: 0px;
+        }
+      }
+
+      .tab-btn {
+        font-size: 12px;
+        font-weight: 600;
+      }
+    }
+
+    .report-filters {
+      justify-content: flex-start;
+      color: white;
+
+      .text {
+        padding: 9px 32px;
+        font-family: var(--headers-font-family);
+        font-size: 13px;
+        font-weight: 600;
+        text-align: left;
+
+        @media screen and (max-width: 720px) {
+          padding: 5px 36px;
+        }
+      }
+
+      @media screen and (max-width: 720px) {
+        padding: 0px;
+      }
+    }
+
+    .tab-btns {
+      .black-font {
+        color: black;
+      }
+    }
+  }
+
+  .stake-settings-ctn {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto auto auto;
+    margin-top: 12px;
+    gap: 12px 11px;
+
+    @media screen and (max-width: 1420px) {
+      grid-template-columns: auto auto;
+    }
+
+    @media screen and (max-width: 1120px) {
+      grid-template-columns: auto;
+      gap: 8px;
+    }
+
+    .indv-stake-btn {
+      min-width: 320px;
+      background: var(--stake-settings-indv-bg);
+      border-radius: 15px;
+
+      @media screen and (max-width: 1450px) {
+        min-width: 48%;
+      }
+
+      @media screen and (max-width: 970px) {
+        min-width: 100%;
+        border-radius: 12px;
+      }
+
+      .label-text,
+      .label-number {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 16px;
+
+        @media screen and (max-width: 370px) {
+          flex-direction: column;
+          justify-content: center;
+          min-width: 200px;
+        }
+      }
+
+      .label-text {
+        margin-top: 16px;
+      }
+
+      .label-number {
+        margin-bottom: 16px;
+        margin-top: 8px;
+        .add-stake-input {
+          display: flex;
+        }
+      }
+
+      .label-text-sub {
+        color: var(--custom-table-body-color);
+      }
+
+      .bt-input {
+        border-radius: 20px;
+        height: 25px;
+        border: none;
+        outline: none;
+        padding: 20px 12px;
+        width: 50%;
+        background-color: #fff;
+
+        @media screen and (max-width: 370px) {
+          width: 100%;
+        }
+      }
+
+      .width {
+        width: 100px;
+      }
+
+      .plus-div,
+      .minus-div {
+        // position: absolute;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--ion-button-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+      }
+
+      .plus-div {
+        left: 5px;
+      }
+
+      .minus-div {
+        left: 155px;
+      }
+
+      .support-add-stake-input {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: white;
+        border-radius: 40px;
+        width: 50%;
+
+        @media screen and (max-width: 370px) {
+          width: 100%;
+        }
+
+        .add-stake-input {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-radius: 40px;
+          width: 95%;
+          position: relative;
+        }
+      }
+    }
+  }
+}
+
+@media screen and (min-width: 720px) {
+  .reports-back-ctn {
+    display: none !important;
+  }
+}
+
+.reports-back-ctn {
+  display: flex;
+  flex-direction: row;
+  color: #fff;
+  margin: 10px 0px;
+
+  .back-icon-mui {
+    width: 0.6em;
+    height: 0.6em;
+  }
+
+  .back-text {
+    font-family: var(--headers-font-family);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16.2px;
+    text-align: center;
+  }
+}

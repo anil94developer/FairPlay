@@ -1,0 +1,16 @@
+.dashboard-view-ctn {
+  padding-left: 2%;
+  padding-right: 2%;
+  @media screen and (max-width: 920px) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .not-logged-in-msg {
+    padding-top: 20px;
+    font-size: 20px;
+    font-family: var(--headers-font-family);
+    text-transform: none;
+    text-align: center;
+    color: #fff;
+  }
+}

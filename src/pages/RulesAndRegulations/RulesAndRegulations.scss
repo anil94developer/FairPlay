@@ -1,0 +1,100 @@
+.footer-content-ctn {
+  .header-ctn {
+    margin-left: 30px;
+    margin-top: 20px;
+    display: inline-flex;
+
+    .title {
+      padding: 0;
+      font-size: 20px;
+    }
+
+    .sports-toggle {
+      margin-left: 20px;
+      width: 320px;
+      background: var(--ion-card-background);
+      border-radius: 6px;
+      border: 2px solid #636c89;
+      height: 48px;
+
+      .MuiBottomNavigationAction-label {
+        letter-spacing: 0.01em;
+        font-size: 14px;
+      }
+
+      .MuiBottomNavigationAction-root {
+        font-family: "Lato";
+        color: var(--ion-text-color);
+        font-weight: 600;
+
+        padding: 0px !important;
+
+        &.Mui-selected {
+          color: var(--ion-text-dark);
+          background: var(--ion-primary-gradient);
+        }
+      }
+    }
+  }
+
+  .layout-ctn {
+    background: var(--ion-card-background);
+    margin: 30px;
+    border-radius: 6px;
+
+    .ion-list-ctn {
+      padding-top: 2px;
+      padding-bottom: 2px;
+
+      .nav-link {
+        font-family: "Lato";
+        font-size: 16px;
+        line-height: 19px;
+        letter-spacing: 0.01em;
+        width: auto;
+        height: 19px;
+        left: 2px;
+        color: var(--ion-text-light);
+        text-decoration: none !important;
+      }
+
+      .active {
+        .ion-list-item {
+          background: var(--ion-card-background-contrast);
+          border-left: 4px solid var(--ion-color-primary);
+        }
+      }
+
+      .ion-list-item {
+        cursor: pointer;
+        text-transform: capitalize;
+        border: 1px solid rgba(var(--ion-text-color-contrast-rgb), 0.1);
+      }
+    }
+  }
+}
+
+@media (min-width: 1400px) {
+  .footer-content-ctn {
+    margin: 0% 14%;
+
+    .rules-ctn {
+      margin: 5% 14%;
+    }
+  }
+}
+
+@media only screen and (max-width: 620px) {
+  .footer-content-ctn {
+    .header-ctn {
+      margin-left: 30px;
+      margin-top: 10px;
+      display: inline-block;
+
+      .sports-toggle {
+        margin-top: 10px;
+        margin-left: 0;
+      }
+    }
+  }
+}

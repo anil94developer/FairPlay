@@ -1,0 +1,63 @@
+// details component
+.mp-details {
+  .mp-detail {
+    height: 64px;
+    border-radius: 10px;
+    border: 1px solid var(--ion-text-light);
+    color: var(--referral-card-border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 8px 0px;
+  }
+
+  .mp-detail-amount {
+    font-family: "Lato";
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .mp-detail-label {
+    font-family: "Lato";
+    font-size: 12px;
+    font-weight: 600;
+  }
+}
+
+.mp-tabs {
+  .mp-tab {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: 44px;
+    background: var(--table-header-background);
+    border-radius: 8px;
+    margin: 8px 0px;
+    overflow: hidden;
+    cursor: pointer;
+
+    .mp-tab-img {
+      height: 100%;
+      width: 35px;
+      padding: 8px;
+      border-right: 1px solid var(--myprofile-tab-border-selected);
+    }
+
+    .mp-tab-label {
+      padding: 10px;
+      text-transform: capitalize;
+      font-family: "Lato";
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+  }
+
+  .mp-selected {
+    border: 1px solid var(--myprofile-tab-border);
+    .mp-tab-img {
+      background: var(--myprofile-tab-img-bg);
+    }
+  }
+}

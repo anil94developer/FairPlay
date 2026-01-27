@@ -1,0 +1,36 @@
+.mp-side-bar {
+  color: #000;
+  background: var(--reports-header-bg-color);
+  width: 266px;
+  padding: 10px;
+  border-radius: 10px;
+
+  .mp-username {
+    .white-circle {
+      height: 52px;
+      width: 52px;
+      background-color: white;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    display: flex;
+    align-items: center;
+    height: 64px;
+    font-family: "Lato";
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    border-bottom: 1px solid #ffffff80;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    .mp-username-sub {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--ion-text-light);
+    }
+  }
+}

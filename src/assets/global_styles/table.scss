@@ -1,0 +1,247 @@
+:root {
+  --table-head-border: 0.1px solid var(--table-head-cell-border) !important;
+  --table-body-border: #e0e0e0;
+}
+
+.table-ctn {
+  width: 100%;
+
+  .MuiPaper-root {
+    margin-top: 16px;
+    box-shadow: none;
+    width: 100%;
+    border-radius: 6px;
+    background-color: transparent;
+
+    .MuiTable-root {
+      border-radius: 0;
+      box-shadow: none;
+
+      .MuiTableRow-root {
+        background: var(--ion-card-background);
+
+        &.back-bg {
+          background: var(--back-odd-background-light) !important;
+        }
+
+        &.lay-bg {
+          background: var(--lay-odd-background) !important;
+        }
+
+        // border: 2px solid transparent;
+
+        @media screen and (max-width: 920px) {
+          border-right: 0;
+          border-left: 0;
+          border-bottom: 0;
+        }
+      }
+
+      .MuiTableHead-root {
+        height: 32px;
+        background: #001d58;
+
+        .MuiTableRow-root {
+          background: var(--ion-primary-gradient);
+          color: var(--ion-text-dark);
+
+          .MuiTableCell-root {
+            border: 0px !important;
+            font-family: "Lato";
+            font-style: normal;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 17px;
+            white-space: nowrap;
+          }
+        }
+      }
+
+      .MuiTableBody-root {
+        .MuiTableCell-body {
+          color: #fff;
+          border: 0px !important;
+          cursor: default;
+          white-space: nowrap;
+          font-size: 14px;
+        }
+
+        .MuiSvgIcon-root {
+          color: var(--ion-text-color-contrast);
+        }
+      }
+    }
+  }
+}
+
+.tbl-ctn {
+  width: 100%;
+  // background: var(--webkit-gradient-background-2) !important;
+  // background: var(--linear-gradient-background-2) !important;
+
+  .MuiPaper-root {
+    margin-top: 8px;
+    box-shadow: none;
+    border-color: none;
+    width: 100%;
+    border-radius: 8px 8px 14px 14px;
+    background-color: transparent;
+
+    @media screen and (max-width: 920px) {
+      border-radius: 10px 10px 10px;
+    }
+
+    .MuiTable-root {
+      // background: var(--webkit-gradient-background-2) !important;
+      // background: var(--linear-gradient-background-2) !important;
+      background: none !important;
+      border-spacing: 0 2px;
+    }
+
+    .MuiTableRow-root {
+      border: none;
+    }
+
+    // .MuiTableBody-root {
+    //   background-color: #fff !important;
+    //   .MuiTableRow-root:nth-child(odd) {
+    //     background: #fff !important;
+    //   }
+    //   .MuiTableRow-root:nth-child(even) {
+    //     background: rgba(207, 207, 207, 0.2) !important;
+    //   }
+    // }
+
+    .MuiTableHead-root {
+      height: 32px;
+      background: linear-gradient(90deg, #6800a8 0%, #45006f 100%);
+
+      // background: var(--table-header-background);
+      .MuiTableRow-root {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+
+        .MuiTableCell-root {
+          color: var(--table-headers-light);
+          // border: 0px !important;
+          font-family: var(--headers-font-family);
+          font-style: normal;
+          font-weight: 600;
+          font-size: 13px;
+          padding: 13px;
+          white-space: nowrap;
+          // border-right: var(--table-head-border);  this is break for other tables
+          border-top: var(--table-head-border);
+          border-bottom: var(--table-head-border);
+
+          &:first-child {
+            border-left: var(--table-head-border);
+          }
+
+          line-height: 17.55px;
+          letter-spacing: 0.02em;
+          text-align: left;
+
+          .MuiIconButton-root {
+            opacity: 1;
+
+            .MuiTableSortLabel-root .MuiSvgIcon-root {
+              color: #fff !important;
+              opacity: 1 !important;
+            }
+          }
+        }
+      }
+    }
+
+    .MuiTableBody-root {
+      .MuiTableCell-body {
+        color: var(--ion-text-color-contrast);
+        //border: 0px !important;
+        cursor: default;
+        white-space: nowrap;
+        font-size: 14px;
+      }
+
+      @media screen and (max-width: 1400px) {
+        .MuiTableCell-body {
+          font-size: 14px;
+        }
+      }
+
+      .MuiSvgIcon-root {
+        color: var(--ion-arrow);
+      }
+
+      .back-odd-row {
+        background: var(--back-odd-background);
+        border-bottom: 1px solid #ffffff;
+      }
+
+      .lay-odd-row {
+        background: var(--lay-odd-background);
+        border-bottom: 1px solid #ffffff;
+      }
+
+      .profit-bet {
+        color: var(--ion-color-success) !important;
+      }
+
+      .loss-bet {
+        color: var(--ion-color-lost) !important;
+      }
+    }
+  }
+}
+
+@media only screen and (max-width: 720px) {
+  .table-ctn {
+    .MuiPaper-root {
+      margin-top: 16px;
+
+      .MuiTable-root {
+        .MuiTableHead-root {
+          .MuiSvgIcon-root {
+            font-size: 20px;
+          }
+        }
+
+        .MuiTableBody-root {
+          .MuiTableCell-body {
+            font-size: 12px;
+            min-height: 48px;
+          }
+
+          .MuiSvgIcon-root {
+            font-size: 18px;
+            margin-bottom: -2px;
+          }
+        }
+      }
+    }
+  }
+
+  .tbl-ctn {
+    .MuiPaper-root .MuiTableHead-root .MuiTableRow-root .MuiTableCell-root {
+      font-size: 12px !important;
+    }
+  }
+}
+
+.MuiTabs-root + {
+  .events-table-ctn {
+    .events-table-content {
+      .MuiPaper-root {
+        .events-table {
+          .MuiTableBody-root {
+            .MuiTableRow-root {
+              .MuiTableCell-root {
+                border-right: none !important;
+                border-bottom: none !important;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,120 @@
+.bm-table-ctn {
+  .bm-table-content {
+    .MuiPaper-root {
+      margin-bottom: 0 !important;
+      .bm-table {
+        .MuiTableBody-root {
+          .MuiTableRow-root {
+            .MuiTableCell-root {
+              &.odds-cell {
+                width: 5%;
+                &:last-child {
+                  padding-right: 8px !important;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Turbo Cashout Dialog Styles
+.turbo-cashout-risk-display {
+  .risk-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    border-bottom: 2px dashed #000;
+
+    .risk-left {
+      border-right: 2px dashed #000;
+    }
+
+    .risk-left,
+    .risk-right {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+
+      .runner-name {
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 8px;
+        color: #000;
+      }
+
+      .risk-value {
+        font-size: 18px;
+        font-weight: bold;
+
+        &.profit {
+          color: #4caf50;
+        }
+
+        &.loss {
+          color: #f44336;
+        }
+      }
+    }
+  }
+
+  .fee-section {
+    text-align: center;
+    padding: 10px 0;
+    color: #000;
+    font-size: 14px;
+  }
+
+  .turbo-cashout-button-section {
+    text-align: center;
+
+    .turbo-cashout-action-btn {
+      width: 100%;
+      background: var(--ion-button-color) !important;
+      color: var(--active-text-color) !important;
+      font-weight: bold !important;
+      font-size: 16px !important;
+      padding: 12px 20px !important;
+      text-transform: none !important;
+
+      .MuiButton-label {
+        font-weight: bold !important;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      &:hover:not(:disabled) {
+        background: var(--ion-button-color) !important;
+        opacity: 0.9;
+      }
+    }
+
+    .turbo-cashout-cancel-btn {
+      width: auto;
+      min-width: 120px;
+      color: var(--ion-text-color-contrast) !important;
+      background: transparent !important;
+      border: 1px solid var(--ion-text-color-contrast) !important;
+      font-weight: 700 !important;
+      border-radius: 30px !important;
+      margin: 5px auto !important;
+      padding: 8px 16px !important;
+      text-transform: none !important;
+
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1) !important;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}

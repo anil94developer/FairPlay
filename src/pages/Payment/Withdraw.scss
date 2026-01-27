@@ -1,0 +1,768 @@
+@media screen and (max-width: 720px) {
+  .ion-app .support {
+    display: flex;
+    flex-direction: column;
+    overflow-x: scroll;
+
+    .support-container {
+      padding: 0px 0px 0px 0px;
+      background: var(--ion-background);
+
+      .as-ctn {
+        padding: 0px 0px;
+        background: none;
+      }
+    }
+  }
+}
+
+.payment-withdraw-ctn {
+  margin: 12px 24px !important;
+  background: var(--background-ctn-gradient);
+  padding: 12px 16px;
+  border-radius: 10px;
+
+  @media screen and (max-width: 720px) {
+    background: transparent;
+    margin: 10px 8px !important;
+    padding: 0;
+  }
+
+  .withdraw-deposit-btn {
+    color: #fff;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 10px;
+    background: var(--ion-color-primary);
+  }
+}
+
+.radio {
+  margin-left: 0px !important;
+  margin-right: 0px !important;
+
+  .radio .MuiFormControlLabel-root {
+    margin-left: 0px !important;
+  }
+
+  .MuiRadio-root {
+    color: #fff;
+  }
+
+  .MuiFormControlLabel-root {
+    color: #fff;
+  }
+
+  .MuiTypography-body1 {
+    color: white !important;
+    font-family: var(--headers-font-family);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16.2px;
+    text-align: left;
+  }
+
+  .MuiSvgIcon-root {
+    fill: white;
+  }
+}
+
+.account-details-ctn {
+  display: flex;
+  margin: 10px;
+
+  .sub-acc-details-ctn {
+    display: flex;
+    justify-content: flex-start;
+    max-width: 800px;
+    overflow-x: scroll;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .delete-btn-ctn {
+    .method-delete-btn {
+      height: 100%;
+      min-width: fit-content;
+      background: #f27171;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      margin-right: 8px;
+    }
+  }
+
+  .account-btn-ctn {
+    display: flex;
+    margin-right: 5px;
+  }
+
+  .account-detail-withdraw {
+    width: 300px;
+    display: block;
+    background: var(--account-details-card-bg);
+    margin-right: 0;
+    padding: 8px 15px;
+    min-width: 170px;
+    text-transform: capitalize;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    background-image: url("../../assets/images/common/icons/accountCardBg.svg");
+    height: 170px;
+    border-radius: 12px;
+    opacity: 0.5;
+    color: var(--card-details);
+
+    &.active {
+      // background: var(--table-header-background) !important;
+      opacity: 1;
+      // color: black;
+    }
+
+    @media screen and (max-width: 720px) {
+      width: 200px;
+      min-width: 200px;
+      height: 130px;
+    }
+  }
+}
+
+.account-inputs {
+  .account-input {
+    margin-top: 10px;
+
+    .MuiInputBase-root {
+      height: 35.5px;
+
+      .MuiInputBase-input {
+        padding: 8px;
+      }
+    }
+
+    .deposit-image {
+      width: 100%;
+    }
+
+    .acc-input {
+      border: 0;
+      background-color: #eee;
+      border-radius: 10px;
+      padding: 8px;
+      min-width: 100%;
+      font-size: 13px;
+
+      &.MuiFormControl-root {
+        padding: 0;
+
+        .MuiInputBase-root {
+          &::before {
+            border-bottom: 0;
+          }
+        }
+      }
+    }
+  }
+
+  .upload-btn {
+    background: var(--ion-color-secondary);
+    color: #fff;
+    text-transform: capitalize;
+    margin-top: 5px;
+    border: 1px solid var(--ion-color-primary);
+    border-radius: 20px;
+    font-size: 13px;
+
+    @media screen and (max-width: 920px) {
+      width: 100%;
+    }
+  }
+
+  .reset-payment-btn {
+    height: 44px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 15px;
+    background: var(--custom-btn-bg-variant-2);
+    color: var(--custom-btn-text-variant-2);
+    border: 1px solid var(--custom-btn-bg-variant-2);
+    width: 120px;
+    font-family: Lato;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 21.6px;
+    text-align: center;
+    border-radius: 100px;
+    // border: 1px solid #fff;
+    margin-top: 5px;
+    margin-right: 5px;
+    text-transform: capitalize;
+
+    @media screen and (max-width: 720px) {
+      min-width: 30%;
+    }
+  }
+
+  .submit-payment-btn {
+    margin-bottom: 10px;
+    padding: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 15px;
+    background: var(--custom-btn-bg-variant-1);
+    color: var(--custom-btn-text-variant-1);
+    border: 1px solid var(--custom-btn-bg-variant-1);
+    width: 120px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 21.6px;
+    text-align: center;
+    border-radius: 100px;
+    border: 1px solid #fff;
+    text-transform: capitalize;
+
+    @media screen and (min-width: 920px) {
+      min-width: 120px;
+    }
+  }
+}
+
+.my-payment-option {
+  margin-bottom: 20px;
+
+  .deposit-form-ctn {
+    .payment-options {
+      width: 100%;
+      margin-top: 5px;
+
+      &.online-payment-options {
+        margin-top: 12px;
+
+        .active {
+          color: #000;
+        }
+      }
+
+      .payment-btn {
+        margin-right: 10px;
+        padding: 5px 9px;
+        min-height: 40px;
+        min-width: 72px;
+      }
+
+      // .active {
+      //   // background: var(--ion-color-secondary);
+      //   color: #fff;
+      // }
+    }
+  }
+}
+
+.payment-deposit-ctn {
+  margin: 0px 0px;
+
+  .payment-option-title,
+  .account-details-title,
+  .uploaded-image-title {
+    display: inline-grid;
+    width: 100%;
+    font-size: 14px;
+    line-height: 19px;
+    padding-bottom: 6px;
+    color: #fff;
+  }
+
+  .account-input-title {
+    display: inline-grid;
+    width: 100%;
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  .payment-form-divider {
+    height: 1px;
+    background: rgb(212, 211, 211);
+    margin: 26px 0 15px 0;
+  }
+}
+
+.payment-option-title {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 2px;
+  padding-top: 2px;
+  text-transform: capitalize;
+  font-family: var(--headers-font-family);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 21.6px;
+  text-align: left;
+  color: #fff;
+
+  @media screen and (max-width: 720px) {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16.2px;
+    text-align: left;
+  }
+
+  .pay-method {
+    background: var(--table-header-background) !important;
+    width: 200px;
+    height: 32px;
+    left: 200px;
+    border: 1px 0px 0px 0px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    padding: 0px 0px 0px 20px;
+
+    border: 1px solid var(--border-color);
+    color: #fff !important;
+
+    @media screen and (max-width: 720px) {
+      padding: 0px 0px 0px 10px;
+      width: 100px;
+      color: #fff !important;
+    }
+  }
+}
+
+.withdraw-form-divider {
+  height: 1px;
+  background: rgb(212, 211, 211);
+  margin: 26px 0 15px 0;
+}
+
+.add-btn {
+  margin-left: 10px !important;
+  width: 180px;
+  height: 170px;
+  border: 1px dashed #fff !important;
+  border-radius: 10px;
+
+  @media screen and (max-width: 720px) {
+    width: 130px;
+    height: 130px;
+  }
+
+  .MuiButton-label {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .add-new-accnt {
+    margin-top: 8px;
+    font-family: var(--headers-font-family);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 18.9px;
+    text-align: center;
+    color: #fff;
+    text-transform: capitalize;
+
+    @media screen and (max-width: 720px) {
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 13.5px;
+      padding-top: 10px;
+    }
+  }
+
+  .add-account {
+    background: white;
+    margin-top: 3px;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+    height: 30px;
+    width: 30px;
+    border-radius: 100px;
+    size: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+// .payment-icon{
+//   height: 25px;
+
+// }
+
+.payment-method-confirm {
+  .MuiPaper-root {
+    border-radius: 20px;
+    max-width: 350px;
+    background: #fff !important;
+    padding: 16px 30px;
+
+    .MuiDialogTitle-root {
+      height: unset !important;
+      margin: 0px;
+      padding: 0px;
+      line-height: 0px;
+    }
+
+    @media screen and (max-width: 720px) {
+      padding: 12px 24px;
+      margin: 0 10px;
+      min-width: unset;
+    }
+
+    .payment-text-bold {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .dialog-footer {
+      padding-top: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .footer-action-btn {
+      background: var(--ion-color-primary);
+      font-size: 16px;
+      font-weight: 600;
+      text-transform: capitalize;
+      width: 40%;
+      border-radius: 20px;
+      color: white;
+
+      @media screen and (max-width: 720px) {
+        font-size: 12px;
+      }
+
+      &:first-child {
+        margin-right: 10px;
+      }
+    }
+
+    .withdraw-yes-btn {
+      background: var(--ion-button-color);
+      color: #000;
+    }
+  }
+
+  .withdraw-title {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+
+    .MuiTypography-h6 {
+      display: flex !important;
+      justify-content: center !important;
+    }
+  }
+
+  .withdrawal-dialog-content {
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+  }
+}
+
+.delete-btn-ctn-div-upi {
+  display: flex;
+  justify-content: space-evenly;
+  margin-right: -70px;
+  align-items: center;
+  margin-top: -27px;
+
+  .account-number {
+    font-family: var(--headers-font-family);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 18.9px;
+    letter-spacing: 0.24em;
+    text-align: left;
+
+    @media screen and (max-width: 720px) {
+      font-family: var(--headers-font-family) !important;
+      font-size: 8px;
+      font-weight: 700;
+      line-height: 13.5px;
+      letter-spacing: 0.24em;
+      text-align: left;
+    }
+  }
+
+  .account-number-bank {
+    font-size: 12px;
+
+    @media screen and (max-width: 720px) {
+      font-size: 10px;
+    }
+  }
+}
+
+.delete-btn-ctn-div {
+  display: flex;
+  justify-content: space-evenly;
+  // margin-right: -20px;
+  align-items: center;
+  margin-bottom: 25px;
+
+  @media screen and (max-width: 720px) {
+    margin-bottom: 0px;
+    margin-left: 30px;
+  }
+
+  .account-number {
+    font-family: var(--headers-font-family);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 18.9px;
+    letter-spacing: 0.24em;
+    text-align: left;
+    max-width: 72%;
+
+    .account-ifsc {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    @media screen and (max-width: 720px) {
+      font-family: var(--headers-font-family) !important;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 13.5px;
+      letter-spacing: 0.24em;
+      text-align: left;
+    }
+  }
+
+  .account-number-bank {
+    font-size: 12px;
+
+    @media screen and (max-width: 720px) {
+      font-size: 10px;
+    }
+  }
+
+  .method-delete-btn {
+    &.MuiButton-text {
+      margin: 0px;
+      padding: 0px;
+      min-width: unset;
+    }
+  }
+}
+
+.account-name-new-ctn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .account-name-new {
+    font-family: var(--headers-font-family);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 29.7px;
+    letter-spacing: 0.3em;
+    text-align: left;
+
+    @media screen and (max-width: 720px) {
+      font-family: var(--headers-font-family);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 18.9px;
+      letter-spacing: 0.32em;
+      text-align: left;
+    }
+  }
+}
+
+.account-name-bottom {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+  font-family: var(--headers-font-family);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 18.9px;
+  text-align: left;
+  color: var(--card-details);
+
+  @media screen and (max-width: 720px) {
+    font-size: 12px;
+  }
+}
+
+.actions-list {
+  display: flex;
+  border-radius: 12px;
+}
+
+.upi-options {
+  margin-top: 10px;
+}
+
+.withdraw-ctn {
+  .report-filters {
+    justify-content: flex-start;
+    color: white;
+
+    .text {
+      padding: 0 32px;
+      font-family: var(--headers-font-family);
+      font-size: 13px;
+      font-weight: 600;
+
+      @media screen and (max-width: 720px) {
+        padding: 5px 32px;
+
+        font-family: var(--headers-font-family);
+        font-size: 10px;
+        font-weight: 600;
+      }
+    }
+  }
+
+  @media screen and (max-width: 920px) {
+    padding: 0 8px;
+  }
+}
+
+.input-template {
+  color: #fff;
+  margin: 20px 0px !important;
+  position: relative;
+}
+
+.account-inputs {
+  .submit-ctn {
+    display: flex;
+    justify-content: flex-end;
+
+    .submit-payment-btn {
+      height: 44px;
+      padding: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 15px;
+      background: var(--custom-btn-bg-variant-1);
+      color: var(--custom-btn-text-variant-1);
+      border: 1px solid var(--custom-btn-border-variant-1);
+      width: 120px;
+      font-family: Lato;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 21.6px;
+      text-align: center;
+      border-radius: 100px;
+      text-transform: capitalize;
+
+      @media screen and (max-width: 720px) {
+        min-width: 30%;
+      }
+    }
+  }
+}
+
+.reports-ctn .payment-withdraw-ctn {
+  .header-ctn .my-payment-option {
+    .deposit-form-ctn {
+      .support-container {
+        padding: 0px 0px 0px 0px;
+        background-color: none;
+
+        .as-ctn {
+          background-color: none;
+        }
+      }
+    }
+  }
+}
+
+.account-number-bank {
+  font-size: 12px;
+
+  @media screen and (max-width: 720px) {
+    font-size: 10px;
+  }
+}
+
+@media screen and (min-width: 720px) {
+  .reports-back-ctn {
+    display: none !important;
+  }
+}
+
+.reports-back-ctn {
+  display: flex;
+  flex-direction: row;
+  color: #fff;
+  margin: 10px 0px;
+
+  .back-icon-mui {
+    width: 0.6em;
+    height: 0.6em;
+  }
+
+  .back-text {
+    font-family: var(--headers-font-family);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16.2px;
+    text-align: center;
+  }
+}
+
+.withdraw-ctn-new {
+  min-height: 83vh;
+  margin: 12px 24px;
+  background: var(--background-ctn-gradient);
+  padding: 16px 12px;
+  border-radius: 15px;
+
+  @media screen and (max-width: 720px) {
+    margin: 0px;
+    padding: 8px;
+  }
+
+  .report-header {
+    .report-filters {
+      justify-content: flex-start;
+
+      @media screen and (max-width: 720px) {
+        padding: 0px;
+      }
+
+      .withdraw-header-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: white;
+        margin: 9px 32px;
+        text-transform: capitalize;
+
+        @media screen and (max-width: 720px) {
+          font-size: 10px;
+          font-weight: 600;
+          margin: 5px 36px;
+        }
+      }
+    }
+  }
+
+  .MuiTabs-flexContainer {
+    .MuiTab-textColorInherit {
+      border-radius: 32px;
+      height: fit-content;
+      min-height: fit-content;
+      border: 1px solid #fff;
+      color: #fff;
+      margin-right: 6px;
+      margin-top: 10px;
+    }
+
+    .MuiTab-textColorInherit.Mui-selected {
+      font-weight: bolder;
+      border: 0;
+      color: #000;
+      background: var(--ion-button-color);
+    }
+  }
+}

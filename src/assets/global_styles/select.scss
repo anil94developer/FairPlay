@@ -1,0 +1,59 @@
+// IonSelect
+ion-select {
+  height: 48px;
+  padding: 10px;
+  box-sizing: border-box;
+  border-radius: 100px;
+  border: 1px solid #fff;
+}
+
+ion-select::part(icon) {
+  opacity: 1;
+  margin-left: 1em;
+  color: transparent;
+  background: url("../images/icons/select-icon.svg") no-repeat center;
+}
+
+ion-select-popover {
+  background: var(--select-popover-background);
+
+  ion-list {
+    border: 1px solid #6800a8;
+    padding: 0px !important;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 15px;
+    background: var(--select-popover-background) !important;
+
+    ion-item {
+      --inner-border-width: 0 0 0 0 !important;
+
+      &:not(:last-child) {
+        border-bottom: 1px solid var(--ion-text-color-contrast-rgb);
+        height: 45px;
+      }
+
+      ion-radio {
+        opacity: 0;
+      }
+
+      &:hover {
+        color: var(--ion-color-primary) !important;
+        background: var(--select-popover-active-background);
+      }
+
+      &.item-radio-checked {
+        color: var(--ion-text-color-contrast);
+        background: var(--select-popover-active-background);
+      }
+    }
+  }
+}
+
+// MaterialUI Select
+.MuiSelect-root {
+  height: 48px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  background: none !important;
+}

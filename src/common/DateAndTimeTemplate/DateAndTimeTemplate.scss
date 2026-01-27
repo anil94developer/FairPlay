@@ -1,0 +1,50 @@
+.date-template {
+  display: flex;
+  align-items: center;
+
+  .date-picker-keyboard-icon {
+    margin-right: 5px;
+  }
+
+  .dt-label {
+    text-transform: capitalize;
+    color: var(--reports-header-color) !important;
+    font-family: var(--headers-font-family);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16.2px;
+  }
+
+  .MuiFormControl-marginNormal {
+    margin: 10px;
+  }
+
+  .MuiInput-root {
+    border: 1px solid var(--reports-header-color);
+    color: var(--reports-header-color) !important;
+    border-radius: 20px;
+    width: 155px;
+    height: 30px;
+
+    @media screen and (max-width: 720px) {
+      height: 28px;
+    }
+
+    .MuiInputBase-input {
+      padding: 11px 5px;
+      font-family: var(--headers-font-family);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 16.2px;
+    }
+
+    .MuiIconButton-root {
+      padding: 3px;
+    }
+
+    .MuiSvgIcon-root {
+      height: 20px;
+      color: #fff;
+    }
+  }
+}

@@ -1,0 +1,46 @@
+.affiliate-daily-report {
+  .aff-dr-ctn {
+    display: flex;
+    flex-direction: column;
+    .date-filters {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .affiliate-data {
+      .aff-date-param {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+      }
+
+      .afiliate-row-cell {
+        text-align: center;
+      }
+
+      .lower-row {
+        padding: 5px 0px;
+      }
+
+      .aff-pagination {
+        display: flex;
+        align-items: center;
+        margin: 5px;
+
+        .aff-page-btn {
+          margin: 2px;
+          color: var(--custom-btn-text-variant-1);
+          border-radius: 5px;
+          padding: 5px 10px;
+          background: var(--custom-btn-bg-variant-1);
+          text-transform: uppercase;
+          font-size: 13px;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+}

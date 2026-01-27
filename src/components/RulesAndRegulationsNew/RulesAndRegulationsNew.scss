@@ -1,0 +1,91 @@
+.rr-ctn {
+  margin: 20px;
+  font-family: "Lato";
+  font-size: 13px;
+  font-weight: 900;
+
+  .rr-accordion {
+    border-radius: 20px;
+    box-shadow: none;
+
+    .Mui-expanded {
+      background: var(--ion-background-color);
+      color: white !important;
+      border-radius: 20px;
+    }
+
+    .MuiAccordionSummary-root {
+      background: var(--ion-background-color);
+      color: white !important;
+      border-radius: 20px;
+      padding: 0;
+      height: 32px !important;
+      min-height: 32px !important;
+    }
+
+    .rr-expand-more-title {
+      display: flex;
+
+      .rr-expand-btn {
+        display: flex;
+        align-items: center;
+        background-color: transparent;
+        position: relative;
+        padding: 2px;
+        padding-left: 6px;
+
+        .rr-expand-more {
+          height: 20px;
+          width: 20px;
+          rect {
+            fill: var(--accordian-arrow-bg);
+          }
+          path {
+            fill: var(--accordian-arrow-text);
+          }
+        }
+
+        .rr-expand-less {
+          height: 20px;
+          width: 20px;
+          transform: rotate(180deg);
+          rect {
+            fill: var(--accordian-arrow-bg);
+          }
+          path {
+            fill: var(--accordian-arrow-text);
+          }
+        }
+      }
+
+      .rr-title-time {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .date-title {
+          padding: 5px;
+          font-size: 13px;
+          text-transform: uppercase;
+          font-weight: 900;
+        }
+      }
+    }
+
+    .MuiAccordionDetails-root {
+      font-weight: 400;
+    }
+
+    .MuiAccordionDetails-root {
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      padding: 12px 0;
+
+      .rule {
+        margin: 10px;
+        color: var(--ion-popover--hover-background);
+      }
+    }
+  }
+}

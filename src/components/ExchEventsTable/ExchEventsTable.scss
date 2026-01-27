@@ -1,0 +1,1432 @@
+.events-table-ctn {
+  padding: 12px;
+  background: var(--background-ctn-gradient);
+  border-radius: 20px;
+  margin-bottom: 30px;
+
+  @media screen and (max-width: 920px) {
+    padding: 3px;
+  }
+
+  .search-events-autocomplete {
+    position: relative;
+
+    .search-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50px;
+      background: var(--ion-color-primary);
+      position: absolute;
+      top: 26px;
+      right: 12px;
+      cursor: pointer;
+    }
+  }
+
+  .MuiTable-root {
+    border-collapse: collapse;
+    // border-spacing: 1px;
+    // background-color: #D9D9D9;
+    // border-radius: 8px;
+  }
+
+  .eventType-accordion {
+    box-shadow: none;
+    margin-top: 8px !important;
+    margin-bottom: 10px !important;
+    // margin-bottom: 4px !important;
+
+    @media screen and (max-width: 920px) {
+      margin-top: 2px !important;
+    }
+
+    .eventType-header {
+      background: var(--webkit-gradient-background-2);
+      background: var(--linear-gradient-background-2);
+      font-family: var(--headers-font-family);
+      font-style: normal;
+      font-weight: normal;
+      font-size: 20px;
+      line-height: 20px;
+      color: var(--accordian-headers-color) !important;
+      padding: 9px 16.2px 9px 22px;
+      height: 44px !important;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      // background: #001D58;
+      border-radius: 8px 8px 0px 0px;
+
+      .MuiAccordionSummary-content {
+        display: flex;
+        flex: 1 1;
+
+        .accordian-sport-name {
+          width: 50%;
+
+          @media screen and (max-width: 920px) {
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 20px;
+          }
+        }
+
+        .accordian-headers {
+          display: flex;
+          width: 50%;
+          border-left: 1px solid #0b57f5;
+          // border-right: 1px solid #0B57F5;
+
+          .accordian-table-headers {
+            width: 100%;
+            text-align: center;
+          }
+
+          .accordian-table-headers:nth-child(2) {
+            border-left: 1px solid #0b57f5;
+            border-right: 1px solid #0b57f5;
+          }
+        }
+      }
+
+      .sport-inplay-icon {
+        height: 20px;
+        width: 20px;
+        margin-right: 5px;
+      }
+
+      .MuiAccordionSummary-expandIcon {
+        opacity: 1;
+        position: absolute;
+        right: 18px;
+
+        .expand-icon {
+          color: var(--accordian-headers-color) !important;
+        }
+      }
+    }
+
+    .inplay-events-tbl-container {
+      padding: 0px;
+
+      .MuiPaper-root {
+        border-radius: 0 0 14px 14px;
+
+        @media screen and (max-width: 920px) {
+          border-radius: 0;
+        }
+      }
+
+      .all-markets-nav-link {
+        cursor: pointer !important;
+      }
+    }
+  }
+
+  .events-table-content {
+    .MuiPaper-root {
+      margin-top: 0px;
+      box-shadow: none;
+      border-radius: 0;
+      .icon-and-name {
+        color: white;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        position: relative;
+        right: 5px;
+
+        .ip-event-icon {
+          width: 34px;
+          padding-right: 10px;
+        }
+      }
+
+      .events-table {
+        border-style: hidden;
+        border-radius: 6px;
+        border-collapse: separate;
+        border-spacing: 0px 2px;
+
+        .et-head {
+          background: var(--table-header-background);
+        }
+        .MuiTableRow-root.status-btns {
+          background-color: transparent;
+          .MuiTableCell-root {
+            border-radius: 0 !important;
+            &.status-btns-cell {
+              padding: 2px 0 !important;
+              border: 0px !important;
+
+              @media screen and (min-width: 920px) {
+                padding: 12px 0 10px 8px !important;
+              }
+              .status-btn {
+                color: var(--tab-active-text);
+                border: 1px solid var(--tab-active-bg);
+                border-radius: 20px;
+                padding: 1px;
+                background: var(--tab-active-bg);
+                opacity: 0.5;
+                font-size: 11px;
+                color: #fff;
+                .MuiButton-label {
+                  background: var(--ion-background-color);
+                  border-radius: 20px;
+                  padding: 3px;
+                }
+                span {
+                  font-weight: bold;
+                }
+                @media screen and (max-width: 720px) {
+                  width: fit-content;
+                  // margin-bottom: 10px;
+                  padding: 2px;
+                  font-size: 10px;
+                }
+
+                &.active {
+                  opacity: 1;
+                }
+              }
+            }
+
+            &:last-child {
+              border-radius: 0px !important;
+              border: 0px !important;
+            }
+          }
+        }
+        .MuiTableHead-root {
+          .MuiTableRow-root {
+            background: var(--head-bg);
+            &.status-btns {
+              // background-color: #0b57f5;
+              background-color: transparent;
+              .MuiTableCell-root {
+                border-radius: 0 !important;
+                &:last-child {
+                  border-radius: 0px !important;
+                  border: 0px !important;
+                }
+              }
+            }
+
+            .MuiTableCell-root {
+              &:first-child {
+                border-radius: 30px 0px 0px 30px !important;
+                text-transform: uppercase;
+                font-size: 13px;
+                font-weight: 600;
+                font-family: "Lato";
+
+                @media screen and (max-width: 720px) {
+                  border-radius: 20px !important;
+                  border: 1px solid var(--table-head-cell-border) !important;
+                }
+              }
+
+              &:last-child {
+                border-radius: 0px 30px 30px 0px !important;
+              }
+            }
+          }
+        }
+
+        .MuiTableBody-root {
+          .MuiTableRow-root {
+            .MuiTableCell-root {
+              &:first-child {
+                border-radius: 30px 0px 0px 30px !important;
+
+                @media screen and (max-width: 720px) {
+                  border-radius: 10px !important;
+                }
+              }
+
+              &:last-child {
+                border-radius: 0px 30px 30px 0px !important;
+              }
+            }
+          }
+        }
+
+        &tr:nth-last-child(1) .MuiTableCell-body {
+          border-bottom: none;
+        }
+
+        .MuiTableCell-root.MuiTableCell-body {
+          // border: 1px solid #d9d9d9 !important;
+
+          &.multi-markets-pin-cell {
+            text-align: center;
+          }
+        }
+
+        .exch-odd-view {
+          min-width: unset;
+          justify-content: center;
+
+          @media screen and (min-width: 920px) {
+            // min-width: 66px;
+            width: fit-content;
+          }
+        }
+
+        &.mt-0 {
+          margin-top: 0px !important;
+        }
+
+        overflow: hidden;
+
+        .MuiTableRow-root {
+          .schedule-cell-header {
+            white-space: nowrap !important;
+          }
+
+          .br-inplay-start {
+            border-left: 1px solid var(--table-head-cell-border) !important;
+            border-top: 1px solid var(--table-head-cell-border) !important;
+            border-bottom: 1px solid var(--table-head-cell-border) !important;
+            max-height: 30px;
+            line-height: 5px !important;
+          }
+
+          .br-inplay-middle {
+            border-top: 1px solid var(--table-head-cell-border) !important;
+            border-bottom: 1px solid var(--table-head-cell-border) !important;
+            max-height: 30px;
+            line-height: 5px !important;
+          }
+
+          .br-inplay-end {
+            border-right: 1px solid var(--table-head-cell-border) !important;
+            border-top: 1px solid var(--table-head-cell-border) !important;
+            border-bottom: 1px solid var(--table-head-cell-border) !important;
+            max-height: 30px;
+            line-height: 5px !important;
+          }
+
+          .temas-col {
+            display: inline-flex;
+
+            .live-img {
+              width: 18px;
+              margin-left: 10px;
+              vertical-align: middle;
+              height: 18px;
+            }
+          }
+
+          .schedule-cell {
+            max-width: 84px;
+            white-space: break-spaces;
+            text-align: center;
+            // .live-img-display {
+            //   height: 22px;
+            //   width: 40px;
+            // }
+
+            @media screen and (min-width: 920px) {
+              height: 30px;
+            }
+          }
+
+          .ipe-time-display {
+            @media screen and (min-width: 720px) and (max-width: 1120px) {
+              display: none;
+            }
+          }
+
+          .teams-cell {
+            min-width: 296px !important;
+            max-width: 296px !important;
+
+            .mob-view {
+              display: none;
+            }
+
+            .all-markets-nav-link {
+              color: var(--table-cell-text);
+              text-decoration: none;
+              font-weight: bold;
+              cursor: pointer;
+
+              .team-name-ctn {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                position: relative;
+              }
+
+              .enabled-markets {
+                display: flex;
+                position: absolute;
+                right: 0;
+
+                .live-img {
+                  margin: 3px;
+                  font-size: 10px;
+                  height: 25px;
+                  width: 25px;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  font-weight: 700;
+                  background: var(--sidebar-icon-bg);
+                  border-radius: 50%;
+
+                  path {
+                    stroke: var(--active-footer-color);
+                  }
+                }
+              }
+
+              .team-name {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                position: relative;
+              }
+
+              .team-names {
+                max-width: 280px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                text-transform: capitalize;
+                font-weight: 700;
+                font-size: 12px;
+                align-content: center;
+                @media (min-width: 1120px) and (max-width: 1366px) {
+                  max-width: 200px;
+                }
+              }
+            }
+          }
+
+          @media screen and (min-width: 1366px) {
+            .teams-cell {
+              min-width: 245px !important;
+              max-width: 245px !important;
+            }
+          }
+
+          .score-cell {
+            max-width: 50px !important;
+            color: var(--ion-text-color);
+            text-decoration: none;
+
+            .score {
+              max-width: 100%;
+            }
+          }
+
+          .odds-cell {
+            min-width: 80px;
+
+            .odds-block {
+              display: inline-flex;
+              width: fit-content;
+              justify-content: space-between;
+              align-items: center;
+              gap: 4px;
+
+              .back-odd,
+              .lay-odd {
+                cursor: default !important;
+                min-height: 30px;
+                // max-width: 78px;
+                padding: 2px 4px;
+                border-radius: 5px;
+                font-family: "Lato";
+                font-style: normal;
+                border-radius: 20px !important;
+                min-width: 56px;
+                max-height: 30px;
+                margin: 2px 2px;
+                // @media screen and (max-width: 1440px) {
+                //   min-width: 60px;
+                // }
+
+                // @media screen and (max-width: 1280px) {
+                //   min-width: 58px;
+                // }
+
+                .price {
+                  font-weight: 900;
+                  padding-top: 2px;
+                  font-size: 13px;
+                  line-height: 12px;
+                  // height: 14px;
+                  color: var(--ion-text-color);
+                }
+
+                .size {
+                  font-weight: 600;
+                  font-size: 9px;
+                  // line-height: 15px;
+                  color: var(--ion-text-color);
+                  opacity: 0.6;
+                }
+              }
+
+              .back-odd {
+                background: var(--back-odd-background);
+              }
+
+              .lay-odd {
+                background: var(--lay-odd-background);
+              }
+            }
+          }
+
+          .all-markets-link-cell {
+            max-width: 80px;
+            text-align: center;
+
+            ion-img {
+              height: 12px;
+              width: 7px;
+              margin-right: -6px;
+              margin-left: 4px;
+            }
+          }
+        }
+
+        .MuiTableRow-root {
+          border: 0px;
+        }
+
+        .MuiTableHead-root .MuiTableRow-root {
+          // background: var(--webkit-gradient-background-2) no-repeat fixed;
+          // background: var(--table-header-background) no-repeat fixed;
+
+          .MuiTableCell-root {
+            font-family: var(--headers-font-family);
+            font-style: normal;
+            font-weight: normal;
+            font-size: 13px;
+            line-height: 19px;
+            color: var(--accordian-headers-color);
+            background: transparent !important;
+            background-color: transparent !important;
+          }
+        }
+
+        .MuiTableBody-root {
+          .MuiTableRow-root {
+            &:last-child .MuiTableCell-root.table-cell-last {
+              border-bottom: none !important;
+              border-radius: 30px;
+            }
+
+            &:nth-child(even) {
+              // background: rgba(207, 207, 207, 0.2);
+              background: transparent;
+            }
+
+            &:nth-child(odd) {
+              background: transparent;
+            }
+
+            .MuiTableCell-root.table-cell-last {
+              border-right: none !important;
+              border-radius: 30px !important;
+              background: var(--table-bg);
+
+              @media screen and (max-width: 920px) {
+                border-radius: 12px 12px 0 0 !important;
+              }
+            }
+
+            .MuiTableCell-root {
+              padding: 12px 11px 4px 12.49px;
+              border: none !important;
+              // border-bottom: 1px solid #cdcdcd !important;
+              // border-right: 1px solid #cdcdcd !important;
+            }
+
+            &:last-child {
+              .MuiTableCell-root {
+                @media screen and (max-width: 920px) {
+                  // border-top: 1px solid #cdcdcd !important;
+                }
+              }
+            }
+          }
+
+          .bgc-white {
+            background: var(--table-cell-bg) !important;
+
+            @media screen and (max-width: 720px) {
+              background-color: transparent !important;
+            }
+          }
+        }
+
+        // background-color: #d9d9d9;
+
+        &.inplay-table {
+          margin-top: 0px !important;
+          border-style: hidden;
+          border-collapse: separate;
+          border-spacing: 0px 2px;
+          text-transform: capitalize;
+
+          .MuiTableHead-root {
+            padding: 10px;
+          }
+
+          .MuiTableHead-root .MuiTableRow-root {
+            background: var(--head-bg);
+
+            .MuiTableCell-root {
+              padding: 5px 10px;
+
+              .icon-and-name {
+                color: white;
+                text-transform: uppercase;
+                display: flex;
+                align-items: center;
+                position: relative;
+                right: 5px;
+
+                .ip-event-icon {
+                  width: 34px;
+                  padding-right: 10px;
+                }
+              }
+            }
+          }
+
+          .MuiTableHead-root {
+            .MuiTableRow-root {
+              .MuiTableCell-root {
+                &:first-child {
+                  border-radius: 20px 0px 0px 20px;
+                }
+
+                &:last-child {
+                  border-radius: 0px 20px 20px 0px;
+                }
+              }
+            }
+          }
+
+          .MuiTableBody-root {
+            .MuiTableRow-root {
+              .MuiTableCell-root {
+                &:first-child {
+                  border-radius: 30px 0px 0px 30px;
+
+                  @media screen and (max-width: 720px) {
+                    border-radius: 10px;
+                  }
+                }
+
+                &:last-child {
+                  border-radius: 0px 30px 30px 0px;
+
+                  @media screen and (max-width: 720px) {
+                    border-radius: 10px 10px 10px 10px !important;
+                  }
+                }
+              }
+            }
+          }
+
+          .exch-odd-view {
+            justify-content: center;
+          }
+        }
+
+        .MuiTableBody-root {
+          .MuiTableRow-root {
+            .MuiTableCell-root {
+              padding: 2px 0px;
+
+              &.multi-markets-pin-cell {
+                @media screen and (min-width: 920px) {
+                  min-width: 50px;
+                }
+
+                .multi-add-icon {
+                  position: relative;
+                  top: 2px;
+                }
+              }
+
+              // &.all-markets-link-cell {
+              //   position: relative;
+
+              //   .all-markets-nav-link {
+              //     position: absolute;
+              //     inset: 0;
+              //   }
+              // }
+            }
+          }
+        }
+
+        .mob-odds-row {
+          display: none;
+        }
+      }
+    }
+  }
+
+  .bs-accordion {
+    position: fixed;
+    bottom: 0px;
+    right: 16px;
+    width: 350px;
+
+    .MuiAccordionSummary-expandIcon {
+      color: #fff !important;
+      opacity: 1;
+    }
+
+    .bs-header {
+      background: var(--webkit-gradient-background-2) !important;
+      background: var(--linear-gradient-background-2) !important;
+      font-family: var(--headers-font-family);
+      font-style: normal;
+      font-weight: normal;
+      font-size: 18px;
+      line-height: 106.7%;
+      color: #fff !important;
+    }
+
+    .bs-body {
+      padding: 0px;
+    }
+  }
+
+  .footer-row {
+    margin-top: 10px;
+
+    .pagination-btn {
+      font-size: 14px;
+    }
+  }
+}
+
+.carousel-root.web-banners {
+  @media screen and (max-width: 920px) {
+    margin: 0 6px;
+  }
+}
+
+.banner-container {
+  // background: var(--webkit-gradient-background-2);
+  background: none;
+  width: 100%;
+  height: auto;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 6px;
+  align-items: center;
+  // border-radius: 6px;
+  overflow: hidden;
+  font-family: var(--headers-font-family);
+  cursor: default;
+
+  @media screen and (max-width: 920px) {
+    grid-template-columns: none;
+  }
+
+  .banner-cards {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 6px;
+    height: 100%;
+
+    .banner-image {
+      border-radius: 10px;
+      cursor: pointer;
+
+      svg {
+        border-radius: 10px;
+
+        @media screen and (max-width: 920px) {
+          border-radius: 8px;
+        }
+      }
+    }
+  }
+
+  &.mt-14 {
+    margin-top: 14px;
+
+    @media screen and (min-width: 920px) {
+      margin-top: 0;
+    }
+  }
+
+  .banner-image {
+    width: inherit;
+    height: 100%;
+
+    svg {
+      border-radius: 10px;
+
+      @media screen and (max-width: 920px) {
+        border-radius: 8px;
+      }
+    }
+  }
+
+  .sport-image {
+    height: 140px;
+    margin-left: 5%;
+
+    &.inplay-image {
+      height: 80px;
+    }
+  }
+
+  .eventType-name {
+    font-family: var(--headers-font-family);
+    font-style: normal;
+    font-weight: normal;
+    font-size: 82px;
+    line-height: 98px;
+    letter-spacing: 0.1em;
+    color: #f8f8f8;
+    margin-left: 12%;
+    margin-right: 22%;
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .inplay-live-icon {
+      height: 58px;
+      width: 58px;
+      margin-right: 21px;
+      margin-top: -8px;
+    }
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .follow-us-on {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background: #f1dcfe;
+
+    .follow-us-on-text {
+      font-family: "Lato";
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 13.5px;
+      letter-spacing: 0.17em;
+      text-align: left;
+      margin-top: 10px;
+    }
+
+    .social-media-icon {
+      margin-right: 10px;
+      margin-top: 10px;
+    }
+  }
+}
+
+.race-events-ctn {
+  .com-tab {
+    min-width: 72px;
+    font-weight: 600;
+    font-size: 13px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    background: transparent;
+    margin-right: 10px;
+    min-height: 36px;
+    opacity: 1;
+    color: var(--ion-text-light);
+    min-height: 30px;
+    max-height: 30px;
+    border: 1px solid #ffffff;
+    border-radius: 20px;
+  }
+
+  .MuiTabs-root {
+    border-bottom: 1px solid #9e81b0;
+    margin-bottom: 12px;
+  }
+
+  .Mui-selected {
+    background: var(--ion-button-color);
+    color: #000000;
+    font-weight: 900;
+  }
+
+  .team-name-cell {
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    @media screen and (max-width: 920px) {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .team {
+      min-width: 250px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 16.2px;
+      padding-left: 12px;
+
+      @media screen and (max-width: 920px) {
+        padding-left: 4px;
+      }
+    }
+  }
+
+  .all-markets-nav-link {
+    text-decoration: none;
+  }
+
+  .race-market-times {
+    display: flex;
+    justify-content: flex-end;
+    text-decoration: none;
+
+    .all-markets-nav-link {
+      text-decoration: none;
+    }
+
+    .market-time {
+      background: #b3b3b3;
+      margin: 0 4px;
+      min-width: 52px;
+      max-width: 52px;
+      height: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-decoration: none;
+      color: #000;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 20px;
+      font-size: 10px;
+
+      &.live {
+        background: var(--ion-color-primary);
+        color: #000;
+      }
+    }
+  }
+
+  .table-ctn {
+    .MuiTableBody-root .MuiTableCell-body {
+      min-height: 32px !important;
+    }
+  }
+}
+
+@media (max-width: 1120px) {
+  .events-table-ctn {
+    .search-events-autocomplete {
+      .MuiFormControl-root {
+        margin-top: 14px;
+        margin-bottom: 16px;
+      }
+
+      .MuiFormLabel-root {
+        color: var(--ion-text-light);
+        font-family: Lato;
+        top: -2px;
+        opacity: 0.6;
+        font-size: 14px;
+      }
+
+      .MuiInputBase-root .MuiFormControl-root,
+      .MuiOutlinedInput-root {
+        background: var(--ion-background-secondary) !important;
+        color: #fff !important;
+        border-radius: 7px;
+
+        span {
+          color: var(--ion-text-light);
+        }
+      }
+
+      .MuiFormControl-root {
+        // background: var(--ion-background-secondary);
+        .MuiInputBase-root .MuiFormControl-root {
+          background: var(--ion-background-secondary) !important;
+        }
+      }
+    }
+
+    .eventType-accordion {
+      .eventType-header {
+        font-size: 16px;
+        line-height: 18px;
+        padding: 7px 14px 7px 7px;
+        height: 36px !important;
+        border-radius: 10px 10px 0 0 !important;
+
+        .sport-inplay-icon {
+          height: 17px;
+          width: 17px;
+          margin-right: 8px;
+        }
+      }
+    }
+
+    .events-table-content {
+      .MuiPaper-root {
+        margin-top: 0px;
+        border-radius: 10px 10px 10px;
+
+        .events-table {
+          overflow: hidden;
+          border-style: hidden;
+
+          .MuiTableRow-root {
+            .odds-cell-head {
+              display: none;
+            }
+
+            .teams-cell {
+              border-radius: 20px;
+
+              @media screen and (max-width: 720px) {
+                border-radius: 10px !important;
+              }
+
+              .web-view {
+                display: none;
+              }
+
+              .mob-view {
+                display: block;
+                min-width: 260px;
+
+                .event-details-ctn {
+                  display: grid;
+                  grid-template-columns: auto auto;
+                  justify-content: space-between;
+                  align-items: flex-start;
+
+                  .timings {
+                    font-weight: 400;
+                    font-size: 12px;
+                    line-height: 17px;
+
+                    span {
+                      opacity: 0.6;
+                    }
+
+                    .date-timing {
+                      font-weight: 600;
+                      opacity: 1;
+                      padding-right: 5px;
+                    }
+                  }
+                }
+
+                .event-name {
+                  display: flex;
+                  white-space: break-spaces;
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+
+                  .live-img {
+                    width: 16px;
+                    height: 16px;
+                    position: relative;
+                    top: 4px;
+                    margin-left: 10px;
+                  }
+                }
+              }
+
+              min-width: 100% !important;
+              max-width: 100% !important;
+
+              .all-markets-nav-link {
+                .team-name {
+                  white-space: nowrap;
+                  font-weight: 600;
+                  font-size: 12px;
+                  line-height: 17px;
+                  display: flex;
+                  justify-content: space-between;
+                }
+
+                .event-name {
+                  font-family: "Lato";
+                  font-style: normal;
+                  color: var(--ion-text-color);
+                  max-width: 248px;
+                  margin-bottom: 3px;
+                  font-weight: 600;
+                  font-size: 12px;
+                  line-height: 17px;
+
+                  .enabled-markets {
+                    padding-top: 4px;
+
+                    .enabled-market-ctn {
+                      margin-left: 0;
+                      margin-right: 4px;
+                    }
+                  }
+
+                  &.mob-event-name {
+                    flex-direction: column;
+                    align-items: flex-start;
+
+                    .event-name-and-link {
+                      display: flex;
+                      align-items: flex-start;
+                      color: var(--table-cell-text);
+                    }
+
+                    .enabled-markets {
+                      padding-top: 4px;
+
+                      .enabled-market-ctn {
+                        margin-left: 0;
+                        margin-right: 4px;
+                      }
+                    }
+                  }
+                }
+
+                .schedule-time {
+                  font-family: "Lato";
+                  font-style: normal;
+                  font-weight: normal;
+                  font-size: 10px;
+                  line-height: 130%;
+                  // text-align: center;
+                  color: var(--ion-text-color);
+                }
+              }
+            }
+
+            .score-cell {
+              display: none;
+              max-width: 40px !important;
+
+              .score {
+                max-width: 100%;
+                font-size: 10px;
+                line-height: 14px;
+              }
+            }
+
+            .odds-cell {
+              display: none;
+              min-width: 120px;
+
+              .odds-block {
+                .back-odd,
+                .lay-odd {
+                  min-width: 40px;
+                  max-width: 50px;
+                  width: 48%;
+                  min-height: 36px;
+                  padding: 2px 2px;
+
+                  .price {
+                    font-size: 10px;
+                    line-height: 15px;
+                  }
+
+                  .size {
+                    font-size: 9px;
+                    line-height: 12px;
+                  }
+
+                  &.disabled {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    .lock-icon {
+                      height: 16px;
+                      width: 16px;
+                    }
+                  }
+                }
+              }
+            }
+
+            .all-markets-link-cell {
+              max-width: 20px;
+
+              @media screen and (max-width: 920px) {
+                display: none;
+              }
+
+              ion-img {
+                height: 12px;
+                width: 7px;
+                margin-right: 0px;
+                margin-left: auto;
+              }
+            }
+          }
+
+          .MuiTableRow-root {
+            border: 0px;
+          }
+
+          .MuiTableHead-root .MuiTableRow-root {
+            .MuiTableCell-root {
+              padding: 10px;
+              font-weight: 600;
+              font-size: 14px;
+              line-height: 20px;
+            }
+          }
+
+          .MuiTableBody-root .MuiTableRow-root {
+            .MuiTableCell-root {
+              padding: 6px;
+
+              &.race-markets {
+                max-width: unset !important;
+                background: var(--table-bg);
+                border-radius: 0px 0 12px 12px !important;
+              }
+            }
+          }
+
+          .mob-odds-row {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            margin-top: 6px;
+            max-width: 100vw;
+            position: relative;
+            justify-content: flex-end;
+
+            @media screen and (min-width: 560px) and (max-width: 1120px) {
+              max-width: 96vw;
+            }
+
+            &.new-odds-row {
+              .mob-odds-block .mob-exchange-btn-odd-row {
+                .mob-exch-odd-button {
+                  border-radius: 0 0 5px 5px;
+                  min-height: 32px;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+
+                  &.disabled {
+                    height: 20px;
+                    max-width: 58px;
+                    font-size: 10px;
+
+                    .lock-icon {
+                      margin-bottom: 0;
+                    }
+                  }
+
+                  .mob-exch-odd-button-content {
+                    min-height: 32px;
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    justify-content: center;
+                    flex-direction: column;
+
+                    .size {
+                      font-size: 9px;
+                      font-weight: 400;
+                      line-height: 10.5px;
+                    }
+
+                    .price {
+                      font-size: 12px;
+                      line-height: 13px;
+                    }
+                  }
+                }
+              }
+            }
+
+            .exchange-odd-title {
+              color: #fff;
+              background: var(--accoridan-summary-background);
+              width: 100%;
+              text-align: center;
+              font-weight: 600;
+              font-size: 8px;
+              line-height: 12px;
+            }
+
+            .mob-odds-block {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: space-around;
+              margin: 0px;
+              padding: 0px;
+              font-size: 12px;
+              margin-left: 8px;
+
+              @media screen and (max-width: 395px) {
+                margin-left: 0;
+              }
+
+              .mob-exchange-btn-odd-row {
+                display: flex;
+                width: fit-content;
+              }
+
+              @media screen and (max-width: 360px) {
+                .mob-exchange-btn-odd-row {
+                  gap: 0 !important;
+                }
+
+                .mob-exch-odd-view {
+                  font-weight: normal;
+                  width: 70%;
+                }
+              }
+
+              .back-odd,
+              .premium-odd {
+                border-radius: 20px;
+                background: var(--back-odd-background);
+                height: 20px;
+                width: 52px;
+                font-size: 13px;
+
+                @media screen and (max-width: 380px) {
+                  width: 50px;
+                }
+
+                .price {
+                  font-weight: 900;
+                }
+              }
+
+              .lay-odd {
+                border-radius: 20px;
+                background: var(--lay-odd-background);
+                height: 20px;
+                width: 52px;
+                font-size: 13px;
+
+                @media screen and (max-width: 380px) {
+                  width: 50px;
+                }
+
+                .price {
+                  font-weight: 900;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .bs-accordion {
+      // bottom: 50px;
+      // width: 100%;
+      // right: 0px;
+      display: none;
+    }
+
+    .footer-row {
+      margin-top: 10px;
+
+      .pagination-btn {
+        font-size: 11px;
+        height: 24px;
+      }
+    }
+  }
+}
+
+.heading {
+  height: 32px;
+  background: var(--table-header-background);
+  color: var(--ion-text-light);
+  display: flex;
+  align-items: center;
+  border-radius: 30px;
+  padding: 5px;
+  padding-left: 12px;
+  font-size: 13px;
+  text-transform: uppercase;
+  font-weight: 900;
+  line-height: 18px;
+  border: 2px solid var(--border-color);
+}
+
+@media only screen and (max-width: 920px) {
+  .heading {
+    height: 32px;
+    background: var(--table-header-background);
+    color: var(--ion-text-light);
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+}
+
+.extra-table .MuiTableCell-root {
+  border-right: none !important;
+  border-bottom: none !important;
+}
+
+.handle-event-date {
+  min-width: fit-content;
+}
+
+.events-table-ctn {
+  .events-table-content {
+    .MuiPaper-root {
+      .events-table {
+        // &.inplay-table {
+        .MuiTableBody-root {
+          .MuiTableRow-root {
+            &.markets-team-cell-pointer {
+              cursor: pointer;
+            }
+            .mob-et-b-c {
+              @media screen and (max-width: 720px) {
+                border-radius: 10px !important;
+                background: var(--custom-table-body-row);
+              }
+            }
+          }
+
+          // }
+        }
+      }
+    }
+  }
+}
+
+.events-table-msg-text {
+  color: white;
+}

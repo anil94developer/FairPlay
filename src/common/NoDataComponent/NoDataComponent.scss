@@ -1,0 +1,55 @@
+.nd-ctn {
+  min-height: calc(100% - 100px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  // background: var(--background-ctn-gradient);
+  // width: 100%;
+  // border-radius: 20px;
+
+  .nd-sub-ctn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: white;
+
+    .nd-img {
+      height: 81px;
+      width: 81px;
+      background-color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+
+      @media screen and (max-width: 720px) {
+        height: 60px;
+        width: 60px;
+
+        img {
+          height: 50%;
+          width: 50%;
+        }
+      }
+    }
+
+    .nd-title {
+      font-size: 20px;
+      font-weight: 900;
+
+      @media screen and (max-width: 720px) {
+        font-size: 15px;
+      }
+    }
+
+    .nd-bc {
+      font-size: 16px;
+      font-weight: 600;
+
+      @media screen and (max-width: 720px) {
+        font-size: 11px;
+      }
+    }
+  }
+}

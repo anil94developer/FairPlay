@@ -1,0 +1,69 @@
+.redeem-row-ctn {
+  background: #000;
+}
+
+.router-ctn {
+  .bonus-statement-ctn {
+    border-radius: 13px;
+    margin: 12px 24px !important;
+    padding: 16px 12px !important;
+    min-height: 85vh;
+    background: var(--background-ctn-gradient);
+
+    @media screen and (max-width: 720px) {
+      margin: 0px 8px !important;
+      padding: 0px !important;
+      background: transparent;
+    }
+  }
+}
+
+.bonus-statement-mob-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 5px;
+  width: 100%;
+  height: 100%;
+}
+
+.award-amt {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2c8900;
+}
+
+.key-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--custom-table-body-color);
+}
+
+.key-text-value {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--custom-table-body-color);
+}
+
+.last-date-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--custom-table-body-color);
+}
+
+.bs-pagination {
+  display: flex;
+  align-items: center;
+  margin: 5px;
+
+  .bs-page-btn {
+    margin: 2px;
+    color: var(--custom-btn-text-variant-1);
+    border-radius: 5px;
+    padding: 5px 10px;
+    background: var(--custom-btn-bg-variant-1);
+    text-transform: uppercase;
+    font-size: 13px;
+    font-weight: 600;
+  }
+}

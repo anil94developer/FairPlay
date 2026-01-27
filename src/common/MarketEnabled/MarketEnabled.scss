@@ -1,0 +1,29 @@
+.market-enabled {
+  margin: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--enabled-market-bg);
+  border-radius: 50%;
+  color: var(--active-footer-color);
+  &.bg-none {
+    background: transparent;
+  }
+  &.v2 {
+    svg path {
+      fill: yellow !important;
+    }
+  }
+  .market-enabled-inner {
+    height: 25px;
+    width: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-transform: uppercase;
+    font-weight: 800;
+    svg path {
+      fill: var(--table-cell-text);
+    }
+    // color: var(--enabled-market-text);
+  }
+}

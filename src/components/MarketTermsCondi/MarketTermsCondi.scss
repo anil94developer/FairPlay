@@ -1,0 +1,89 @@
+.odds-terms-condi-ctn {
+  padding: 0 !important;
+
+  .MuiAccordion-root.Mui-expanded {
+    box-shadow: none;
+    margin-top: 0px;
+    margin-bottom: 16px;
+  }
+
+  .conditions-paragraph {
+    padding: 8px 0px;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    box-shadow: none;
+    font-size: 13px;
+    font-weight: 400;
+    margin: 0px 4px;
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0 !important;
+    }
+  }
+
+  .terms-policy {
+    padding-top: 0 !important;
+    padding-bottom: 12px !important;
+    margin-top: 2px;
+  }
+
+  .sub-header {
+    color: var(--ion-button-color);
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 7px;
+  }
+
+  .MuiAccordion-root {
+    .MuiAccordionDetails-root {
+      border: none !important;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .MuiAccordionSummary-root {
+      display: flex;
+      justify-content: flex-start;
+      position: relative;
+      border-radius: 20px !important;
+
+      &.Mui-expanded {
+        border-bottom-left-radius: 20px !important;
+        border-bottom-right-radius: 20px !important;
+      }
+
+      .MuiIconButton-root {
+        position: absolute;
+        left: 5px !important;
+        background: var(--accordian-arrow-bg);
+        padding: 3px;
+        width: 27px;
+        height: 27px;
+
+        .MuiSvgIcon-root {
+          color: var(--accordian-arrow-text);
+        }
+      }
+
+      .MuiTypography-root {
+        margin-left: 26px;
+        font-size: 13px !important;
+        color: #fff;
+      }
+
+      background: var(--table-bg) !important;
+      width: 100%;
+
+      .MuiAccordionSummary-content {
+        width: 20%;
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .odds-terms-condi-ctn {
+    padding: 0;
+  }
+}

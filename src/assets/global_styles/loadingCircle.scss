@@ -1,0 +1,41 @@
+.centered {
+  text-align: center;
+}
+
+.spinner.loading {
+  text-align: center;
+}
+
+.loading-text {
+  width: 90px;
+  position: absolute;
+  top: calc(50% - 34px);
+  left: calc(50% - 46px);
+  text-align: center;
+  color: #fff;
+  font-size: 32px;
+}
+
+.spinner.loading:before {
+  content: "";
+  height: 60px;
+  width: 60px;
+  margin: -15px auto auto -15px;
+  position: absolute;
+  top: calc(50% - 34px);
+  left: calc(50% - 20px);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #2180c0 #fff #fff;
+  border-radius: 100%;
+  animation: rotation 0.7s infinite linear;
+}
+
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
+  }
+}

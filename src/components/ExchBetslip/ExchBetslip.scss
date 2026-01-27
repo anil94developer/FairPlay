@@ -1,0 +1,608 @@
+.exch-betslip-ctn {
+  width: 100%;
+  position: relative;
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+
+  // Modal styling for Button Variables
+  .modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--background-ctn-gradient);
+    border-radius: 12px;
+    outline: none;
+    max-width: 600px;
+    width: 90vw;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+
+    @media screen and (max-width: 720px) {
+      width: 95vw;
+      max-height: 85vh;
+    }
+  }
+
+  .betslip-progress {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 999;
+    pointer-events: none !important;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    padding-top: 40%;
+    display: flex;
+    flex-direction: row;
+    cursor: default !important;
+
+    ion-spinner {
+      margin-left: 40%;
+      margin-right: auto;
+      overflow: hidden;
+      --color: #fff;
+    }
+
+    .spinner-message {
+      position: absolute;
+      margin-right: 45%;
+      margin-left: 45%;
+      color: #fff;
+      font-size: 36px;
+    }
+  }
+
+  .body-ctn {
+    max-height: 350px;
+    overflow-y: auto;
+    margin: 0px 6px;
+    border-radius: 12px;
+
+    @media screen and (max-width: 720px) {
+      margin: 6px;
+    }
+
+    .bet-body {
+      width: 100%;
+      // padding: 10px;
+      // border-radius: 6px;
+      // margin: 3px 0px;
+
+      .header-row {
+        padding: 0px 12px 0px 8px;
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        font-size: 14px;
+        height: 40px;
+        line-height: 20px;
+        font-family: "Lato";
+        font-weight: bold;
+        padding: 0 4px 0 4px;
+
+        .header-event-market-div {
+          display: flex;
+          flex-direction: column;
+          height: 50px;
+          color: #000;
+
+          .event {
+            font-weight: 700;
+            line-height: 21px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 12px;
+            max-width: 230px;
+          }
+
+          .market {
+            font-family: var(--headers-font-family);
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 13.5px;
+            text-align: left;
+
+            // color: #fff;
+            .odd-value {
+              font-weight: bold;
+            }
+          }
+        }
+
+        .bet-del-btn {
+          color: var(--ion-background-color) !important;
+          background: #fff !important;
+          border-radius: 100%;
+          height: 26px;
+          width: 26px;
+          opacity: 1;
+          margin-top: 5px;
+
+          .close-icon {
+            width: 20px;
+            height: 26px;
+            color: #000;
+          }
+        }
+      }
+
+      .bet-card {
+        // background: #d1e0ff;
+        border-radius: 6px;
+        color: #000;
+        padding: 8px;
+        background: var(--background-card);
+
+        &.bet-card-lay {
+          background: #fed0d0;
+        }
+
+        .input-row {
+          // margin-top: 12px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+
+          .input-row-ctn {
+            width: 48%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+
+            &.odds-ctn {
+              .row-header {
+                font-weight: 500;
+                font-size: 10px;
+                line-height: 19px;
+                // color: #d7ccde;
+              }
+            }
+
+            &.stake-ctn {
+              .row-header {
+                font-weight: 500;
+                font-size: 10px;
+                line-height: 19px;
+                text-align: end;
+                // color: #d7ccde;
+              }
+
+              .row-input {
+                height: 30px !important;
+                font-size: 12px;
+                font-weight: bold;
+              }
+            }
+
+            .row-header {
+              font-family: "Lato" !important;
+              font-size: 11px;
+              font-style: normal;
+              font-weight: 600;
+              line-height: 13px;
+              letter-spacing: 0em;
+              text-align: left;
+              color: #fff;
+              margin-bottom: 3px;
+            }
+
+            .row-input {
+              background: var(--ion-background-color);
+              border-radius: 100px;
+              // border: 1px solid #bdbdbd !important;
+              height: 30px;
+              display: flex !important;
+              color: #fff;
+
+              input {
+                text-align: center;
+                font-weight: 700;
+                padding: 0;
+                font-size: 12px;
+                line-height: 17px;
+                color: #fff;
+              }
+
+              .MuiButton-root {
+                max-width: 24px !important;
+                min-width: 24px !important;
+                background: var(--bet-slip-btn);
+                border-radius: 0;
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                margin: 2.5px;
+                height: 24px;
+                border-radius: 100%;
+                padding: 6px 13px;
+
+                svg path {
+                  fill: #000000;
+                }
+
+                .MuiButton-startIcon {
+                  margin: 0;
+                  padding: 0;
+                }
+              }
+            }
+          }
+        }
+
+        .clear-row {
+          width: fit-content;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          font-family: "Lato";
+          font-style: normal;
+          font-weight: normal;
+          font-size: 10px;
+          line-height: 12px;
+          position: absolute;
+          top: 30px;
+          color: #757575;
+          right: 8px;
+          // color: #d7ccde;
+
+          .text {
+            &:hover {
+              cursor: pointer;
+              text-decoration: underline;
+            }
+
+            &.disabled {
+              cursor: default;
+              text-decoration: none;
+            }
+          }
+        }
+
+        .quick-bet {
+          margin-top: 3px;
+          width: 100%;
+          display: grid;
+          grid-template-columns: repeat(4, auto);
+          // flex: 1 1 0;
+          // flex-wrap: wrap;
+          margin-bottom: 9px;
+          gap: 2px;
+
+          .qb-btn {
+            margin-top: 5px;
+            width: 100%;
+            // color: #fff;
+            box-sizing: border-box;
+            border-radius: 100px;
+            font-family: "Lato";
+            font-style: normal;
+            line-height: 15px;
+            text-transform: capitalize;
+            font-family: var(--headers-font-family);
+            font-size: 10px;
+            font-weight: 400;
+            line-height: 13.5px;
+            text-align: center;
+            background: var(--table-bg) !important;
+            color: #ffffff;
+            padding: 5px;
+          }
+
+          .qb-btn-allin {
+            margin-top: 5px;
+            width: 100%;
+            color: #fff;
+            background: #008c95;
+            // border: 1px solid #008c95;
+            box-sizing: border-box;
+            border-radius: 100px;
+            font-family: "Jost";
+            font-style: normal;
+            font-weight: bold;
+            font-size: 8px;
+            line-height: 15px;
+            text-transform: uppercase;
+            padding: 4px;
+            border: 0 !important;
+            span {
+              font-weight: bold;
+            }
+
+            &.min-btn {
+              background: #e0cf0c !important;
+              color: #000000 !important;
+            }
+
+            &.max-btn {
+              background: #0235ac !important;
+            }
+
+            &.edit-btn {
+              background: #018234 !important;
+            }
+
+            &.clear-btn {
+              background: #b82212 !important;
+            }
+          }
+
+          .qb-btn-max {
+            margin-top: 5px;
+            width: calc(50% - 5px);
+            color: var(--ion-background-color);
+            background: var(--ion-color-primary);
+            box-sizing: border-box;
+            border-radius: 100px;
+            font-family: "Jost";
+            font-style: normal;
+            font-weight: 600;
+            font-size: 12px;
+            line-height: 15px;
+            text-transform: capitalize;
+          }
+        }
+
+        .profit-loss {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+
+          .info {
+            font-style: normal;
+            font-weight: 500 !important;
+            font-size: 10px;
+            line-height: 13.5px;
+            letter-spacing: -0.01em;
+            color: #fff;
+            font-family: var(--headers-font-family);
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 13.5px;
+            text-align: left;
+          }
+
+          .returns {
+            display: flex;
+            align-items: center;
+
+            .label {
+              font-style: normal;
+              font-weight: normal;
+              font-size: 13px;
+              line-height: 16px;
+              color: #000e2c;
+            }
+
+            .amt {
+              margin-left: 10px;
+              font-style: normal;
+              font-weight: 600;
+              font-size: 14px;
+              line-height: 16px;
+              color: #18a21e;
+            }
+          }
+        }
+
+        .profit-loss-pts {
+          // margin-top: 13px;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: baseline;
+
+          .info {
+            font-style: normal;
+            font-weight: 600;
+            font-size: 11px;
+            line-height: 13.5px;
+            letter-spacing: -0.01em;
+            // color: #fff;
+            font-family: var(--headers-font-family);
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 13.5px;
+            text-align: left;
+          }
+
+          .returns {
+            display: flex;
+            align-items: center;
+
+            .label {
+              font-family: "Lato";
+              font-style: normal;
+              font-weight: normal;
+              font-size: 13px;
+              line-height: 16px;
+              color: #000e2c;
+            }
+
+            .amt {
+              margin-left: 10px;
+              font-family: "Lato";
+              font-style: normal;
+              font-weight: 600;
+              font-size: 14px;
+              line-height: 16px;
+              color: #fff;
+            }
+          }
+        }
+      }
+    }
+
+    &.bs-back-bet {
+      background: var(--back-odd-background);
+
+      &.casino-bet {
+        background: var(--ion-background);
+
+        .header-row .event {
+          color: #fff;
+        }
+      }
+    }
+
+    &.bs-lay-bet {
+      background: var(--lay-odd-background);
+    }
+
+    .bet-body-back {
+      &.casino-bet {
+        // background: var(--ion-background);
+        .header-row .event {
+          color: #fff;
+        }
+      }
+    }
+
+    // .bet-body-lay {
+    //   background: var(--lay-odd-background);
+    // }
+
+    .exch-bs-alert {
+      .info-msg {
+        color: green;
+        border: 2px solid green;
+        border-radius: 6px;
+        padding: 10px;
+        margin: 5px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+
+        .icon {
+          margin-right: 10px;
+        }
+      }
+
+      .error-msg {
+        color: red;
+        border: 2px solid red;
+        border-radius: 6px;
+        padding: 10px;
+        margin: 5px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+
+        .icon {
+          margin-right: 10px;
+        }
+      }
+    }
+  }
+
+  .bet-footer {
+    padding: 6px 6px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 60px;
+    // background: #f1f1f1;
+    // box-shadow: 0px -3px 8px rgba(0, 0, 0, 0.12);
+
+    .stake-section {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+
+      .stake-value {
+        font-family: "Lato";
+        font-style: normal;
+        font-weight: 600;
+        font-size: 14px;
+        line-height: 20.23px;
+        color: #ffffff;
+      }
+
+      .stake-label {
+        font-family: "Lato";
+        font-weight: 300;
+        font-size: 12px;
+        line-height: 17.34px;
+        color: #fff;
+      }
+    }
+  }
+
+  .place-section {
+    width: 100%;
+    height: 100%;
+    text-align: right;
+
+    .place-btn {
+      padding: 10px 30px;
+      background: var(--bet-slip-btn);
+      box-shadow: 0px 14px 40px -20px rgba(0, 0, 0, 0.15);
+      border-radius: 6px;
+      color: var(--ion--text-light);
+      border-radius: 100px;
+      // border: 1px solid #fff;
+      width: 100%;
+
+      font-family: Lato;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 17.55px;
+      text-align: center;
+
+      @media screen and (max-width: 920px) {
+        padding: 8px 26px;
+        width: unset;
+      }
+
+      .MuiButton-label {
+        justify-content: center !important;
+      }
+
+      .btn-content {
+        display: flex;
+        flex-direction: column;
+        text-transform: capitalize;
+        justify-content: center;
+
+        .label {
+          font-family: "Lato" !important;
+          font-style: normal;
+          font-weight: 700;
+          font-size: 16px;
+          line-height: 18px;
+          color: var(--ion-text-dark);
+          text-align: left;
+        }
+
+        .returns {
+          font-family: "Lato";
+          font-style: normal;
+          font-weight: 600;
+          font-size: 13px;
+          line-height: 16px;
+          letter-spacing: -0.01em;
+          color: var(--ion-color-primary-contrast);
+        }
+      }
+    }
+  }
+
+  .Toastify__toast-container--bottom-center {
+    bottom: 3em;
+  }
+}
+
+.lay-line {
+  border: 2px solid var(--lay-odd-background);
+}
+
+.back-line {
+  border: 2px solid var(--back-odd-background);
+}

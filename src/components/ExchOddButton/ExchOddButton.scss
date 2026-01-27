@@ -1,0 +1,146 @@
+.exch-odd-view {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0px;
+  width: 100%;
+  min-width: 56px;
+  padding: 0px;
+  @media screen and (min-width: 920px) {
+    min-width: 52px;
+    width: 56px !important;
+  }
+  .exch-odd-button {
+    padding: 0px !important;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    &.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      cursor: default;
+      .lock-icon {
+        height: 16px;
+        width: 16px;
+        margin-left: auto;
+        margin-right: auto;
+        // margin-top: 8px;
+      }
+    }
+  }
+  .exch-odd-button-content {
+    padding: 0px 4px;
+    width: 100%;
+
+    @media screen and (min-width: 920px) {
+      min-width: 56px;
+    }
+
+    // @media screen and (max-width: 1440px) {
+    //   min-width: 60px;
+    // }
+    // @media screen and (max-width: 1280px) {
+    //   min-width: 58px;
+    // }
+  }
+  .odd-change {
+    .exch-odd-button-content {
+      animation-name: odd-change;
+      animation-duration: 0s;
+    }
+  }
+}
+
+.mob-exch-odd-view {
+  width: fit-content;
+  text-align: center;
+  padding: 0px;
+  margin-right: 1px;
+  color: #000;
+  .mob-exch-odd-button {
+    padding: 0px !important;
+    min-height: 26.5px;
+    border-radius: 20px !important;
+    &.disabled {
+      opacity: 0.6;
+      pointer-events: none;
+      cursor: default;
+      .lock-icon {
+        height: 14px;
+        width: 10px;
+        margin-bottom: -4px;
+      }
+    }
+  }
+  .mob-exch-odd-button-content {
+    padding: 2px 1.75px;
+    min-height: 26.5px;
+  }
+  .odd-change {
+    .mob-exch-odd-button-content {
+      animation-name: odd-change;
+      animation-duration: 0s;
+    }
+  }
+}
+
+@keyframes odd-change {
+  0% {
+    border-radius: 4px;
+    //background: var(--odd-btn-animation-color);
+  }
+  10% {
+    border-radius: 4px;
+    //background: none;
+  }
+  20% {
+    //order-radius: 4px;
+    //background: var(--odd-btn-animation-color);
+  }
+  30% {
+    border-radius: 4px;
+    //background: none;
+  }
+  40% {
+    border-radius: 4px;
+    //background: var(--odd-btn-animation-color);
+  }
+  50% {
+    border-radius: 4px;
+    //background: none;
+  }
+  60% {
+    border-radius: 4px;
+    //background: var(--odd-btn-animation-color);
+  }
+  70% {
+    border-radius: 4px;
+    //background: none;
+  }
+  80% {
+    border-radius: 4px;
+    background: var(--odd-btn-animation-color);
+  }
+  90% {
+    border-radius: 4px;
+    //background: none;
+  }
+  100% {
+    border-radius: 4px;
+    //background: var(--odd-btn-animation-color);
+  }
+}
+
+@media (max-width: 720px) {
+  .exch-odd-view {
+    min-width: 50px;
+    .exch-odd-button-content {
+      padding: 1px;
+      min-height: 30px !important;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+  }
+}

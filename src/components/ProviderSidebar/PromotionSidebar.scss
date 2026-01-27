@@ -1,0 +1,133 @@
+.promotions-sidebar-container {
+  position: sticky;
+  top: 10px;
+
+  @media screen and (max-width: 920px) {
+    position: relative;
+    top: unset;
+  }
+}
+
+.px-8 {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.promotions-sidebar-ctn {
+  border-radius: 10px;
+  margin-top: 7px;
+
+  .promotions-header {
+    background: var(--accoridan-summary-background);
+    color: var(--accordian-headers-color);
+    padding: 12px 0;
+    text-align: center;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .promotions-banners {
+    margin: auto;
+    text-align: center;
+    border-radius: 0 0 10px 10px;
+
+    svg {
+      border-radius: 8px;
+    }
+
+    .banner-divider {
+      margin: 0;
+    }
+
+    .banner {
+      padding-top: 0;
+      display: block;
+      margin-top: 3px;
+
+      video {
+        border-radius: 10px;
+        width: 100%;
+      }
+    }
+  }
+}
+
+.promotions-ctn {
+  .promotions-banners {
+    display: flex;
+    gap: 7.46px;
+
+    img {
+      height: 80px;
+    }
+  }
+}
+
+.trending-games-ctn {
+  background: var(--container-bg);
+  padding: 6px;
+  border-radius: 10px;
+
+  .trending-game-heading {
+    background: var(--head-bg);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 13.52px;
+    color: var(--head-text-1);
+    border: 1px solid var(--head-border);
+    padding: 11px 9px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .see-more {
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 12px;
+      color: var(--head-text-2);
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+
+      .MuiSvgIcon-root {
+        width: 10px;
+        height: 10px;
+      }
+    }
+  }
+
+  .games-container {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 6px;
+
+    .trending-game-card {
+      cursor: pointer;
+
+      // width: 33%;
+      img {
+        border-radius: 4px;
+
+        @media screen and (max-width: 920px) {
+          height: 122px;
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  @media screen and (max-width: 920px) {
+    display: none;
+    padding: 8px 0 0 0;
+    margin-bottom: 4px;
+
+    .trending-game-heading {
+      padding: 8px 12px;
+    }
+
+    .games-container {
+      grid-template-columns: auto auto auto auto;
+    }
+  }
+}

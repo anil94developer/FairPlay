@@ -1,0 +1,46 @@
+.MuiPopover-root {
+  .MuiPopover-paper {
+    background: var(--ion-popover-background);
+
+    .MuiList-root,
+    .MuiMenu-list {
+      padding: 0px;
+
+      .MuiListItem-root,
+      .MuiMenuItem-root {
+        color: var(--ion-text-color);
+        font-size: 12px;
+        height: 48px;
+        padding-left: 16px;
+        background: var(--ion-popover-background);
+        font-family: "Lato";
+        color: white;
+
+        &:not(:last-child) {
+          border-bottom: 1px solid white;
+          background: var(--ion-popover-background);
+        }
+
+        &:last-child {
+          border-bottom-right-radius: 16px;
+          border-bottom-left-radius: 16px;
+        }
+
+        &:first-child {
+          border-top-right-radius: 16px;
+          border-top-left-radius: 16px;
+        }
+
+        &:hover {
+          color: var(--popover-background-active);
+          background: #fff;
+        }
+
+        &.Mui-selected {
+          color: var(--popover-background-active);
+          background: #fff;
+        }
+      }
+    }
+  }
+}

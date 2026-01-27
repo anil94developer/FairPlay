@@ -1,0 +1,22 @@
+.rbb-btn {
+  @media screen and (min-width: 720px) {
+    display: none;
+  }
+
+  background-color: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 8px;
+  padding-top: 8px;
+  text-transform: capitalize;
+
+  .rbb-icon {
+    color: white;
+    height: 13px;
+    width: 13px;
+  }
+}

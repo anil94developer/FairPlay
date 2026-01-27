@@ -1,0 +1,37 @@
+.game-rules-container-content::-webkit-scrollbar {
+  width: 4px;
+  height: 0;
+}
+
+.game-rules-container-content {
+  border-radius: 13px;
+  margin: 12px 5px 12px 24px;
+  background: var(--background-ctn-gradient);
+  padding: 16px 12px;
+  min-height: fit-content;
+  overflow: scroll;
+  margin-bottom: 20px;
+
+  .rules-accordians-ctn {
+    margin-top: 10px;
+  }
+
+  @media screen and (max-width: 768px) {
+    background: transparent;
+    margin: 0;
+    padding: 10px;
+  }
+}
+
+.gr-ctn {
+  display: flex;
+
+  .promotions-trending-games {
+    max-width: 25%;
+    padding: 5px;
+
+    .promotions-sidebar-container {
+      position: unset;
+    }
+  }
+}

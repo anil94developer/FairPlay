@@ -1,0 +1,22 @@
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="sh-img" alt="">
+    <rect width="20" height="20" rx="10" fill="#000"></rect>
+    <g clip-path="url(#clip0_4576_1305)">
+        <path d="M2.56979 5.42773H17.4264V14.5686H2.56979V5.42773Z" fill="#29A3EC"></path>
+        <path d="M2.92664 5.85498H17.0695V14.1407H2.92664V5.85498Z" fill="#3CDEF6"></path>
+        <path d="M9.71545 5.14062V14.8552H10.2849V5.14062H9.71545Z" fill="white"></path>
+        <path d="M2.14374 6.5708V7.14019H17.8566V6.5708H2.14374Z" fill="white"></path>
+        <path d="M2.14374 12.856V13.4296H17.8566V12.856H2.14374Z" fill="white"></path>
+        <path d="M3.42606 6.71387V13.2858H3.99973V6.71387H3.42606Z" fill="white"></path>
+        <path d="M4.85605 6.71387V13.2858H5.42973V6.71387H4.85605Z" fill="white"></path>
+        <path d="M16.0006 6.71387V13.2858H16.5701V6.71387H16.0006Z" fill="white"></path>
+        <path d="M14.5706 6.71387V13.2858H15.1443V6.71387H14.5706Z" fill="white"></path>
+        <path
+            d="M2 4.85791V15.1425H18V14.8557V4.85791H2ZM2.57032 5.42709H17.4264V14.5688H2.57032V5.42709Z"
+            fill="#5A3392"></path>
+    </g>
+    <defs>
+        <clipPath id="clip0_4576_1305">
+            <rect width="16" height="16" fill="white" transform="translate(2 2)"></rect>
+        </clipPath>
+    </defs>
+</svg>

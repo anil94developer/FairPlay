@@ -1,0 +1,143 @@
+.bottom-tab {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  .support {
+    height: auto;
+    background: var(--ion-button-bg-2);
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 10px;
+    gap: 6px;
+    .help-msg {
+      color: var(--active-text-color);
+      font-weight: 700;
+      font-size: 20px;
+      font-family: Satoshi;
+      text-align: center;
+      padding: 4px;
+    }
+    .wp-svg {
+      path {
+        fill: var(--active-text-color);
+      }
+    }
+    .social-icons {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      .sm-link {
+        background: border-box;
+      }
+      .sm-icon {
+        fill: black;
+      }
+    }
+  }
+
+  .secure {
+    height: auto;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    .secure-img {
+      min-width: 120px;
+    }
+    .safe-msgs {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+      .safe {
+        color: #fff;
+        font-style: Satoshi;
+      }
+      .safe1 {
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .safe2 {
+        font-size: 14px;
+        font-weight: 400;
+      }
+    }
+    @media screen and (max-width: 840px) {
+      .secure-img {
+        min-width: 140px;
+      }
+      .safe-msgs {
+        gap: 4px;
+      }
+    }
+  }
+
+  .line {
+    margin-top: 12px;
+    width: 100%;
+    height: 1px;
+    background: var(--ion-button-bg-2);
+  }
+
+  .copyright {
+    height: auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 12px 0px;
+    padding-bottom: 32px;
+    .copyright-msgs {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 10px;
+      margin-left: 6px;
+      width: 75%;
+      .cpr {
+        width: 90%;
+        color: #fff;
+        font-style: Satoshi;
+        color: #fff;
+        font-weight: 400;
+        font-size: 15px;
+      }
+      .msg1 {
+        line-height: 1;
+        color: #979fb6;
+      }
+    }
+
+    .copyright-imgs {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      width: 25%;
+      .copyright-img {
+        width: 80px;
+        height: 80px;
+      }
+    }
+
+    @media screen and (max-width: 840px) {
+      .copyright-msgs {
+        .cpr {
+          font-size: 15px;
+        }
+      }
+      .copyright-imgs {
+        flex-direction: column;
+        .copyright-img {
+          width: 80px;
+          height: 60px;
+        }
+      }
+    }
+  }
+}

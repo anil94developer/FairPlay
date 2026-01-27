@@ -1,0 +1,429 @@
+.router-ctn {
+  .my-wallet-ctn {
+    .no-data-row {
+      padding: 4px !important;
+    }
+
+    .back-btn {
+      background-color: red;
+      margin: 10px;
+      margin-left: 0;
+      background-color: transparent;
+      text-transform: capitalize;
+      color: #fff;
+      display: flex !important;
+      justify-content: center;
+      align-items: center;
+
+      .back-icon-mui {
+        color: white;
+        height: 15px;
+        width: 15px;
+      }
+    }
+
+    margin-top: 0 !important;
+    border-radius: 13px;
+    min-height: 85vh;
+    background: var(--background-ctn-gradient);
+
+    @media screen and (max-width: 768px) {
+      background: transparent;
+    }
+
+    .avail-bal-label {
+      background-color: transparent !important;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--ion-button-color);
+      letter-spacing: 2px;
+      margin-left: 0px !important;
+      padding-left: 0px !important;
+
+      @media screen and (max-width: 768px) {
+        font-weight: 600;
+        font-size: 10px;
+      }
+    }
+
+    .claim-btn {
+      margin: 10px 5px;
+      padding: 9px 15px;
+      background: var(--custom-btn-bg-variant-2);
+      border-radius: 20px;
+      text-transform: capitalize;
+      border: 1px solid var(--custom-btn-border-variant-2);
+      font-weight: 600;
+      color: var(--custom-btn-text-variant-2);
+
+      @media screen and (max-width: 768px) {
+        font-weight: 600;
+        font-size: 10px;
+        width: 100%;
+      }
+    }
+
+    .my-wallet-header {
+      .page-title {
+        padding-left: 0;
+        height: inherit;
+        text-align: left;
+        position: relative;
+      }
+    }
+
+    .err-msg {
+      text-align: right;
+      color: var(--ion-color-danger);
+    }
+
+    .filters-row {
+      margin-left: 10px;
+      display: flex;
+      justify-content: flex-end;
+
+      @media screen and (max-width: 768px) {
+        .claim-btn {
+          text-transform: capitalize;
+          font-size: 12px;
+          height: 28px;
+          color: #fff;
+        }
+      }
+
+      div {
+        margin-right: 20px;
+
+        .MuiFormControl-marginNormal {
+          margin-top: 4px;
+        }
+      }
+    }
+
+    .clim-action-web {
+      margin-top: 3px;
+
+      .button {
+        border-radius: 8px;
+        color: var(--ion-text-light);
+      }
+    }
+
+    .balance-history-tbl-ctn {
+      .table-ctn {
+        .MuiPaper-root {
+          margin-top: 0px;
+        }
+      }
+    }
+
+    margin: 12px 24px !important;
+    padding: 16px 12px !important;
+
+    @media screen and (max-width: 720px) {
+      margin: 0px 8px !important;
+      padding: 0px !important;
+    }
+  }
+}
+
+.upperrow-pad-5 {
+  margin: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  .tiny-info-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &.mw-ur-profit {
+    color: rgb(0, 81, 0);
+  }
+
+  &.mw-ur-loss {
+    color: rgb(189, 2, 2);
+  }
+}
+
+@media only screen and (max-width: 721px) {
+  .my-wallet-ctn {
+    padding: 0 11px;
+
+    .user-wallet-filters-row .MuiInputBase-root {
+      height: 32px;
+    }
+
+    .content-ctn {
+      padding: 0;
+      margin-top: 12px;
+    }
+
+    .header-ctn,
+    .page-title {
+      padding-bottom: 0;
+      margin-top: 0 !important;
+    }
+
+    .header-ctn {
+      .my-balance-ctn {
+        background: var(--input-background-color);
+        border: 1px solid var(--linear-color-change);
+        height: 50px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        // align-items: center;
+        border-radius: 8px;
+        // margin: 10px;
+        padding: 7px 13px;
+        margin-top: 4px;
+
+        .label {
+          color: #fff;
+          font-size: 12px;
+          opacity: 0.6;
+          line-height: 14px;
+        }
+
+        .amount {
+          color: #fff;
+          font-size: 16px;
+          font-weight: 600;
+          line-height: 23px;
+        }
+      }
+    }
+
+    .user-wallet-filters-row {
+      margin-top: 4px;
+    }
+
+    .user-wallet-filters-row {
+      justify-content: flex-end;
+    }
+
+    .balance-history-tbl-ctn {
+      .table-ctn {
+        .MuiPaper-root {
+          margin-top: 0px;
+        }
+      }
+
+      .tbl-ctn .MuiPaper-root {
+        margin-top: 0px;
+      }
+
+      .MuiTableCell-root {
+        padding: 14px;
+      }
+    }
+
+    .mob-view {
+      display: grid;
+    }
+
+    .filters-input {
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 7px;
+      margin-bottom: 5px;
+
+      .MuiFormControl-root {
+        border: 1px solid #d3d3d3;
+        border-radius: 6px;
+        margin: 0;
+        height: 34px;
+
+        .MuiButtonBase-root {
+          padding-right: 10px;
+        }
+
+        .MuiInputBase-root {
+          height: 34px;
+        }
+
+        .MuiInputBase-input {
+          font-size: 12px;
+          height: 34px;
+        }
+      }
+
+      .date-label {
+        font-size: 12px;
+
+        @media screen and (max-width: 768px) {
+          padding-bottom: 2px;
+        }
+      }
+    }
+
+    .web-view {
+      display: none;
+    }
+
+    .my-wallet-tbl {
+      .date-col,
+      .arrow-icon-col,
+      .from-date-col,
+      .to-date-col,
+      .desc-col {
+        display: none;
+      }
+
+      .td-expand-action,
+      .td-date,
+      .td-market,
+      .td-bet-on,
+      .td-outcome,
+      .td-commission,
+      .td-empty {
+        display: none;
+      }
+
+      .tbl-body {
+        // .MuiTableRow-root {
+        //   border: 2px solid #fff;
+        // }
+        .col-data-header {
+          font-weight: 600;
+        }
+
+        .col-data-desc {
+          opacity: 0.8;
+        }
+
+        .from-to-cell {
+          display: flex;
+          align-items: center;
+
+          .MuiSvgIcon-root {
+            font-size: 16px;
+            margin-left: 1px;
+            margin-right: 1px;
+          }
+        }
+      }
+    }
+  }
+}
+
+.wallet-sidebar {
+  .MuiFormControl-root {
+    width: 100%;
+  }
+
+  padding: 0;
+
+  .wallet-menu {
+    height: 100%;
+    padding: 0;
+
+    .MuiFormControl-root {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    .wallet-menu-card {
+      margin-inline-start: 0px;
+      width: initial;
+      margin-top: 0px;
+      border-radius: 0;
+      height: 100%;
+
+      .wallet-menu-card-header {
+        background: var(--ion-primary-gradient);
+        color: var(--ion-color-primary-contrast);
+        font-size: 16px;
+      }
+
+      .wallet-menu-card-content {
+        padding-inline-start: 0px;
+        padding-inline-end: 0px;
+        min-height: 75vh;
+        // max-height: 75vh;
+        overflow-y: auto;
+        padding: 0px 22px;
+        background: var(--ion-background);
+        height: 100%;
+
+        .filters-heading {
+          font-weight: 600;
+          font-size: 18px;
+          line-height: 26px;
+          color: var(--ion-text-light);
+
+          margin: 16px 0 10px 0;
+        }
+
+        .date-label {
+          color: var(--ion-text-light);
+        }
+
+        .MuiInputBase-root {
+          border: 2px solid var(--ion-primary-border-color);
+          border-radius: 8px;
+          color: var(--ion-text-light);
+
+          .MuiInputBase-input {
+            color: var(--ion-text-light);
+          }
+        }
+
+        .MuiInputBase-root .MuiSvgIcon-root {
+          color: var(--ion-text-light);
+          position: relative;
+          right: 14px;
+        }
+
+        .wallet-sidebar-tabs {
+          border: 2px solid var(--ion-primary-border-color);
+          border-radius: 8px;
+          color: var(--ion-text-light);
+          padding: 13px;
+          margin-bottom: 12px;
+          font-weight: 600;
+          font-size: 14px;
+          line-height: 20px;
+          cursor: pointer;
+
+          &.active {
+            background: var(--sidebar-active-link-color);
+          }
+        }
+      }
+    }
+  }
+}
+
+.mw-pagination {
+  display: flex;
+  align-items: center;
+  margin: 5px;
+
+  .mw-page-btn {
+    margin: 2px;
+    color: var(--custom-btn-text-variant-1);
+    border-radius: 5px;
+    padding: 5px 10px;
+    background: var(--custom-btn-bg-variant-1);
+    text-transform: uppercase;
+    font-size: 13px;
+    font-weight: 600;
+  }
+}
+
+.border-left {
+  border-left: 1px solid var(--reports-header-border);
+}
+
+.border-right {
+  border-right: 1px solid var(--border-color);
+}
+
+.border-left-right {
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+}

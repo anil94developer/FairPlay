@@ -1,0 +1,126 @@
+ion-card {
+  background: var(--ion-card-background);
+  color: var(--ion-card-text-color);
+  border: none !important;
+  border-radius: 6px;
+
+  ion-card-header {
+    background: var(--ion-card-background);
+    color: var(--ion-card-text-color);
+
+    ion-card-title {
+      color: var(--ion-card-text-color);
+    }
+  }
+
+  ion-card-header {
+    background: var(--ion-card-background);
+    color: var(--ion-card-text-color);
+  }
+}
+
+.data-info-card {
+  border: 1px solid rgba(var(--ion-text-light-rgb), 0.1);
+  border-radius: 6px;
+  background: var(--ion-card-background-contrast);
+  padding: 16px;
+  font-family: "Lato";
+  letter-spacing: 0.01em;
+  margin-left: 3px;
+  margin-right: 3px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: default;
+
+  .card-label {
+    color: var(--ion-text-color);
+    margin-bottom: 16px;
+    font-size: 18px;
+    line-height: 22px;
+    letter-spacing: 0.01em;
+  }
+
+  .card-content {
+    color: var(--ion-text-color-contrast);
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 27px;
+    letter-spacing: 0.01em;
+  }
+}
+
+@media only screen and (max-width: 576px) {
+  .data-info-card {
+    .card-label {
+      font-size: 16px;
+      line-height: 19px;
+    }
+
+    .card-content {
+      font-size: 18px;
+      line-height: 22px;
+    }
+  }
+}
+
+.info-card {
+  border: 1px solid rgba(var(--ion-text-light-rgb), 0.1);
+  border-radius: 6px;
+  background: var(--ion-primary-gradient);
+  padding: 16px;
+  font-family: "Lato";
+  letter-spacing: 0.01em;
+  margin-left: 3px;
+  margin-right: 3px;
+  display: flex;
+  justify-content: space-between;
+  cursor: default;
+
+  &.flex-column {
+    flex-direction: column;
+  }
+
+  &.flex-row {
+    flex-direction: row;
+  }
+
+  .card-label {
+    color: var(--reports-title-color);
+    font-size: 18px;
+    line-height: 22px;
+    letter-spacing: 0.01em;
+  }
+
+  .card-content {
+    color: var(--reports-title-color);
+    font-weight: 600;
+    font-size: 30px;
+    font-family: var(--headers-font-family);
+    line-height: 27px;
+    letter-spacing: 0.01em;
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .info-card {
+    &.mb-size {
+      padding: 4px;
+
+      .card-label {
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .card-content {
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 24px;
+      }
+    }
+
+    &.flex-row {
+      flex-direction: column;
+    }
+  }
+}

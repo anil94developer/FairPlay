@@ -1,0 +1,96 @@
+.odds-terms-condi-ctn {
+  height: 520px;
+  max-height: 520px;
+  padding: 16px;
+  width: 100%;
+
+  .sub-header {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .rules-accordion {
+    .MuiPaper-root {
+      .MuiAccordionDetails-root {
+        display: grid;
+      }
+    }
+  }
+
+  .MuiAccordion-root {
+    border-radius: 12px 12px;
+    box-shadow: unset;
+    margin-bottom: 10px;
+
+    &.Mui-expanded {
+      border-radius: 12px;
+      margin-top: 0;
+    }
+    .MuiAccordionSummary-root {
+      background: var(--accoridan-summary-background) !important;
+      border-radius: 12px;
+      padding: 12px;
+
+      &.Mui-expanded {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+
+      .MuiTypography-root {
+        color: #000 !important;
+        font-family: var(--headers-font-family);
+        font-size: 16px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+    }
+
+    .MuiIconButton-root {
+      right: 10px !important;
+      color: #fff !important;
+    }
+
+    .MuiAccordionDetails-root {
+      display: grid;
+      border: 1px solid #d4d4d4;
+      border-top: 0;
+      padding: 12px;
+
+      .conditions-paragraph {
+        margin: unset;
+        font-size: 12px;
+        line-height: 17px;
+        padding-bottom: 14px;
+      }
+
+      .conditions-paragraph:last-child {
+        padding-bottom: 0;
+      }
+    }
+  }
+}
+
+.game-rules-header {
+  background: var(--ion-color-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15.5px 17px;
+  font-weight: 600;
+  color: var(--ion-text-light);
+  .game-rules-title {
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 29px;
+  }
+  .game-rules-close {
+    cursor: pointer;
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .odds-terms-condi-ctn {
+    padding: 0;
+  }
+}

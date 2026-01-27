@@ -1,0 +1,47 @@
+.promotion-card {
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  background: var(--ion-button-bg-2);
+}
+
+// .banner-display-content {
+//   position: absolute;
+//   right: 15%;
+//   top: 20%;
+// }
+
+.banner-display-content {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 85%;
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.know-more-btn-div {
+  display: flex;
+  justify-content: flex-end;
+  padding: 5px;
+}
+
+@media (max-width: 768px) {
+  .banner-display-content {
+    transform: scale(0.8);
+  }
+}
+
+@media (max-width: 510px) {
+  .banner-display-content {
+    transform: scale(0.6);
+  }
+}
+
+@media (max-width: 380px) {
+  .banner-display-content {
+    transform: scale(0.5);
+  }
+}

@@ -1,0 +1,25 @@
+ion-button {
+  &.back-btn {
+    --border-radius: 4px;
+    --padding-top: 10px;
+    --padding-bottom: 10px;
+    --padding-start: 8px;
+    --padding-end: 12px;
+    margin-right: 24px;
+    --border-color: none;
+    text-transform: none;
+    ion-icon {
+      height: 18px;
+      width: 16px;
+    }
+    &.ion-color-secondary {
+      --border-color: rgba(var(--ion-text-color-contrast-rgb), 0.1) !important;
+      ion-icon {
+        color: var(--ion-text-color);
+      }
+      .back-btn-text {
+        color: var(--ion-color-secondary-contrast) !important;
+      }
+    }
+  }
+}

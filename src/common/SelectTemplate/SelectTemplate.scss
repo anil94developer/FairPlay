@@ -1,0 +1,74 @@
+.select-template {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .st-label {
+    text-wrap: nowrap;
+    color: var(--reports-header-color);
+    font-family: var(--headers-font-family);
+
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16.2px;
+    text-align: center;
+
+    @media screen and (max-width: 720px) {
+      font-family: var(--headers-font-family);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 16.2px;
+      text-align: left;
+      padding-left: 5px;
+    }
+  }
+
+  .MuiInputBase-root {
+    width: 155px;
+    height: 30px;
+    border: 1px solid var(--reports-header-color);
+    border-radius: 20px;
+    margin: 10px;
+
+    .MuiSelect-root {
+      color: var(--reports-header-color);
+      font-family: var(--headers-font-family);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 16.2px;
+    }
+
+    .MuiSvgIcon-root {
+      color: #000;
+    }
+  }
+
+  .MuiInput-underline::before,
+  .MuiInput-underline::after {
+    border-bottom: 0px;
+  }
+
+  .MuiInput-underline:hover {
+    border-bottom: 2px solid var(--reports-header-color);
+  }
+
+  .MuiInput-underline:hover:not(.Mui-disabled):before {
+    border-bottom: none;
+  }
+
+  &.select-template--large {
+    .MuiInputBase-root {
+      width: 200px;
+    }
+  }
+}
+
+.MuiListItem-button {
+  border: 1px solid white;
+}
+
+.MuiPopover-root .MuiPopover-paper {
+  border-radius: 15px;
+  min-width: 220px !important;
+  max-height: 400px;
+}

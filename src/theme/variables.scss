@@ -1,0 +1,565 @@
+/* Ionic Variables and Theming. For more info, please see:
+http://ionicframework.com/docs/theming/ */
+
+/** Ionic CSS Variables **/
+:root {
+  /* Gradient styles */
+  --gradient-color-primary: #2f004e;
+  --gradient-color-secondary: #2f004e;
+
+  /** primary **/
+  --ion-primary-gradient: linear-gradient(
+    98.85deg,
+    var(--gradient-color-primary) 3.56%,
+    var(--gradient-color-secondary) 97.13%
+  );
+  --ion-color-primary-rgb: 255, 167, 36;
+  --ion-color-primary-contrast: #0a0d15;
+  --ion-color-primary-contrast-rgb: 10, 13, 21;
+  --ion-color-primary-shade: #e09320;
+  --ion-color-primary-tint: #ffb03a;
+  --ion-primary-border-color: #2f004e;
+
+  --markets-table-background: #eff4ff;
+  --table-bg: #443121;
+  --table-body-content: #ffffff;
+
+  /** secondary **/
+  --ion-color-secondary: #37446e;
+  --ion-color-secondary-rgb: 55, 68, 110;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #303c61;
+  --ion-color-secondary-tint: #4b577d;
+
+  /** tertiary **/
+  --ion-color-tertiary: #5260ff;
+  --ion-color-tertiary-rgb: 82, 96, 255;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #4854e0;
+  --ion-color-tertiary-tint: #6370ff;
+
+  /** success **/
+  --ion-color-success: #34a300;
+  --ion-color-success-rgb: 52, 163, 0;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #2e8f00;
+  --ion-color-success-tint: #48ac1a;
+
+  /** warning **/
+  --ion-color-warning: #ffc409;
+  --ion-color-warning-rgb: 255, 196, 9;
+  --ion-color-warning-contrast: #000000;
+  --ion-color-warning-contrast-rgb: 0, 0, 0;
+  --ion-color-warning-shade: #e0ac08;
+  --ion-color-warning-tint: #ffca22;
+
+  /** danger **/
+  --ion-color-danger: #ff0000;
+  --ion-color-danger-rgb: 255, 98, 98;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #e05656;
+  --ion-color-danger-tint: #ff7272;
+  --ion-color-lost: #cf0a13;
+
+  /** dark **/
+  --ion-color-dark: #222428;
+  --ion-color-dark-rgb: 34, 36, 40;
+  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-contrast-rgb: 255, 255, 255;
+  --ion-color-dark-shade: #1e2023;
+  --ion-color-dark-tint: #383a3e;
+
+  /** medium **/
+  --ion-color-medium: #92949c;
+  --ion-color-medium-rgb: 146, 148, 156;
+  --ion-color-medium-contrast: #ffffff;
+  --ion-color-medium-contrast-rgb: 255, 255, 255;
+  --ion-color-medium-shade: #808289;
+  --ion-color-medium-tint: #9d9fa6;
+
+  /** light **/
+  --ion-color-light: #f4f5f8;
+  --ion-color-light-rgb: 244, 245, 248;
+  --ion-color-light-contrast: #000000;
+  --ion-color-light-contrast-rgb: 0, 0, 0;
+  --ion-color-light-shade: #d7d8da;
+  --ion-color-light-tint: #f5f6f9;
+
+  /** Sports List Navbar Colors **/
+  --ion-nav-card-background: var(--ion-color-primary);
+  --ion-nav-card-text: #00061a;
+
+  /** Header Colors **/
+  --ion-header-text-color: #828db9;
+  --ion-header-text-color-rgb: 130, 141, 185;
+  --ion-header-background: #090909;
+  --ion-header-link-color: rgba(255, 255, 255, 0.6);
+
+  /** Back and Lay **/
+  --back-odd-background: #b2d9ff;
+  --back-odd-background-light: #89bce2;
+  --back-odd-background-rgb: 151, 211, 255;
+  --lay-odd-background: #ffc3dc;
+  --lay-odd-background-rgb: 255, 173, 173;
+  --lay-odd-background-light: rgba(255, 130, 130, 0.5);
+  --premium-odd-background: #9bceff;
+  --premium-tab-color: #fff;
+
+  /** Table colour **/
+  --table-headers-light: #fff;
+  --headers-font-family: "Lato";
+
+  /* Odds info icons */
+  --market-info-icons: #fff;
+
+  /*
+   * White Label variables
+   * ---------------------
+   */
+  --odd-btn-animation-color: #2f004e;
+  --footer-text-color: #6a7394;
+  --active-footer-color: #fff;
+  --nav-list-live-icon-color: #ff0000;
+
+  /** Header Logo Sizes **/
+  --logo-xl-width: 176px;
+  --logo-xl-height: 53px;
+  --logo-lg-width: 176px;
+  --logo-lg-height: 53px;
+  --logo-md-width: 110px;
+  --logo-md-height: 53px;
+  --logo-sm-width: 92px;
+  --logo-sm-height: 53px;
+  --logo-xs-width: 92px;
+  --logo-xs-height: 53px;
+
+  --logo-web-height: 43px;
+  --logo-mob-height: 48px;
+
+  /* Login Page logo */
+  --login-logo-xl-width: 130px;
+  --login-logo-xl-height: 34px;
+  --login-logo-sm-width: 106px;
+  --login-logo-sm-height: 38px;
+
+  /* Sidebar links */
+  --sidebar-active-link-color: #000000;
+
+  /* Dashboard colors */
+  --dashboard-ctn-background: #6800a8;
+  --dashboard-provider-background: #2f004e;
+  --dashboard-text-border-btm: linear-gradient(
+    90deg,
+    #2f004e 0%,
+    rgba(255, 167, 36, 0) 100%
+  );
+  --dashboard-live-game-dc-card-ctn: linear-gradient(
+    180deg,
+    #090909 0%,
+    #000000 100%
+  );
+  --linear-color-change: #2f004e;
+  --home-unerline-linear-color-change: #2f004e;
+  --events-table-broder-col: #00061a;
+  --enabled-market-btn-col: linear-gradient(
+    45deg,
+    #090909 48.44%,
+    #000000 48.45%
+  );
+
+  /* Footer Background */
+  --footer-ctn-background: #090909;
+  --footer-vertical-gradient: linear-gradient(180deg, #090909 0%, #000000 100%);
+
+  --icon-color: #ffffff;
+  /* Theme colors */
+  --th1-primary: #ffc019;
+  --th1-bg: #303031;
+
+  --th2-primary: #090909;
+  --th2-bg: #f6f6f4;
+
+  --th3-primary: #64d0b7;
+  --th3-bg: #232035;
+
+  --th4-primary: #6800a8;
+  --th4-bg: #181429;
+
+  --th5-primary: #53ade4;
+  --th5-bg: #303031;
+
+  --th6-primary: #db3732;
+  --th6-bg: #202020;
+
+  --th7-primary: #c73e8d;
+  --th7-bg: #1a2538;
+
+  --th8-primary: #c73e8d;
+  --th8-bg: #303031;
+
+  --th9-primary: #18bb4e;
+  --th9-bg: #131416;
+
+  --th10-primary: #a66a0e;
+  --th10-bg: #131416;
+}
+
+.ios body {
+  --ion-color-step-50: #0d0d0d;
+  --ion-color-step-100: #1a1a1a;
+  --ion-color-step-150: #262626;
+  --ion-color-step-200: #333333;
+  --ion-color-step-250: #404040;
+  --ion-color-step-300: #4d4d4d;
+  --ion-color-step-350: #595959;
+  --ion-color-step-400: #666666;
+  --ion-color-step-450: #737373;
+  --ion-color-step-500: #808080;
+  --ion-color-step-550: #8c8c8c;
+  --ion-color-step-600: #999999;
+  --ion-color-step-650: #a6a6a6;
+  --ion-color-step-700: #b3b3b3;
+  --ion-color-step-750: #bfbfbf;
+  --ion-color-step-800: #cccccc;
+  --ion-color-step-850: #d9d9d9;
+  --ion-color-step-900: #e6e6e6;
+  --ion-color-step-950: #f2f2f2;
+}
+
+/*
+   * Material Design Dark Theme
+   * -------------------------------------------
+   */
+
+.md body {
+  --ion-color-step-50: #1e1e1e;
+  --ion-color-step-100: #2a2a2a;
+  --ion-color-step-150: #363636;
+  --ion-color-step-200: #414141;
+  --ion-color-step-250: #4d4d4d;
+  --ion-color-step-300: #595959;
+  --ion-color-step-350: #656565;
+  --ion-color-step-400: #717171;
+  --ion-color-step-450: #7d7d7d;
+  --ion-color-step-500: #898989;
+  --ion-color-step-550: #949494;
+  --ion-color-step-600: #a0a0a0;
+  --ion-color-step-650: #acacac;
+  --ion-color-step-700: #b8b8b8;
+  --ion-color-step-750: #c4c4c4;
+  --ion-color-step-800: #d0d0d0;
+  --ion-color-step-850: #dbdbdb;
+  --ion-color-step-900: #e7e7e7;
+  --ion-color-step-950: #f3f3f3;
+}
+
+ion-title {
+  --color: #ffffff;
+}
+
+/* Optional CSS, this is added for the flashing that happens when toggling between themes */
+ion-item {
+  --transition: none;
+}
+
+.ios body,
+.md body {
+  --ion-color-primary: #fe6201;
+  --ion-background: #090909;
+  --ion-background-color-rgb: 0, 20, 61;
+  --ion-background-color: #000000;
+  --ion-background-secondary: #000000;
+  --ion-background-tertiary: #000000;
+  --ion-button-color: #fe6201;
+  --ion-button-color-2: #ffffff;
+  --ion-button-bg-2: #fe6201;
+  --ion-selected-btn-bg-color: #000000;
+  --table-bg: #443121;
+  --background-ctn-gradient: #201d1c;
+  --background-card: #201d1c;
+  --team-info-background: #fe6201;
+  --bet-slip-btn: #fe6201;
+  --account-details-card-bg: #fe6201;
+  --input-template-bg: #624c3d;
+  --input-template-color: #ffffff;
+  --input-label-border: #fe6201;
+  --input-label-bg: #000000;
+  --btn-disable-bg: #624c3d;
+  --card-details: #fff;
+  --sidebar-icon-bg: #fe6201;
+  --pl-total: #fe6201;
+  --campaign-card-bg: #836748;
+  --dashed-border: #fe6201;
+  --copy-button-color: invert(44%) sepia(97%) saturate(3110%) hue-rotate(358deg)
+    brightness(101%) contrast(100%);
+  --ion-heading-color: #fe6201;
+
+  --bet-slip-tab-unsel-bg: #000000;
+  --bet-slip-tab-unsel-text: #ffffff;
+
+  --premium-vs-bg: #fe6201;
+  --premium-vs-border: #fe6201;
+  --premium-vs-text: #ffffff;
+
+  /* Form ctn css */
+  --form-ctn-border: #fe6201;
+  --form-ctn-no-account-text: #a4d4d4;
+
+  /* Date display  */
+  --date-display-bg: var(--ion-background-color);
+  --date-display-color: #ffffff;
+
+  /* Custom button colors */
+  /* variant 1 */
+  --custom-btn-bg-variant-1: #fe6201;
+  --custom-btn-text-variant-1: #000000;
+  --custom-btn-border-variant-1: #ffffff;
+  /* variant 2 */
+  --custom-btn-bg-variant-2: #fe6201;
+  --custom-btn-text-variant-2: #ffffff;
+  --custom-btn-icon-variant-2: invert(0%) sepia(10%) saturate(7499%)
+    hue-rotate(294deg) brightness(97%) contrast(100%);
+  --custom-btn-border-variant-2: #ffffff;
+
+  /* Tab colors */
+  --myprofile-tab-img-bg: #fe6201;
+  --myprofile-tab-border: transparent;
+  --myprofile-tab-border-selected: #fe6201;
+
+  /* Referral css  */
+  --referral-card-bg: #836748;
+  --referral-card-border: #ffffff;
+  --referral-card-text: #ffffff;
+
+  /* Tab colors */
+  --tab-passive-bg: transparent;
+  --tab-passive-text: #ffffff;
+  --tab-passive-border: #ffffff;
+
+  --tab-active-bg: #fe6201;
+  --tab-active-text: #000000;
+  --tab-active-border: #ffffff;
+
+  /* Reports Header */
+  --reports-header-bg-color: #443121;
+  --reports-subheader-bg-color: #000000;
+  --reports-header-icon-color: invert(0%) sepia(79%) saturate(2316%)
+    hue-rotate(112deg) brightness(106%) contrast(95%);
+  --reports-header-icon-bg-color: #ffffff;
+  --reports-header-color: #ffffff;
+  --reports-header-border: #fe6201;
+
+  /* Head Colors */
+  --head-bg: #000000;
+  --head-text-1: #ffffff;
+  --head-text-2: var(--ion-color-primary);
+  --head-border: #000000;
+
+  /* Container bg color  */
+  --container-bg: #443121;
+
+  /* Table cell */
+  --table-head-cell-border: #fe6201;
+  --table-head-bg: #000000;
+  --table-cell-bg: #443121;
+  --table-cell-text: #ffffff;
+  --table-cell-border: #443121;
+  --table-subheader-bg: #000000;
+  --table-subheader-text: #ffffff;
+
+  /* Custom Table */
+  --custom-table-body-row: #443121;
+  --custom-table-body-color: #ffffff;
+  --custom-table-body-border: #ffffff80;
+  --custom-table-no-data-bg: #443121;
+  --custom-table-no-data-text: #ffffff;
+  --custom-table-no-data-border: #ffffff80;
+
+  --stake-settings-indv-bg: #443121;
+
+  /* Dashboard colors  */
+  --dashboard-icon-bg: #fe6201;
+  --dashboard-icon-color: #ffffff;
+  --dashboard-text-color: #ffffff;
+
+  /* Mobile header */
+  --mob-header-bg: #443121;
+  --mob-header-text: #ffffff;
+  --mob-header-icon: invert(100%) sepia(0%) saturate(7484%) hue-rotate(223deg)
+    brightness(105%) contrast(107%);
+  --mob-header-active-bg: #000000;
+  --mob-header-active-text: #ffffff;
+  --mob-header-active-icon: invert(90%) sepia(77%) saturate(3206%)
+    hue-rotate(109deg) brightness(104%) contrast(110%);
+  --mob-header-border: #fe6201;
+
+  /* Enabled markets */
+  --enabled-market-bg: #fe6201;
+  --enabled-market-text: #000000;
+
+  /* Arrow color  */
+  --arrow-color: #ffffff;
+
+  /* Fancy btn  */
+  --fancy-book-btn: var(--ion-color-primary);
+  --fancy-book-btn-text: #000000;
+
+  --linear-gradient-background-1: linear-gradient(
+    88.06deg,
+    var(--ion-background) 30%,
+    var(--ion-color-primary) 86%
+  );
+  --linear-gradient-background-2: linear-gradient(
+    90deg,
+    #c94f03 0%,
+    #853503 100%
+  );
+
+  --card-bg1: "#094145";
+  --card-bg2: "443121";
+
+  --card-bg: linear-gradient(
+    284.37deg,
+    var(--card-bg1) -213.61%,
+    var(--card-bg2) 99.84%
+  );
+
+  --accoridan-summary-background: #fff;
+
+  --table-header-background: var(--ion-background-color);
+  --betslip-bg-color: #c94f03;
+  --webkit-gradient-background-1: linear-gradient(
+    88.06deg,
+    var(--ion-background) 30%,
+    var(--ion-color-primary) 86%
+  );
+  --webkit-gradient-background-2: linear-gradient(
+    88.06deg,
+    var(--ion-background) 30%,
+    var(--ion-color-primary) 117.02%
+  );
+
+  --ion-text-color: #090909;
+  --ion-text-color-rgb: 0, 20, 61;
+  --ion-text-light: #ffffff;
+  --ion-text-light-rgb: 255, 255, 255;
+  --ion-text-dark: #000000;
+  --ion-text-dark-rgb: 10, 13, 21;
+  --ion-text-color-contrast: #fff;
+  --ion-text-color-contrast-rgb: var(--ion-text-light);
+  --ion-arrow: #ffffff;
+
+  /** Card Variables**/
+  --ion-card-background: #e4e8ed;
+  --ion-card-text-color: #090909;
+  --ion-card-background-contrast: #ffffff;
+  --ion-card-border: 1px solid rgba(10, 13, 21, 0.1);
+  --ion-card-border-color-rgb: 10, 13, 21;
+
+  /** Toolbar Variables**/
+  --ion-toolbar-background: none;
+  --ion-item-background: none;
+  --ion-item-background-activated: none;
+
+  /** Popover Variables**/
+  --ion-popover-background: #443121;
+  --ion-popover--hover-background: #fff;
+  --popover-background-active: #000000;
+
+  /** Expansion Panel Variables**/
+  --accordion-summary-root-background: #ffffff;
+  --accordion-summary-root-expanded-background: #000000;
+  --accordion-summary-root-text-color: var(--ion-text-color);
+  --accordion-details-root-background: #ffffff;
+
+  /** All Markets variables **/
+  --am-accordion-summary-root-background: #e4e8ed;
+  --am-accordion-summary-root-expanded-background: var(--ion-color-primary);
+  --am-accordion-summary-root-text-color: var(--ion-text-color);
+  --am-accordion-details-root-background: #ffffff;
+
+  /** IonSelect Styles **/
+  --select-element-background: var(--ion-popover--hover-background);
+  --select-popover-background: var(--ion-popover-background);
+  --select-popover-active-background: var(--ion-popover--hover-background);
+
+  /** Dialog Styles **/
+  --dialog-header-background: #000000;
+  --dialog-content-background: #e4e8ed;
+  --dialog-close-btn: #e4e8ed;
+  --dialog-header-bg: #000000;
+  --dialog-header-color: #ffffff;
+
+  /* Notification Styles  */
+  --notification-bg: #fe6201;
+  --notification-text: #000;
+
+  /** DatePicker-Container Styles **/
+  --date-picker-container-background: #ffffff;
+  --date-picker-header-button-background: #e4e8ed;
+  --date-picker-selected-bg: #fe6201;
+
+  /** Drawer Styles **/
+  --drawer-background: #e4e8ed;
+  --drawer-background-contrast: #ffffff;
+  --drawer-text-color: #00143d;
+
+  /** Input Field Styles **/
+  --input-background-color: #000000;
+  --input-text-color: #0a0d15;
+  --input-bg-color: #ffffff;
+
+  /** Reports style **/
+  --reports-bg-color: #ffffff;
+  --reports-title-color: var(--ion-color-primary);
+  --filter-controls-border: rgba(180, 180, 180, 1);
+
+  /* Odds info icons */
+  --market-info-icons: #fff;
+
+  /* Scorecard */
+  --score-card-details-color: var(--ion-color-primary);
+  --score-card-background-color: #090909;
+
+  /* signup card */
+  --signup-card-background-color: #000000;
+  --signup-font-color: #fff;
+
+  /* notification background color */
+  --notification-background-col: linear-gradient(
+    180deg,
+    #ff924f 0%,
+    #ff6a00 25%,
+    #d75e02 60%,
+    #ff984f 100%
+  );
+
+  /* Markets Accordian*/
+  --accordian-headers-color: #fff;
+  --accordian-arrow-bg: var(--ion-color-primary);
+  --accordian-arrow-text: #000000;
+
+  --section-border: #ffffff80;
+  --card-bg: "#094145";
+
+  --provider-blend-color: none;
+  --scrollable-box: #443121;
+  --table-header: #000000;
+  --table-sub-header: #443a21;
+  --market-table-bg: #5f4631;
+  --border-color: #fe6201;
+  --active-text-color: #000000;
+  --carousel-arrow-btn: #443121;
+
+  /* Backgrounds */
+  --deposit_web_banner: url("./assets/images/home_page/deposit_info/green_deposit.webp");
+  --deposit_mob_banner: url("./assets/images/home_page/deposit_info/green_mob_deposit.webp");
+  --provider-banner: url("./assets/images/home_page/provider_background.webp");
+  --login-background: url("./assets/images/common/loginBG.webp");
+  --login-mob-background: url("./assets/images/common/loginMobBG.webp");
+  --signup-bg: var(--ion-background);
+}

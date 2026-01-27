@@ -1,0 +1,47 @@
+:root {
+  --border-radius: 20px;
+  --title-icon-dimensions: 20px;
+}
+
+.container {
+  background: var(--ion-color-primary);
+  border: 1px solid var(--reports-header-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+
+  .title-container {
+    width: 100%;
+    height: 32px;
+    background: var(--ion-background-color);
+    display: flex;
+    align-items: center;
+    border-bottom-left-radius: calc(var(--border-radius) - 2px);
+    border-bottom-right-radius: calc(var(--border-radius) - 2px);
+  }
+
+  .title-container-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 5px;
+    background: var(--reports-header-icon-bg-color);
+    width: var(--title-icon-dimensions);
+    height: var(--title-icon-dimensions);
+    border-radius: 50%;
+
+    .title-img {
+      height: 15px;
+      width: 15px;
+      border-radius: 50%;
+      filter: var(--reports-header-icon-color);
+    }
+  }
+
+  .title {
+    margin-left: 5px;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+}

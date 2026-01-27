@@ -1,0 +1,219 @@
+.button-variables-modal-ctn {
+  padding: 10px;
+  max-height: 70vh;
+  overflow-y: auto;
+  position: relative;
+  background: var(--table-bg);
+
+  .modal-spinner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-header {
+    margin-bottom: 24px;
+    text-align: center;
+
+    .modal-title {
+      margin: 0 0 8px 0;
+      font-family: var(--headers-font-family);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--custom-table-body-color);
+    }
+
+    .modal-subtitle {
+      margin: 0;
+      font-family: var(--headers-font-family);
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--custom-table-body-color);
+      opacity: 0.8;
+    }
+  }
+
+  .stake-settings-modal-ctn {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    margin-bottom: 8px;
+
+    .indv-stake-btn-modal {
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+
+      .label-text-modal,
+      .label-number-modal {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 6px;
+        width: 100%;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .label-text-sub-modal {
+          color: var(--custom-table-body-color);
+          font-size: 12px;
+          font-weight: 600;
+          font-family: var(--headers-font-family);
+        }
+
+        .bt-input-modal {
+          border-radius: 8px;
+          height: 36px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          outline: none;
+          padding: 8px 12px;
+          width: 100%;
+          background: rgba(255, 255, 255, 0.9);
+          font-size: 14px;
+
+          &:focus {
+            border-color: var(--ion-button-color);
+            box-shadow: 0 0 0 2px rgba(var(--ion-button-color-rgb), 0.2);
+          }
+
+          &.width-modal {
+            flex: 1;
+            margin: 0 8px;
+            text-align: center;
+            border: none;
+            background: transparent;
+          }
+        }
+
+        .support-add-stake-input-modal {
+          display: flex;
+          align-items: center;
+          background-color: rgba(255, 255, 255, 0.9);
+          border-radius: 24px;
+          padding: 4px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+
+          .add-stake-input-modal {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+          }
+
+          .plus-div-modal,
+          .minus-div-modal {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--ion-button-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover {
+              transform: scale(1.05);
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            &:active {
+              transform: scale(0.95);
+            }
+
+            img {
+              width: 12px;
+              height: 12px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: center;
+
+    .save-btn-modal {
+      border: none;
+      border-radius: 8px;
+      padding: 12px 32px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--headers-font-family);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 120px;
+      background: var(--ion-button-color);
+      color: var(--active-text-color);
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Dark theme adjustments
+@media (prefers-color-scheme: dark) {
+  .button-variables-modal-ctn {
+    .modal-header {
+      .modal-title,
+      .modal-subtitle {
+        color: #ffffff;
+      }
+    }
+
+    .stake-settings-modal-ctn {
+      .indv-stake-btn-modal {
+        .label-text-modal,
+        .label-number-modal {
+          .label-text-sub-modal {
+            color: #ffffff;
+          }
+
+          .bt-input-modal {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.3);
+
+            &.width-modal {
+              background: transparent;
+              color: #ffffff;
+            }
+          }
+
+          .support-add-stake-input-modal {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+          }
+        }
+      }
+    }
+
+    .modal-actions {
+      border-top-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+}

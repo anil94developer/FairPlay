@@ -624,11 +624,18 @@ export const oddValueFormatter = (marketType, oddValue, sessionRuns) => {
 };
 
 export const getFieldFromToken = (value: JwtToken) => {
-  if (sessionStorage.getItem("jwt_token")) {
-    const claim = sessionStorage.getItem("jwt_token")?.split(".")[1];
-    return JSON.parse(window.atob(claim))[value];
+  const token = sessionStorage.getItem("jwt_token");
+  if (!token || !token.includes(".")) {
+    return null;
   }
-  return null;
+
+  try {
+    const claim = token.split(".")[1];
+    const decoded = JSON.parse(window.atob(claim));
+    return decoded?.[value] ?? null;
+  } catch {
+    return null;
+  }
 };
 
 export const fancyCategories = [

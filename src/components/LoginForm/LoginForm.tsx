@@ -19,6 +19,7 @@ import { DomainConfig } from "../../models/DomainConfig";
 import { RootState } from "../../models/RootState";
 import {
   fetchBalance,
+  login,
   loginFailed,
   loginSuccess,
   requestEnd,
@@ -30,8 +31,10 @@ import "./LoginForm.scss";
 import { getSapToken } from "../../store/auth/authActions";
 import downloadIcon from "../../assets/images/icons/download-icon.svg";
 import android from "../../assets/images/footer/android.svg";
+import USABET_API from "../../api-services/usabet-api";
 
 type StoreProps = {
+  login: Function;
   loginSuccess: Function;
   loginFailed: Function;
   requestStart: Function;
@@ -82,6 +85,7 @@ const LoginForm: React.FC<LoginProps> = (props) => {
     errorMsg,
     loading,
     loggedIn,
+    login,
     loginSuccess,
     loginFailed,
     requestStart,
@@ -111,34 +115,8 @@ const LoginForm: React.FC<LoginProps> = (props) => {
       password: Yup.string().required(langData?.["required"] || "Required"),
     }),
     onSubmit: async (values) => {
-      requestStart();
-
-      try {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Set dummy data in storage
-        setDummyAuthData(values.username);
-
-        // Generate dummy token
-        const dummyToken =
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-
-        setLoginResponse(dummyToken);
-        loginSuccess(dummyToken);
-
-        requestEnd();
-
-        // Redirect to home or specified URL
-        if (redirectUrl) {
-          history.push(redirectUrl);
-        } else {
-          history.push("/home");
-        }
-      } catch (err) {
-        loginFailed("Login failed");
-        requestEnd();
-      }
+      // Real login via Redux thunk (API call)
+      await login(values.username, values.password, "");
     },
   });
 
@@ -147,34 +125,34 @@ const LoginForm: React.FC<LoginProps> = (props) => {
     requestStart();
 
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Call backend to create / auto-login a demo user
+      const response = await USABET_API.post("/user/autoDemoUserLogin", {});
 
-      const demoUsername = "demo_user";
+      // Expected shape:
+      // { data: { user_name: "wtluf13kjj", password: "Ct*23U@xTfkc" }, status: true }
+      const credentials = response?.data?.data || response?.data;
+      const demoUsername =
+        credentials?.user_name || credentials?.username || "";
+      const demoPassword = credentials?.password || "";
 
-      // Set dummy data in storage
-      setDummyAuthData(demoUsername);
-
-      // Generate dummy token
-      const dummyToken =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vX3VzZXIiLCJuYW1lIjoiRGVtbyBVc2VyIiwiaWF0IjoxNTE2MjM5MDIyfQ.demo_token_signature";
-
-      setLoginResponse(dummyToken);
-      loginSuccess(dummyToken);
-
-      setDemoLoading(false);
-      requestEnd();
-
-      // Redirect
-      if (redirectUrl) {
-        history.push(redirectUrl);
-      } else {
-        history.push("/home");
+      if (!demoUsername || !demoPassword) {
+        // Backend did not return credentials in expected shape
+        loginFailed("Demo login failed: credentials not received.");
+        return;
       }
-    } catch (err) {
+
+      // Reuse normal login flow with returned credentials
+      await login(demoUsername, demoPassword, "");
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.msg ||
+        err?.message ||
+        "Demo login failed";
+      loginFailed(msg);
+    } finally {
       setDemoLoading(false);
       requestEnd();
-      console.log(err);
     }
   };
 
@@ -385,6 +363,8 @@ const mapStateToProps = (state: RootState) => {
 
 const mapDispatchToProps = (dispatch: Function) => {
   return {
+    login: (username: string, password: string, code: string) =>
+      dispatch(login(username, password, code)),
     fetchBalance: () => dispatch(fetchBalance()),
     loginSuccess: (payload) => dispatch(loginSuccess(payload)),
     loginFailed: (err: string) => dispatch(loginFailed(err)),

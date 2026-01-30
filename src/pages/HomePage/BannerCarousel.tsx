@@ -149,7 +149,10 @@ const App: React.FC<StateProps> = (props) => {
               ? apiWebBanners
               : desktopDefaultBanner
             )?.map((banner, index) => (
-              <div key={index} className={"inplay-bg banner-card-div"}>
+              <div
+                key={banner.id ?? banner.bannerId ?? `desktop-${index}`}
+                className={"inplay-bg banner-card-div"}
+              >
                 <div
                   className="banner-image"
                   onClick={() => {
@@ -174,7 +177,10 @@ const App: React.FC<StateProps> = (props) => {
               ? apiMobBanners
               : mobileDefaultBanner
             )?.map((banner, index) => (
-              <div className={"inplay-bg banner-card-div"}>
+              <div
+                key={banner.id ?? banner.bannerId ?? `mobile-${index}`}
+                className={"inplay-bg banner-card-div"}
+              >
                 <div
                   className="banner-image"
                   onClick={() => {

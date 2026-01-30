@@ -61,6 +61,11 @@ function detectEnvironment(): Environment {
 }
 
 export function getBaseUrl(env: string, url: string) {
+  // Allow env override (Vite exposes env vars via `import.meta.env`, limited by envPrefix in `vite.config.ts`)
+  // Example: REACT_APP_REST_API_URL=https://usabet9.com/api/v1
+  const override = (import.meta as any)?.env?.[url];
+  if (override) return override as string;
+
   const validEnv = env in EnvUrlsMap ? (env as Environment) : "production";
   return EnvUrlsMap[validEnv][url];
 }

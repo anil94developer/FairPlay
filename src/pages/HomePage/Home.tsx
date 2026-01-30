@@ -35,6 +35,7 @@ import { EventDTO } from "../../models/common/EventDTO";
 import { FavoriteEventDTO } from "../../models/common/FavoriteEventDTO";
 import { favoriteEvents } from "../../description/favoriteEvents";
 import { newLaunch } from "../../description/newLaunch";
+import USABET_API from "../../api-services/usabet-api";
 const TopMatches = lazy(() => import("./TopMatches"));
 
 type StoreProps = {
@@ -70,6 +71,7 @@ const HomePage: React.FC<StoreProps> = (props) => {
     []
   );
   const [slotGames, setSlotGames] = useState<DcGameNew[]>([]);
+  const [loadingMatches, setLoadingMatches] = useState<boolean>(false);
   const history = useHistory();
   const setDialogShow = (show: boolean) => {
     setShowDialog(show);
@@ -89,8 +91,110 @@ const HomePage: React.FC<StoreProps> = (props) => {
     setSlotGames(slotGames);
   };
 
-  const fetchFavoruiteEvents = () => {
-    setFavouriteEvents(favoriteEvents);
+  // Transform API response to FavoriteEventDTO format
+  const transformApiDataToFavoriteEvents = (apiData: any[]): FavoriteEventDTO[] => {
+    return apiData.map((match) => {
+      // Extract team names from match_name (e.g., "Canterbury Kings v Central Stags")
+      const matchNameParts = match.match_name?.split(" v ") || match.match_name?.split(" vs ") || [];
+      const homeTeam = matchNameParts[0]?.trim() || "";
+      const awayTeam = matchNameParts[1]?.trim() || "";
+
+      // Transform runners to FavoriteMatchOddsRunnerDTO format
+      const runners = (match.runners || []).map((runner: any) => {
+        const parsePrice = (val: any): number | null => {
+          if (val === "--" || val === null || val === undefined) return null;
+          const num = typeof val === "number" ? val : parseFloat(val);
+          return isNaN(num) ? null : num;
+        };
+
+        return {
+          runnerId: runner.selection_id?.toString() || runner.selectionId?.toString() || "",
+          runnerName: runner.selection_name || "",
+          status: runner.status || "ACTIVE",
+          backPrices: (runner.ex?.availableToBack || []).map((price: any) => ({
+            price: parsePrice(price.price),
+            size: parsePrice(price.size),
+          })),
+          layPrices: (runner.ex?.availableToLay || []).map((price: any) => ({
+            price: parsePrice(price.price),
+            size: parsePrice(price.size),
+          })),
+        };
+      });
+
+      return {
+        openDate: match.match_date || new Date().toISOString(),
+        sportId: match.sport_id?.toString() || "",
+        sportName: match.sport_name || "",
+        competitionId: match.series_id?.toString() || "",
+        competitionName: match.series_name || "",
+        eventId: match.match_id?.toString() || "",
+        eventName: match.match_name || "",
+        marketId: match.market_id || match.marketId || "",
+        status: match.status || "SUSPENDED",
+        providerName: "USABET", // Default provider
+        markets: {
+          matchOddsProvider: "USABET",
+          matchOddsBaseUrl: "",
+          matchOddsTopic: "",
+          matchOdds: [
+            {
+              marketId: match.market_id || match.marketId || "",
+              marketName: match.market_name || "Match Odds",
+              marketTime: new Date(match.match_date || Date.now()).getTime(),
+              marketType: "MATCH_ODDS",
+              status: match.status || "SUSPENDED",
+              runners: runners,
+              commissionEnabled: false,
+              suspended: match.status === "SUSPENDED",
+              disabled: match.is_lock || false,
+              limits: {
+                minBetValue: 0,
+                maxBetValue: 0,
+                oddsLimit: 0,
+              },
+            },
+          ],
+          enableMatchOdds: match.bookmaker_count > 0 || match.status === "OPEN",
+          enableBookmaker: match.bookmaker_count > 0,
+          enableFancy: match.enable_fancy === 1,
+          enablePremium: false,
+          fancySuspended: false,
+          fancyDisabled: !match.enable_fancy,
+        },
+        enabled: match.is_active === 1,
+        premiumEnabled: false,
+        winnerMarketEnabled: false,
+        forcedInplay: match.manual_inplay || false,
+        virtualEvent: false,
+        favorite: match.is_favorites || false,
+        homeTeam: homeTeam,
+        awayTeam: awayTeam,
+        eventSlug: match.match_name?.toLowerCase().replace(/\s+/g, "-") || "",
+        catId: match.inplay ? "INPLAY" : "UPCOMING",
+      } as FavoriteEventDTO;
+    });
+  };
+
+  const fetchFavoruiteEvents = async () => {
+    setLoadingMatches(true);
+    try {
+      const response = await USABET_API.get("/match/homeMatchesV2");
+      if (response?.data?.status === true && Array.isArray(response.data.data)) {
+        const transformedEvents = transformApiDataToFavoriteEvents(response.data.data);
+        setFavouriteEvents(transformedEvents);
+      } else {
+        // Fallback to static data if API fails or returns invalid data
+        console.warn("API response invalid, using fallback data");
+        setFavouriteEvents(favoriteEvents);
+      }
+    } catch (error) {
+      console.error("Error fetching home matches:", error);
+      // Fallback to static data on error
+      setFavouriteEvents(favoriteEvents);
+    } finally {
+      setLoadingMatches(false);
+    }
   };
 
   useEffect(() => {
@@ -215,8 +319,14 @@ const mapStateToProps = (state: RootState) => {
   let status = 0;
   if (state.auth.loggedIn) {
     const jwtToken = sessionStorage.getItem("jwt_token");
-    if (jwtToken) {
-      status = JSON.parse(window.atob(jwtToken.split(".")[1])).status;
+    if (jwtToken && jwtToken.includes(".")) {
+      try {
+        const claim = jwtToken.split(".")[1];
+        const decoded = JSON.parse(window.atob(claim));
+        status = decoded.status ?? decoded.sts ?? 0;
+      } catch {
+        status = 0;
+      }
     }
   }
   return {

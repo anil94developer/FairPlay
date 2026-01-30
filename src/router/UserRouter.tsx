@@ -810,12 +810,26 @@ const mapStateToProps = (state: RootState) => {
       langData: state.common.langData,
     };
   }
-  let claim = state.auth?.jwtToken?.split(".")?.[1] || "";
-  const role = JSON.parse(window.atob(claim)).role;
-  const status = JSON.parse(window.atob(claim)).sts;
+  const jwt = state.auth?.jwtToken;
+  let role: string | null = null;
+  let status: number = -1;
+
+  if (jwt && jwt.includes(".")) {
+    try {
+      const claim = jwt.split(".")[1];
+      const decoded = JSON.parse(window.atob(claim));
+      role = decoded.role ?? null;
+      status = decoded.sts ?? decoded.status ?? -1;
+    } catch {
+      // If token is not a valid JWT or cannot be decoded, fall back to defaults.
+      role = null;
+      status = -1;
+    }
+  }
+
   return {
     loggedIn: state.auth.loggedIn,
-    role: role,
+    role,
     status,
     allowedConfig: state.common.allowedConfig,
     commissionEnabled: state.common.commissionEnabled,

@@ -19,6 +19,7 @@ import {
 import API from "../../api";
 import SVLS_API from "../../svls-api";
 import AUTH_API from "../../api-services/auth-api";
+import USABET_API from "../../api-services/usabet-api";
 import { depositEvent } from "../../util/facebookPixelEvent";
 import { demoUser } from "../../util/stringUtil";
 
@@ -85,24 +86,33 @@ export const handleSideBar = () => {
 
 export const getRoleFromToken = (): string => {
   if (sessionStorage.getItem("jwt_token")) {
-    const claim = sessionStorage.getItem("jwt_token").split(".")[1];
-    return JSON.parse(window.atob(claim)).role;
+    const token = sessionStorage.getItem("jwt_token");
+    if (token && token.includes(".")) {
+      const claim = token.split(".")[1];
+      return JSON.parse(window.atob(claim)).role;
+    }
   }
   return "";
 };
 
 export const getPermissionFromToken = () => {
   if (sessionStorage.getItem("jwt_token")) {
-    const claim = sessionStorage.getItem("jwt_token").split(".")[1];
-    return JSON.parse(window.atob(claim)).perm;
+    const token = sessionStorage.getItem("jwt_token");
+    if (token && token.includes(".")) {
+      const claim = token.split(".")[1];
+      return JSON.parse(window.atob(claim)).perm;
+    }
   }
   return null;
 };
 
 export const getCurrencyTypeFromToken = () => {
   if (sessionStorage.getItem("jwt_token")) {
-    const claim = sessionStorage.getItem("jwt_token").split(".")[1];
-    return JSON.parse(window.atob(claim)).cur;
+    const token = sessionStorage.getItem("jwt_token");
+    if (token && token.includes(".")) {
+      const claim = token.split(".")[1];
+      return JSON.parse(window.atob(claim)).cur;
+    }
   }
   return 0;
 };
@@ -117,48 +127,66 @@ export const getSapTokenFromToken = () => {
 
 export const getHouseIdFromToken = () => {
   if (sessionStorage.getItem("jwt_token")) {
-    const claim = sessionStorage.getItem("jwt_token").split(".")[1];
-    return JSON.parse(window.atob(claim)).hid;
+    const token = sessionStorage.getItem("jwt_token");
+    if (token && token.includes(".")) {
+      const claim = token.split(".")[1];
+      return JSON.parse(window.atob(claim)).hid;
+    }
   }
   return null;
 };
 
 export const getSportsBookFromToken = () => {
   if (sessionStorage.getItem("jwt_token")) {
-    const claim = sessionStorage.getItem("jwt_token").split(".")[1];
-    return JSON.parse(window.atob(claim)).org;
+    const token = sessionStorage.getItem("jwt_token");
+    if (token && token.includes(".")) {
+      const claim = token.split(".")[1];
+      return JSON.parse(window.atob(claim)).org;
+    }
   }
   return null;
 };
 
 export const getStatusFromToken = () => {
   if (sessionStorage.getItem("jwt_token")) {
-    const claim = sessionStorage.getItem("jwt_token").split(".")[1];
-    return JSON.parse(window.atob(claim)).status;
+    const token = sessionStorage.getItem("jwt_token");
+    if (token && token.includes(".")) {
+      const claim = token.split(".")[1];
+      return JSON.parse(window.atob(claim)).status;
+    }
   }
   return null;
 };
 
 export const getParentIdFromToken = () => {
   if (sessionStorage.getItem("jwt_token")) {
-    const claim = sessionStorage.getItem("jwt_token").split(".")[1];
-    return JSON.parse(window.atob(claim)).pid;
+    const token = sessionStorage.getItem("jwt_token");
+    if (token && token.includes(".")) {
+      const claim = token.split(".")[1];
+      return JSON.parse(window.atob(claim)).pid;
+    }
   }
   return null;
 };
 
 export const getUserCreationTime = () => {
   if (sessionStorage.getItem("jwt_token")) {
-    const claim = sessionStorage.getItem("jwt_token").split(".")[1];
-    return JSON.parse(window.atob(claim)).ctime;
+    const token = sessionStorage.getItem("jwt_token");
+    if (token && token.includes(".")) {
+      const claim = token.split(".")[1];
+      return JSON.parse(window.atob(claim)).ctime;
+    }
   }
   return null;
 };
 
 export const getAccountPathFromToken = () => {
   if (sessionStorage.getItem("jwt_token")) {
-    const claim = sessionStorage.getItem("jwt_token").split(".")[1];
-    return JSON.parse(window.atob(claim)).path;
+    const token = sessionStorage.getItem("jwt_token");
+    if (token && token.includes(".")) {
+      const claim = token.split(".")[1];
+      return JSON.parse(window.atob(claim)).path;
+    }
   }
   return null;
 };
@@ -209,36 +237,89 @@ export const login = (username: string, password: string, code: string) => {
           uuid,
         });
       } else {
-        const loginRequest = {
-          username,
-          password,
-          uuid,
-        };
-        response = await AUTH_API.post("/login", loginRequest);
+        // USA Bet v1 login
+        const form = new URLSearchParams();
+        form.set("user_name", username);
+        form.set("password", password);
+        form.set("grant_type", "password");
+
+        console.log("Login base URL (USABET_API):", USABET_API.defaults.baseURL);
+        response = await USABET_API.post("/user/userLogin", form, {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        });
+
+        // Check if API returned status: false (error in response body)
+        if (response?.data?.status === false) {
+          const errorMsg =
+            response?.data?.msg ||
+            response?.data?.message ||
+            "Invalid credentials! Please try again.";
+          dispatch(loginFailed(errorMsg));
+          return;
+        }
       }
       sessionStorage.setItem("username", username);
-      sessionStorage.setItem("jwt_token", response.data.jwtToken);
+
+      // USA Bet returns `token: { accessToken, refreshToken, ... }`
+      const accessToken =
+        response?.data?.token?.accessToken ||
+        response?.data?.accessToken ||
+        response?.data?.access_token ||
+        response?.data?.jwtToken;
+
+      const refreshToken =
+        response?.data?.token?.refreshToken || response?.data?.refreshToken;
+
+      if (accessToken) {
+        sessionStorage.setItem("jwt_token", accessToken);
+      }
+      if (refreshToken) {
+        sessionStorage.setItem("refresh_token", refreshToken);
+      }
       // sessionStorage.setItem('bg_token', response.data.bgToken);
       // sessionStorage.setItem('bc_token', response.data.bcToken);
       // sessionStorage.setItem('wacs_token', response.wacsToken);
       // sessionStorage.setItem('dc_token', response.dcToken);
-      dispatch(loginSuccess(response.data));
+      // Reducer expects the token string (LoginForm used to dispatch token string too)
+      dispatch(loginSuccess(accessToken || response.data));
       const history = createBrowserHistory({ forceRefresh: true });
-      let claim = response.data.jwtToken.split(".")[1];
-      let permission = JSON.parse(window.atob(claim)).perm;
-      let role = JSON.parse(window.atob(claim)).role;
-      let status = JSON.parse(window.atob(claim)).sts;
-      if (status === 2) {
-        history.replace("/terms-and-conditions");
-      } else if (status === 4) {
-        history.replace("/reset-password");
-      } else if ((permission & 2) !== 0) {
-        history.replace("/platform_admin/house");
-      } else if (role !== "User") {
-        history.replace("/admin");
+
+      // If token is a JWT, apply existing redirect logic; otherwise go home
+      if (typeof accessToken === "string" && accessToken.includes(".")) {
+        try {
+          const claim = accessToken.split(".")[1];
+          const decoded = JSON.parse(window.atob(claim));
+          const permission = decoded.perm;
+          const role = decoded.role;
+          const status = decoded.sts ?? decoded.status;
+
+          if (status === 2) {
+            history.replace("/terms-and-conditions");
+          } else if (status === 4) {
+            history.replace("/reset-password");
+          } else if (permission && (permission & 2) !== 0) {
+            history.replace("/platform_admin/house");
+          } else if (role && role !== "User") {
+            history.replace("/admin");
+          } else {
+            history.replace("/home");
+          }
+        } catch {
+          history.replace("/home");
+        }
+      } else {
+        history.replace("/home");
       }
     } catch (err: any) {
-      dispatch(loginFailed(err.response.data.message));
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.msg ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Login failed";
+      dispatch(loginFailed(msg));
+    } finally {
+      dispatch(requestEnd());
     }
   };
 };
@@ -284,7 +365,7 @@ export const logout = () => {
       dispatch(logoutFailed(err.message));
     }
     const history = createBrowserHistory({ forceRefresh: true });
-    history.replace("/home");
+    history.replace("/login");
   };
 };
 

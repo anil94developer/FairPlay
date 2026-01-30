@@ -6,7 +6,7 @@ export const events = [
     competitionId: "822951",
     competitionName: "Indonesian Super League",
     eventId: "35098308",
-    eventName: "Malut United v PSBS Biak Numfor",
+    eventName: "ssssMalut United v PSBS Biak Numfor",
     marketId: "1.252162297",
     status: "UPCOMING",
     providerName: "BetFair",
@@ -11589,3 +11589,90 @@ export const events = [
     liveStreamChannelId: "448",
   },
 ];
+
+// Generic function to fetch events from API filtered by sport
+// Usage: import { fetchEventsFromAPI } from '../description/events';
+//        const sportEvents = await fetchEventsFromAPI(USABET_API, sportId, sportName);
+export const fetchEventsFromAPI = async (USABET_API, sportId, sportName) => {
+  try {
+    const response = await USABET_API.get("/match/homeMatchesV2");
+
+    if (response?.data?.status === true && Array.isArray(response.data.data)) {
+      // Filter matches by sport_id and sport_name
+      const filteredMatches = response.data.data.filter((match) => {
+        const matchSportId = match.sportId || match.sport_id || "";
+        const matchSportName = match.sportName || match.sport_name || "";
+        
+        // Match by sport ID
+        const idMatch = sportId && matchSportId === sportId;
+        
+        // Match by sport name (case-insensitive)
+        const nameMatch = sportName && matchSportName &&
+          (matchSportName.toLowerCase() === sportName.toLowerCase() ||
+           matchSportName.toLowerCase().includes(sportName.toLowerCase()) ||
+           sportName.toLowerCase().includes(matchSportName.toLowerCase()));
+        
+        return idMatch || nameMatch;
+      });
+
+      // Transform API data to match events format
+      const transformedEvents = filteredMatches.map((match) => {
+        // Get homeTeam and awayTeam
+        const homeTeam = match.homeTeam || match.home_team || "";
+        const awayTeam = match.awayTeam || match.away_team || "";
+        
+        // Get event name - prioritize match_name, then eventName/event_name
+        let eventName = match.match_name || match.matchName || match.eventName || match.event_name || "";
+        if (!eventName && homeTeam && awayTeam) {
+          eventName = `${homeTeam} V ${awayTeam}`;
+        } else if (!eventName) {
+          eventName = match.eventId || match.event_id || "Event";
+        }
+
+        // Get match date - prioritize match_date, then openDate/open_date
+        const matchDate = match.match_date || match.matchDate;
+        const openDate = match.openDate || match.open_date || matchDate || new Date().toISOString();
+
+        return {
+          eventId: match.eventId || match.event_id || "",
+          eventName: eventName,
+          sportId: match.sportId || match.sport_id || sportId,
+          sportName: match.sportName || match.sport_name || sportName,
+          competitionId: match.competitionId || match.competition_id || "",
+          competitionName: match.competitionName || match.competition_name || "",
+          openDate: openDate,
+          status: match.status || "UPCOMING",
+          providerName: match.providerName || match.provider_name || "BetFair",
+          homeTeam: homeTeam,
+          awayTeam: awayTeam,
+          marketId: match.marketId || match.market_id || "",
+          markets: match.markets || {},
+          enabled: match.enabled !== false,
+          forcedInplay: match.forcedInplay || match.forced_inplay || false,
+          virtualEvent: match.virtualEvent || match.virtual_event || false,
+          favorite: match.favorite || false,
+          ...match, // Include any additional fields from API
+        };
+      });
+
+      return transformedEvents;
+    }
+    
+    // Return empty array if API call fails or returns invalid data
+    return [];
+  } catch (error) {
+    console.error("Error fetching events from API:", error);
+    // Return empty array on error, or fallback to static events filtered by sport
+    if (sportId) {
+      return events.filter((event) => event.sportId === sportId);
+    }
+    return [];
+  }
+};
+
+// Function to fetch cricket matches from API (convenience function)
+// Usage: import { fetchCricketEventsFromAPI } from '../description/events';
+//        const cricketEvents = await fetchCricketEventsFromAPI(USABET_API);
+export const fetchCricketEventsFromAPI = async (USABET_API) => {
+  return fetchEventsFromAPI(USABET_API, "4", "Cricket");
+};

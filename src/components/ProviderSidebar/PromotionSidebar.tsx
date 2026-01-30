@@ -213,9 +213,20 @@ const PromotionSidebar: React.FC<PromotionProps> = (props) => {
 const mapStateToProps = (state: RootState) => {
   let status = 0;
   if (state.auth.loggedIn) {
-    status = JSON.parse(
-      window.atob(sessionStorage.getItem("jwt_token").split(".")[1])
-    ).status;
+    try {
+      const jwtToken = sessionStorage.getItem("jwt_token");
+      if (jwtToken) {
+        const tokenParts = jwtToken.split(".");
+        if (tokenParts.length >= 2) {
+          const decodedPayload = window.atob(tokenParts[1]);
+          const parsedPayload = JSON.parse(decodedPayload);
+          status = parsedPayload.status || 0;
+        }
+      }
+    } catch (error) {
+      console.error("Error decoding JWT token:", error);
+      status = 0;
+    }
   }
   return {
     loggedIn: state.auth.loggedIn,

@@ -49,6 +49,7 @@ import { fetchFavEvents } from "../../store/exchangeSports/exchangeSportsActions
 import { Check } from "@material-ui/icons";
 import { events } from "../../description/events";
 import { favourites } from "../../description/favourites";
+import USABET_API from "../../api-services/usabet-api";
 
 type StoreProps = {
   events: EventDTO[];
@@ -104,6 +105,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
   const [matchOddsTopic, setMatchOddsTopic] = useState<string>("");
   const [eventFilter, setEventFilter] = useState<Status>();
   const [favouriteEvents, setFavouriteEvents] = useState<EventDTO[]>([]);
+  const [loadingMatches, setLoadingMatches] = useState<boolean>(false);
 
   const tableFields = [
     {
@@ -217,33 +219,213 @@ const EventsTable: React.FC<StoreProps> = (props) => {
     if (eventName) searchEvent(eventName);
   }, [eventName]);
 
-  const updateEvents = () => {
+  const updateEvents = async () => {
     if (!pathParams["competition"]) {
-      fetchEventsBySport(
-        SPToBFIdMap[selectedEventType.id]
-          ? SPToBFIdMap[selectedEventType.id]
-          : selectedEventType.id,
-        events
-      );
+      // Fetch from API instead of using static events
+      await fetchMatchesFromAPI();
     } else {
-      fetchEventsByCompetition(
-        SPToBFIdMap[selectedEventType.id]
+      // For competition-specific view, still use API but filter by competition
+      try {
+        const response = await USABET_API.get("/match/homeMatchesV2");
+        if (response?.data?.status === true && Array.isArray(response.data.data)) {
+          const targetSportId = selectedEventType.id;
+          const filteredMatches = response.data.data.filter((match: any) => {
+            const sportId = match.sportId || match.sport_id || "";
+            const competitionId = match.competitionId || match.competition_id || "";
+            return sportId === targetSportId && competitionId === selectedCompetition.id;
+          });
+
+          // Transform and use filtered matches
+          const transformedEvents: EventDTO[] = filteredMatches.map((match: any) => {
+            const homeTeam = match.homeTeam || match.home_team || "";
+            const awayTeam = match.awayTeam || match.away_team || "";
+            let eventName = match.match_name || match.matchName || match.eventName || match.event_name || "";
+            if (!eventName && homeTeam && awayTeam) {
+              eventName = `${homeTeam} V ${awayTeam}`;
+            } else if (!eventName) {
+              eventName = match.eventId || match.event_id || "Event";
+            }
+            const matchDate = match.match_date || match.matchDate;
+            const openDate = match.openDate || match.open_date || matchDate || new Date().toISOString();
+
+            return {
+              eventId: match.eventId || match.event_id || "",
+              eventName: eventName,
+              eventSlug: eventName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+              sportId: match.sportId || match.sport_id || targetSportId,
+              sportName: match.sportName || match.sport_name || selectedEventType.name,
+              competitionId: match.competitionId || match.competition_id || "",
+              competitionName: match.competitionName || match.competition_name || "",
+              openDate: openDate,
+              status: match.status || "UPCOMING",
+              providerName: match.providerName || match.provider_name || "BetFair",
+              homeTeam: homeTeam,
+              awayTeam: awayTeam,
+              marketId: match.marketId || match.market_id || "",
+              markets: match.markets || {},
+              enabled: match.enabled !== false,
+              forcedInplay: match.forcedInplay || match.forced_inplay || false,
+              virtualEvent: match.virtualEvent || match.virtual_event || false,
+              favorite: match.favorite || false,
+              ...match,
+            };
+          });
+
+          if (transformedEvents.length > 0) {
+            const sportIdToUse = SPToBFIdMap[targetSportId] ? SPToBFIdMap[targetSportId] : targetSportId;
+            fetchEventsByCompetition(sportIdToUse, selectedCompetition.id, transformedEvents);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching competition events:", error);
+        // Fallback to static events
+        const sportIdToUse = SPToBFIdMap[selectedEventType.id] ? SPToBFIdMap[selectedEventType.id] : selectedEventType.id;
+        fetchEventsByCompetition(sportIdToUse, selectedCompetition.id, events);
+      }
+    }
+  };
+
+  // Fetch matches from API based on selected sport
+  const fetchMatchesFromAPI = async () => {
+    if (!selectedEventType.id) {
+      return;
+    }
+
+    setLoadingMatches(true);
+    try {
+      const response = await USABET_API.get("/match/homeMatchesV2");
+
+      if (response?.data?.status === true && Array.isArray(response.data.data)) {
+        // Get sport ID and name from selectedEventType
+        const targetSportId = selectedEventType.id;
+        const targetSportName = selectedEventType.name;
+        const targetSportSlug = selectedEventType.slug || "";
+
+        console.log(`[ExchEventsTable] Filtering for sport:`, {
+          id: targetSportId,
+          name: targetSportName,
+          slug: targetSportSlug,
+          totalMatches: response.data.data.length,
+        });
+
+        // Filter matches by sport_id and sport_name
+        // For cricket (id: "4"), we want strict matching by both ID and name
+        const filteredMatches = response.data.data.filter((match: any) => {
+          const sportId = String(match.sportId || match.sport_id || "").trim();
+          const sportName = String(match.sportName || match.sport_name || "").trim();
+          
+          // Match by sport ID (exact match)
+          const idMatch = sportId === targetSportId;
+          
+          // Match by sport name (case-insensitive, exact or contains)
+          const normalizedSportName = sportName.toLowerCase();
+          const normalizedTargetName = targetSportName.toLowerCase();
+          const nameMatch = sportName && targetSportName &&
+            (normalizedSportName === normalizedTargetName ||
+             normalizedSportName.includes(normalizedTargetName) ||
+             normalizedTargetName.includes(normalizedSportName));
+          
+          // For cricket specifically, require both ID and name to match for strict filtering
+          // For other sports, match by ID or name
+          const isCricket = targetSportId === "4" || targetSportSlug === "cricket" || normalizedTargetName === "cricket";
+          
+          if (isCricket) {
+            // Strict matching for cricket: both ID and name must match
+            return idMatch && nameMatch;
+          } else {
+            // For other sports, match by ID or name
+            return idMatch || nameMatch;
+          }
+        });
+
+        console.log(`[ExchEventsTable] Filtered matches:`, {
+          sport: targetSportName,
+          filteredCount: filteredMatches.length,
+          sampleMatch: filteredMatches[0] ? {
+            sportId: filteredMatches[0].sportId || filteredMatches[0].sport_id,
+            sportName: filteredMatches[0].sportName || filteredMatches[0].sport_name,
+            matchName: filteredMatches[0].match_name || filteredMatches[0].matchName,
+          } : null,
+        });
+
+        // Transform API data to EventDTO format
+        const transformedEvents: EventDTO[] = filteredMatches.map((match: any) => {
+          // Get homeTeam and awayTeam
+          const homeTeam = match.homeTeam || match.home_team || "";
+          const awayTeam = match.awayTeam || match.away_team || "";
+          
+          // Get event name - prioritize match_name, then eventName/event_name
+          let eventName = match.match_name || match.matchName || match.eventName || match.event_name || "";
+          if (!eventName && homeTeam && awayTeam) {
+            eventName = `${homeTeam} V ${awayTeam}`;
+          } else if (!eventName) {
+            eventName = match.eventId || match.event_id || "Event";
+          }
+
+          // Get match date - prioritize match_date, then openDate/open_date
+          const matchDate = match.match_date || match.matchDate;
+          const openDate = match.openDate || match.open_date || matchDate || new Date().toISOString();
+
+          return {
+            eventId: match.eventId || match.event_id || "",
+            eventName: eventName,
+            eventSlug: eventName
+              .toLowerCase()
+              .replace(/\s+/g, "-")
+              .replace(/[^a-z0-9-]/g, ""),
+            sportId: match.sportId || match.sport_id || targetSportId,
+            sportName: match.sportName || match.sport_name || targetSportName,
+            competitionId: match.competitionId || match.competition_id || "",
+            competitionName: match.competitionName || match.competition_name || "",
+            openDate: openDate,
+            status: match.status || "UPCOMING",
+            providerName: match.providerName || match.provider_name || "BetFair",
+            homeTeam: homeTeam,
+            awayTeam: awayTeam,
+            marketId: match.marketId || match.market_id || "",
+            markets: match.markets || {},
+            enabled: match.enabled !== false,
+            forcedInplay: match.forcedInplay || match.forced_inplay || false,
+            virtualEvent: match.virtualEvent || match.virtual_event || false,
+            favorite: match.favorite || false,
+            ...match, // Include any additional fields from API
+          };
+        });
+
+        // Update events in store (even if empty, to clear previous data)
+        if (!pathParams["competition"]) {
+          const sportIdToUse = SPToBFIdMap[targetSportId]
+            ? SPToBFIdMap[targetSportId]
+            : targetSportId;
+          
+          if (transformedEvents.length > 0) {
+            console.log(`[ExchEventsTable] Updating store with ${transformedEvents.length} events for ${targetSportName}`);
+            fetchEventsBySport(sportIdToUse, transformedEvents);
+          } else {
+            console.log(`[ExchEventsTable] No matches found for ${targetSportName} (ID: ${targetSportId}), clearing events`);
+            // Clear events if no matches found
+            fetchEventsBySport(sportIdToUse, []);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching matches from API:", error);
+      // Fallback to static events if API fails
+      if (!pathParams["competition"]) {
+        const sportIdToUse = SPToBFIdMap[selectedEventType.id]
           ? SPToBFIdMap[selectedEventType.id]
-          : selectedEventType.id,
-        selectedCompetition.id,
-        events
-      );
+          : selectedEventType.id;
+        fetchEventsBySport(sportIdToUse, events);
+      }
+    } finally {
+      setLoadingMatches(false);
     }
   };
 
   useEffect(() => {
     if (!pathParams["competition"]) {
-      fetchEventsBySport(
-        SPToBFIdMap[selectedEventType.id]
-          ? SPToBFIdMap[selectedEventType.id]
-          : selectedEventType.id,
-        events
-      );
+      // Fetch from API for all sports based on selectedEventType
+      fetchMatchesFromAPI();
     }
   }, [selectedEventType]);
 
@@ -265,12 +447,17 @@ const EventsTable: React.FC<StoreProps> = (props) => {
 
   useEffect(() => {
     let refreshInterval = setInterval(() => {
-      updateEvents();
+      // Fetch from API for all sports
+      if (!pathParams["competition"]) {
+        fetchMatchesFromAPI();
+      } else {
+        updateEvents();
+      }
     }, 60 * 1000);
     return () => {
       clearInterval(refreshInterval);
     };
-  }, [selectedEventType]);
+  }, [selectedEventType, pathParams]);
 
   // Unsubscribe Web socket messages
   useEffect(() => {
@@ -570,7 +757,9 @@ const EventsTable: React.FC<StoreProps> = (props) => {
                                     sportId={sEvent?.sportId}
                                   />
                                   <EventName
-                                    eventName={sEvent?.customEventName}
+                                    eventName={sEvent?.customEventName
+                                      ? sEvent?.customEventName
+                                      : sEvent?.eventName}
                                     homeTeam={sEvent.homeTeam}
                                     awayTeam={sEvent?.awayTeam}
                                     openDate={

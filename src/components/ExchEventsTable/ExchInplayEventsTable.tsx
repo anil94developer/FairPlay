@@ -390,7 +390,10 @@ const InplayEventsTable: React.FC<StoreProps> = (props) => {
                                                 eventName={
                                                   sEvent?.customEventName
                                                     ? sEvent?.customEventName
-                                                    : sEvent?.eventName
+                                                    : sEvent?.eventName ||
+                                                      (sEvent?.homeTeam && sEvent?.awayTeam
+                                                        ? `${sEvent.homeTeam} V ${sEvent.awayTeam}`
+                                                        : "")
                                                 }
                                                 homeTeam={sEvent?.homeTeam}
                                                 awayTeam={sEvent?.awayTeam}
@@ -473,8 +476,13 @@ const InplayEventsTable: React.FC<StoreProps> = (props) => {
                                               eventName={
                                                 sEvent?.customEventName
                                                   ? sEvent?.customEventName
-                                                  : sEvent?.eventName
+                                                  : sEvent?.eventName ||
+                                                    (sEvent?.homeTeam && sEvent?.awayTeam
+                                                      ? `${sEvent.homeTeam} V ${sEvent.awayTeam}`
+                                                      : "")
                                               }
+                                              homeTeam={sEvent?.homeTeam}
+                                              awayTeam={sEvent?.awayTeam}
                                               openDate={
                                                 sEvent?.customOpenDate
                                                   ? sEvent?.customOpenDate

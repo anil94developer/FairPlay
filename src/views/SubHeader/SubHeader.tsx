@@ -255,6 +255,20 @@ const SubHeader: React.FC<StoreProps> = (props) => {
     return subHeaderName.toLowerCase() !== "check bonuses" || loggedIn;
   };
 
+  // Wrapper component to filter out invalid props from Material-UI Tabs
+  const TabNavLink = React.forwardRef<
+    HTMLAnchorElement,
+    React.ComponentProps<typeof NavLink> & {
+      fullWidth?: boolean;
+      indicator?: any;
+      selectionFollowsFocus?: boolean;
+      textColor?: string;
+    }
+  >(({ fullWidth, indicator, selectionFollowsFocus, textColor, ...navLinkProps }, ref) => {
+    return <NavLink {...navLinkProps} ref={ref} />;
+  });
+  TabNavLink.displayName = "TabNavLink";
+
   const defaultSubHeaders = subHeaders.map((value, index) => {
     if (
       isAllowed(value.config) &&
@@ -264,7 +278,7 @@ const SubHeader: React.FC<StoreProps> = (props) => {
       value.loginRequired
     ) {
       return (
-        <NavLink
+        <TabNavLink
           key={
             value?.key
               ? SPORTS_MAP.get(value.name).slug + index
@@ -294,7 +308,7 @@ const SubHeader: React.FC<StoreProps> = (props) => {
             {langData?.[value.langKey]}
             {value?.superScript ? value.superScript : null}
           </Button>
-        </NavLink>
+        </TabNavLink>
       );
     }
     return null;
@@ -395,7 +409,6 @@ const SubHeader: React.FC<StoreProps> = (props) => {
                 <Tooltip
                   enterTouchDelay={0}
                   className=" header-tooltip"
-                  color="white"
                   title={`${langData?.["cashable"]} : ${
                     balance
                       ? Math.floor(Number(cashableAmount / cFactor)).toFixed(2)

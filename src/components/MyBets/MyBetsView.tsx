@@ -35,6 +35,7 @@ import {
 import Spinner from "../Spinner/Spinner";
 import "./MyBets.scss";
 import { Tabs } from "@material-ui/core";
+import USABET_API from "../../api-services/usabet-api";
 
 type StoreProps = {
   allowedConfig: number;
@@ -301,77 +302,69 @@ const MyBets: React.FC<StoreProps> = (props) => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Dummy data instead of API call
-      const dummyResponse = {
-        data: {
-          orders: [
-            {
-              id: "bet-001",
-              eventName: "Team A vs Team B",
-              betPlacedTime: new Date().toISOString(),
-              stakeAmount: 100 * cFactor,
-              payOutAmount: 150 * cFactor,
-              oddValue: 1.5,
-              marketType: "MATCH_ODDS",
-              marketName: "Match Odds",
-              outcomeDesc: "Team A",
-              outcomeResult: "Open",
-              betType: "BACK",
-              sportId: "4",
-              sessionRuns: null,
-              rowClassName: "",
-            },
-            {
-              id: "bet-002",
-              eventName: "Team C vs Team D",
-              betPlacedTime: new Date(Date.now() - 86400000).toISOString(),
-              stakeAmount: 200 * cFactor,
-              payOutAmount: 180 * cFactor,
-              oddValue: 0.9,
-              marketType: "BOOKMAKER",
-              marketName: "Bookmaker",
-              outcomeDesc: "Team D",
-              outcomeResult: "Settled",
-              betType: "LAY",
-              sportId: "1",
-              sessionRuns: null,
-              rowClassName: "",
-            },
-            {
-              id: "bet-003",
-              eventName: "Player X vs Player Y",
-              betPlacedTime: new Date(Date.now() - 172800000).toISOString(),
-              stakeAmount: 50 * cFactor,
-              payOutAmount: 75 * cFactor,
-              oddValue: 1.5,
-              marketType: "FANCY",
-              marketName: "Fancy Market",
-              outcomeDesc: "Over 20.5",
-              outcomeResult: "Won",
-              betType: "BACK",
-              sportId: "2",
-              sessionRuns: 25,
-              rowClassName: "",
-            },
-          ],
-          pageToken: null,
-        },
-      };
-      let betList = dummyResponse.data?.orders;
-      for (const bet of betList) {
-        bet.stakeAmount = bet.stakeAmount / cFactor;
-        bet.payOutAmount = bet.payOutAmount / cFactor;
-        const betType = bet?.betType;
+      // Fetch data from API
+      const response = await USABET_API.get("/match/homeMatchesV2");
 
-        if (betType === "BACK") {
-          bet.rowClassName = "mb-profit-amount";
-        } else {
-          bet.rowClassName = "mb-loss-amount";
+      if (response?.data?.status === true && Array.isArray(response.data.data)) {
+        let allMatches = response.data.data;
+
+        // Filter by selected sport if not "All"
+        let filteredMatches = allMatches;
+        if (filters.sport !== "All" && filters.selectedGame === "SPORTS") {
+          filteredMatches = allMatches.filter((match: any) => {
+            const sportId = match.sportId || match.sport_id || "";
+            return sportId === filters.sport;
+          });
         }
+
+        // Transform API data to UserBet format
+        const betList: UserBet[] = filteredMatches.map((match: any, index: number) => {
+          const sportId = match.sportId || match.sport_id || "";
+          const bet: UserBet & { sportId?: string; payOutAmount?: number; sessionRuns?: number | null; rowClassName?: string; categoryType?: string } = {
+            id: match.eventId || match.event_id || `bet-${index}`,
+            eventId: match.eventId || match.event_id || "",
+            eventName: match.eventName || match.event_name || "",
+            betPlacedTime: match.openDate || match.open_date || new Date().toISOString(),
+            stakeAmount: (match.stakeAmount || match.stake_amount || 0) / cFactor,
+            payOutAmount: (match.payOutAmount || match.pay_out_amount || 0) / cFactor,
+            oddValue: match.oddValue || match.odd_value || 0,
+            marketType: (match.marketType || match.market_type || "MATCH_ODDS") as UserBet["marketType"],
+            marketName: match.marketName || match.market_name || "Match Odds",
+            outcomeDesc: match.outcomeDesc || match.outcome_desc || "",
+            outcomeResult: match.outcomeResult || match.outcome_result || "Open",
+            betType: (match.betType || match.bet_type || "BACK") as UserBet["betType"],
+            sportId: sportId,
+            sessionRuns: match.sessionRuns || match.session_runs || null,
+            rowClassName: "",
+            categoryType: match.categoryType || match.category_type || "SPORTS",
+          };
+
+          // Set row className based on bet type
+          if (bet.betType === "BACK") {
+            bet.rowClassName = "mb-profit-amount";
+          } else {
+            bet.rowClassName = "mb-loss-amount";
+          }
+
+          return bet;
+        });
+
+        // Sort by betPlacedTime
+        betList.sort((a, b) => {
+          const dateA = new Date(a.betPlacedTime).getTime();
+          const dateB = new Date(b.betPlacedTime).getTime();
+          return sortDesc ? dateB - dateA : dateA - dateB;
+        });
+
+        setBets(betList);
+        setNextPageToken(response.data?.pageToken || null);
+      } else {
+        // Fallback to empty array if API response is invalid
+        setBets([]);
+        setNextPageToken(null);
       }
-      setBets(betList);
-      setNextPageToken(dummyResponse.data?.pageToken);
     } catch (err) {
+      console.error("Error fetching bets data:", err);
       setBets([]);
       setNextPageToken(null);
     }

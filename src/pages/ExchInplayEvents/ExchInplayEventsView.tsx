@@ -54,6 +54,7 @@ import {
   setEventType,
   setExchEvent,
 } from "../../store/exchangeSports/exchangeSportsActions";
+import USABET_API from "../../api-services/usabet-api";
 
 type InplayEventsObj = {
   sportId: string;
@@ -109,6 +110,7 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
   const [apiMobBanners, setApiMobBanners] = useState([]);
   const [favouriteEvents, setFavouriteEvents] = useState<EventDTO[]>([]);
   const [inplayEvents, setInplayEvents] = useState<InplayEventsObj[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const history = useHistory();
   const windowSize = useWindowSize();
 
@@ -163,46 +165,197 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
     loggedIn && fetchNotifications();
   }, [loggedIn, notificationUpdated]);
 
-  useEffect(() => {
-    // Data transformation logic for inplayEvents
-    const groupedEventsMap = new Map<string, InplayEventsObj>();
+  // Sport ID mapping for filtering
+  const sportIdMap: { [key: string]: string[] } = {
+    "4": ["4"], // Cricket
+    "1": ["1"], // Football
+    "2": ["2"], // Tennis
+    "99994": ["99994"], // Kabaddi
+    "sr:sport:2": ["sr:sport:2", "7511"], // Basketball (also includes some Baseball IDs)
+    "7511": ["7511"], // Baseball
+    "4339": ["4339"], // GreyHound
+    "7": ["7"], // Horse Race
+  };
 
-    mockDataSource.forEach((event: any) => {
-      // Ensure we have a valid sportId
-      const sportId = event.sportId || "unknown";
+  const fetchInplayMatches = async () => {
+    setLoading(true);
+    try {
+      const response = await USABET_API.get("/match/homeMatchesV2");
 
-      if (!groupedEventsMap.has(sportId)) {
-        groupedEventsMap.set(sportId, {
-          sportId: sportId,
-          sportName: event.sportName || "Unknown Sport",
-          sportSlug: (event.sportName || "unknown")
-            .toLowerCase()
-            .replace(/\s+/g, "-"),
-          events: [],
+      if (response?.data?.status === true && Array.isArray(response.data.data)) {
+        // Filter for inplay events only
+        const inplayEvents = response.data.data.filter((event: any) => {
+          // Primary check: inplay flag
+          if (event.inplay === true || event.inPlay === true || event.in_play === true) {
+            return true;
+          }
+          
+          // Secondary check: status is IN_PLAY
+          if (event.status === "IN_PLAY") {
+            return true;
+          }
+          
+          // Tertiary check: forcedInplay flag
+          if (event.forcedInplay === true || event.forced_inplay === true) {
+            return true;
+          }
+          
+          // Fallback: Check if event has started based on match_date or openDate
+          const matchDate = event.match_date || event.matchDate;
+          const openDate = event.openDate || event.open_date || matchDate;
+          if (openDate) {
+            const sportId = event.sportId || event.sport_id || "";
+            const eventTime = moment(openDate);
+            const now = moment();
+            
+            // For tennis (sportId "2"), check if within 5 minutes
+            if (sportId === "2") {
+              return eventTime.diff(now, "minutes") <= 5;
+            }
+            
+            // For other sports, check if event has started (openDate is in the past)
+            return eventTime.diff(now, "seconds") <= 0;
+          }
+          
+          return false;
         });
+
+        // Transform API data to InplayEventsObj format
+        const groupedEventsMap = new Map<string, InplayEventsObj>();
+
+        inplayEvents.forEach((event: any) => {
+          // Ensure we have a valid sportId
+          const sportId = event.sportId || event.sport_id || "unknown";
+          const sportName = event.sportName || event.sport_name || "Unknown Sport";
+
+          if (!groupedEventsMap.has(sportId)) {
+            groupedEventsMap.set(sportId, {
+              sportId: sportId,
+              sportName: sportName,
+              sportSlug: sportName.toLowerCase().replace(/\s+/g, "-"),
+              events: [],
+            });
+          }
+
+          const sport = groupedEventsMap.get(sportId)!;
+
+          // Get homeTeam and awayTeam
+          const homeTeam = event.homeTeam || event.home_team || "";
+          const awayTeam = event.awayTeam || event.away_team || "";
+          
+          // Get event name - prioritize match_name, then eventName/event_name
+          let eventName = event.match_name || event.matchName || event.eventName || event.event_name || "";
+          if (!eventName && homeTeam && awayTeam) {
+            eventName = `${homeTeam} V ${awayTeam}`;
+          } else if (!eventName) {
+            eventName = event.eventId || event.event_id || "Event";
+          }
+
+          // Get match date - prioritize match_date, then openDate/open_date
+          const matchDate = event.match_date || event.matchDate;
+          const openDate = event.openDate || event.open_date || matchDate || new Date().toISOString();
+
+          // Transform to EventDTO format
+          const eventDTO: EventDTO = {
+            eventId: event.eventId || event.event_id || "",
+            eventName: eventName,
+            eventSlug: eventName
+              .toLowerCase()
+              .replace(/\s+/g, "-")
+              .replace(/[^a-z0-9-]/g, ""),
+            sportId: sportId,
+            sportName: sportName,
+            competitionId: event.competitionId || event.competition_id || "",
+            competitionName: event.competitionName || event.competition_name || "",
+            openDate: openDate,
+            status: event.status || "UPCOMING",
+            providerName: event.providerName || event.provider_name || "BetFair",
+            homeTeam: homeTeam,
+            awayTeam: awayTeam,
+            marketId: event.marketId || event.market_id || "",
+            markets: event.markets || {},
+            enabled: event.enabled !== false,
+            forcedInplay: event.forcedInplay || event.forced_inplay || false,
+            virtualEvent: event.virtualEvent || event.virtual_event || false,
+            favorite: event.favorite || false,
+            ...event, // Include any additional fields from API
+          };
+
+          sport.events.push(eventDTO);
+        });
+
+        const transformedInplayEvents = Array.from(groupedEventsMap.values());
+        setInplayEvents(transformedInplayEvents);
+      } else {
+        // Fallback to mock data if API fails or returns invalid data
+        console.warn("API response invalid, using fallback data");
+        const groupedEventsMap = new Map<string, InplayEventsObj>();
+        mockDataSource.forEach((event: any) => {
+          const sportId = event.sportId || "unknown";
+          if (!groupedEventsMap.has(sportId)) {
+            groupedEventsMap.set(sportId, {
+              sportId: sportId,
+              sportName: event.sportName || "Unknown Sport",
+              sportSlug: (event.sportName || "unknown")
+                .toLowerCase()
+                .replace(/\s+/g, "-"),
+              events: [],
+            });
+          }
+          const sport = groupedEventsMap.get(sportId)!;
+          const eventDTO: EventDTO = {
+            ...event,
+            eventSlug: event.eventName
+              ? event.eventName.toLowerCase().replace(/\s+/g, "-")
+              : "",
+          };
+          sport.events.push(eventDTO);
+        });
+        setInplayEvents(Array.from(groupedEventsMap.values()));
       }
+    } catch (error) {
+      console.error("Error fetching inplay matches:", error);
+      // Fallback to mock data on error
+      const groupedEventsMap = new Map<string, InplayEventsObj>();
+      mockDataSource.forEach((event: any) => {
+        const sportId = event.sportId || "unknown";
+        if (!groupedEventsMap.has(sportId)) {
+          groupedEventsMap.set(sportId, {
+            sportId: sportId,
+            sportName: event.sportName || "Unknown Sport",
+            sportSlug: (event.sportName || "unknown")
+              .toLowerCase()
+              .replace(/\s+/g, "-"),
+            events: [],
+          });
+        }
+        const sport = groupedEventsMap.get(sportId)!;
+        const eventDTO: EventDTO = {
+          ...event,
+          eventSlug: event.eventName
+            ? event.eventName.toLowerCase().replace(/\s+/g, "-")
+            : "",
+        };
+        sport.events.push(eventDTO);
+      });
+      setInplayEvents(Array.from(groupedEventsMap.values()));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      const sport = groupedEventsMap.get(sportId)!;
-
-      // Transform to EventDTO
-      const eventDTO: EventDTO = {
-        ...event,
-        eventSlug: event.eventName
-          ? event.eventName.toLowerCase().replace(/\s+/g, "-")
-          : "",
-        // Add other missing fields if necessary, or rely on mock data having them
-      };
-
-      sport.events.push(eventDTO);
-    });
-
-    const transformedInplayEvents = Array.from(groupedEventsMap.values());
-    setInplayEvents(transformedInplayEvents);
+  useEffect(() => {
+    fetchInplayMatches();
   }, []);
 
   useEffect(() => {
+    // Refresh inplay matches every 30 seconds
     let refreshInterval = setInterval(() => {
-      updateEvents(statusNew);
+      if (statusNew === Status.LIVE_MATCH || statusNew === Status.SPORT) {
+        fetchInplayMatches();
+      } else {
+        updateEvents(statusNew);
+      }
     }, 30000);
     return () => {
       clearInterval(refreshInterval);
@@ -211,11 +364,15 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
 
   const handleStatusChange = (newValue) => {
     setStatusNew(newValue);
+    if (newValue === Status.LIVE_MATCH) {
+      setSelectedSport(undefined); // Reset sport filter when "All" is selected
+    }
   };
 
   const getEvents = () => {
     switch (statusNew) {
       case Status.LIVE_MATCH:
+        // Show all sports when "All" is selected
         return inplayEvents
           .map((sport) => ({
             ...sport,
@@ -238,13 +395,17 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
           }))
           .filter((sport) => sport.events.length > 0);
       case Status.SPORT:
+        // Filter by selected sport
+        const allowedSportIds = sportIdMap[selectedSport || ""] || [selectedSport];
         return inplayEvents
-          .filter(
-            (sport) =>
-              sport.sportId === selectedSport ||
-              sport.sportId === BFToSRIdMap[sport.sportId] ||
+          .filter((sport) => {
+            // Check if sport ID matches any of the allowed IDs
+            return (
+              allowedSportIds.includes(sport.sportId) ||
+              sport.sportId === BFToSRIdMap[selectedSport || ""] ||
               sport.sportId.split("_").join(":") === selectedSport
-          )
+            );
+          })
           .map((sport) => {
             const matchingEvents = sport.events.filter((event) =>
               event?.eventName
@@ -516,10 +677,16 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
             </div>
           </div>
 
-          <InplayEventsTable
-            inplayEvents={getEvents()}
-            mobBanners={apiWebBanners}
-          />
+          {loading ? (
+            <div className="loading-container" style={{ padding: "20px", textAlign: "center" }}>
+              {langData?.["loading"] || "Loading..."}
+            </div>
+          ) : (
+            <InplayEventsTable
+              inplayEvents={getEvents()}
+              mobBanners={apiWebBanners}
+            />
+          )}
           {/* )} */}
         </IonCol>
         {Status.CUP_WINNER !== statusNew && (

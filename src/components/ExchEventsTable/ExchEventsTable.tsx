@@ -47,9 +47,10 @@ import CATALOG_API from "../../catalog-api";
 import { Button, Tabs } from "@material-ui/core";
 import { fetchFavEvents } from "../../store/exchangeSports/exchangeSportsActions";
 import { Check } from "@material-ui/icons";
-import { events } from "../../description/events";
+// import { events } from "../../description/events";
 import { favourites } from "../../description/favourites";
 import USABET_API from "../../api-services/usabet-api";
+import { EXCHANGE_EVENT_TYPES, EXCH_SPORTS_MAP } from "../../constants/ExchangeEventTypes";
 
 type StoreProps = {
   events: EventDTO[];
@@ -79,6 +80,7 @@ enum Status {
 }
 const EventsTable: React.FC<StoreProps> = (props) => {
   const {
+     
     allowedConfig,
     selectedEventType,
     selectedCompetition,
@@ -106,6 +108,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
   const [eventFilter, setEventFilter] = useState<Status>();
   const [favouriteEvents, setFavouriteEvents] = useState<EventDTO[]>([]);
   const [loadingMatches, setLoadingMatches] = useState<boolean>(false);
+  const [events, setEvents] = useState<EventDTO[]>([]);
 
   const tableFields = [
     {
@@ -210,6 +213,37 @@ const EventsTable: React.FC<StoreProps> = (props) => {
     }
   };
 
+  // Helper function to get sport ID from URL slug
+  const getSportIdFromUrl = (): string | null => {
+    const pathname = pathLocation?.pathname || "";
+    // Extract slug from URL like /exchange_sports/cricket -> "cricket"
+    const match = pathname.match(/\/exchange_sports\/([^\/]+)/);
+    if (match && match[1]) {
+      const slug = match[1].toLowerCase();
+      // Try to find sport ID from EXCH_SPORTS_MAP or EXCHANGE_EVENT_TYPES
+      if (EXCH_SPORTS_MAP[slug]) {
+        return EXCH_SPORTS_MAP[slug];
+      }
+      const sportType = EXCHANGE_EVENT_TYPES.find(
+        (sport) => sport.slug.toLowerCase() === slug
+      );
+      if (sportType) {
+        return sportType.id;
+      }
+    }
+    return null;
+  };
+
+  // Helper function to get sport slug from URL
+  const getSportSlugFromUrl = (): string | null => {
+    const pathname = pathLocation?.pathname || "";
+    const match = pathname.match(/\/exchange_sports\/([^\/]+)/);
+    if (match && match[1]) {
+      return match[1].toLowerCase();
+    }
+    return null;
+  };
+
   const searchEvent = async (val) => {
     console.log(val);
     setEventsData(events);
@@ -220,68 +254,175 @@ const EventsTable: React.FC<StoreProps> = (props) => {
   }, [eventName]);
 
   const updateEvents = async () => {
-    if (!pathParams["competition"]) {
-      // Fetch from API instead of using static events
-      await fetchMatchesFromAPI();
-    } else {
-      // For competition-specific view, still use API but filter by competition
-      try {
-        const response = await USABET_API.get("/match/homeMatchesV2");
-        if (response?.data?.status === true && Array.isArray(response.data.data)) {
-          const targetSportId = selectedEventType.id;
-          const filteredMatches = response.data.data.filter((match: any) => {
-            const sportId = match.sportId || match.sport_id || "";
-            const competitionId = match.competitionId || match.competition_id || "";
-            return sportId === targetSportId && competitionId === selectedCompetition.id;
-          });
+    setLoadingMatches(true);
+    try {
+      const response = await USABET_API.get("/match/homeMatchesV2");
 
-          // Transform and use filtered matches
-          const transformedEvents: EventDTO[] = filteredMatches.map((match: any) => {
-            const homeTeam = match.homeTeam || match.home_team || "";
-            const awayTeam = match.awayTeam || match.away_team || "";
-            let eventName = match.match_name || match.matchName || match.eventName || match.event_name || "";
-            if (!eventName && homeTeam && awayTeam) {
-              eventName = `${homeTeam} V ${awayTeam}`;
-            } else if (!eventName) {
-              eventName = match.eventId || match.event_id || "Event";
-            }
-            const matchDate = match.match_date || match.matchDate;
-            const openDate = match.openDate || match.open_date || matchDate || new Date().toISOString();
+      // Handle different API response structures
+      let allMatches: any[] = [];
+      
+      if (response?.data?.status === true && Array.isArray(response.data.data)) {
+        allMatches = response.data.data;
+      } else if (Array.isArray(response?.data?.data) && response?.data?.status === true) {
+        allMatches = response.data.data;
+      } else if (Array.isArray(response?.data)) {
+        allMatches = response.data;
+      }
 
-            return {
-              eventId: match.eventId || match.event_id || "",
-              eventName: eventName,
-              eventSlug: eventName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
-              sportId: match.sportId || match.sport_id || targetSportId,
-              sportName: match.sportName || match.sport_name || selectedEventType.name,
-              competitionId: match.competitionId || match.competition_id || "",
-              competitionName: match.competitionName || match.competition_name || "",
-              openDate: openDate,
-              status: match.status || "UPCOMING",
-              providerName: match.providerName || match.provider_name || "BetFair",
-              homeTeam: homeTeam,
-              awayTeam: awayTeam,
-              marketId: match.marketId || match.market_id || "",
-              markets: match.markets || {},
-              enabled: match.enabled !== false,
-              forcedInplay: match.forcedInplay || match.forced_inplay || false,
-              virtualEvent: match.virtualEvent || match.virtual_event || false,
-              favorite: match.favorite || false,
-              ...match,
-            };
-          });
+      if (allMatches.length > 0) {
+        let filteredMatches = allMatches;
 
-          if (transformedEvents.length > 0) {
-            const sportIdToUse = SPToBFIdMap[targetSportId] ? SPToBFIdMap[targetSportId] : targetSportId;
-            fetchEventsByCompetition(sportIdToUse, selectedCompetition.id, transformedEvents);
+        // Get sport info from URL (e.g., "cricket" from /exchange_sports/cricket)
+        const urlSlug = getSportSlugFromUrl();
+        const urlSportId = getSportIdFromUrl();
+        alert(urlSlug + " " + urlSportId);
+        // Get sport name from slug
+        let targetSportName = selectedEventType.name;
+        if (urlSlug) {
+          const sportType = EXCHANGE_EVENT_TYPES.find(
+            (sport) => sport.slug.toLowerCase() === urlSlug
+          );
+          if (sportType) {
+            targetSportName = sportType.name;
           }
         }
-      } catch (error) {
-        console.error("Error fetching competition events:", error);
-        // Fallback to static events
-        const sportIdToUse = SPToBFIdMap[selectedEventType.id] ? SPToBFIdMap[selectedEventType.id] : selectedEventType.id;
-        fetchEventsByCompetition(sportIdToUse, selectedCompetition.id, events);
+        
+        // Use URL-based sport ID if available, otherwise use selectedEventType
+        const targetSportId = urlSportId || selectedEventType.id;
+
+        console.log(`[ExchEventsTable] Filtering by URL:`, {
+          urlSlug: urlSlug,
+          urlSportId: urlSportId,
+          targetSportId: targetSportId,
+          targetSportName: targetSportName,
+          totalMatches: allMatches.length,
+        });
+       
+        // Filter by sport from URL (e.g., cricket, football, etc.)
+        if (urlSlug && urlSportId) {
+         
+          filteredMatches = allMatches.filter((match: any) => {
+            const apiSportId = String(match.sport_id || match.sportId || "").trim();
+            const apiSportName = String(match.sport_name || match.sportName || "").trim();
+            
+            // Match by sport ID (exact match)
+            const idMatch = apiSportId === targetSportId;
+            
+            // Match by sport name (case-insensitive)
+            const normalizedApiSportName = apiSportName.toLowerCase();
+            const normalizedTargetSportName = targetSportName.toLowerCase();
+            const nameMatch = apiSportName && targetSportName &&
+              (normalizedApiSportName === normalizedTargetSportName ||
+               normalizedApiSportName.includes(normalizedTargetSportName) ||
+               normalizedTargetSportName.includes(normalizedApiSportName));
+            
+            // Require both ID and name to match for strict filtering
+            return idMatch && nameMatch;
+          });
+
+          console.log(`[ExchEventsTable] Filtered by sport:`, {
+            sport: targetSportName,
+            filteredCount: filteredMatches.length,
+            sampleMatch: filteredMatches[0] ? {
+              sportId: filteredMatches[0].sport_id || filteredMatches[0].sportId,
+              sportName: filteredMatches[0].sport_name || filteredMatches[0].sportName,
+              matchName: filteredMatches[0].match_name || filteredMatches[0].matchName,
+            } : null,
+          });
+        }
+
+        // Filter by competition if competition is selected
+        if (pathParams["competition"] && selectedCompetition.id) {
+          filteredMatches = filteredMatches.filter((match: any) => {
+            const competitionId = String(match.series_id || match.competitionId || match.competition_id || "").trim();
+            return competitionId === selectedCompetition.id;
+          });
+        }
+
+        // Transform API data to EventDTO format
+        const transformedEvents: EventDTO[] = filteredMatches.map((match: any) => {
+          // Extract team names from match_name if available
+          let homeTeam = match.homeTeam || match.home_team || "";
+          let awayTeam = match.awayTeam || match.away_team || "";
+          
+          const matchName = match.match_name || match.matchName || "";
+          if (matchName && !homeTeam && !awayTeam) {
+            const teamMatch = matchName.match(/^(.+?)\s+v\s+(.+)$/i);
+            if (teamMatch) {
+              homeTeam = teamMatch[1].trim();
+              awayTeam = teamMatch[2].trim();
+            }
+          }
+          
+          // Get event name - prioritize match_name from API response
+          let eventName = match.match_name || match.matchName || match.eventName || match.event_name || "";
+          if (!eventName && homeTeam && awayTeam) {
+            eventName = `${homeTeam} V ${awayTeam}`;
+          } else if (!eventName) {
+            eventName = match.match_id || match.matchId || match.eventId || match.event_id || "Event";
+          }
+
+          // Get match date - prioritize match_date from API response
+          const matchDate = match.match_date || match.matchDate;
+          const openDate = match.openDate || match.open_date || matchDate || new Date().toISOString();
+
+          // Get sport info from API response
+          const apiSportId = match.sport_id || match.sportId || selectedEventType.id;
+          const apiSportName = match.sport_name || match.sportName || selectedEventType.name;
+
+          return {
+            eventId: match.match_id || match.matchId || match.eventId || match.event_id || "",
+            eventName: eventName,
+            eventSlug: eventName
+              .toLowerCase()
+              .replace(/\s+/g, "-")
+              .replace(/[^a-z0-9-]/g, ""),
+            sportId: apiSportId,
+            sportName: apiSportName,
+            competitionId: match.series_id || match.competitionId || match.competition_id || "",
+            competitionName: match.series_name || match.competitionName || match.competition_name || "",
+            openDate: openDate,
+            status: match.status || "UPCOMING",
+            providerName: match.providerName || match.provider_name || "BetFair",
+            homeTeam: homeTeam,
+            awayTeam: awayTeam,
+            marketId: match.market_id || match.marketId || "",
+            markets: match.markets || {},
+            enabled: match.is_active !== 0 && match.enabled !== false,
+            forcedInplay: match.manual_inplay || match.forcedInplay || match.forced_inplay || false,
+            virtualEvent: match.virtualEvent || match.virtual_event || false,
+            favorite: match.is_favorites || match.favorite || false,
+            inplay: match.inplay || match.inPlay || match.in_play || false,
+            runners: match.runners || [],
+            totalMatched: match.totalMatched || 0,
+            ...match, // Include any additional fields from API
+          };
+        });
+          // alert(transformedEvents.length);
+        console.log(`[ExchEventsTable] updateEvents - Setting ${transformedEvents.length} events to state`);
+        setEvents(transformedEvents);
+
+        // Also update Redux store for compatibility
+    if (!pathParams["competition"]) {
+          const sportIdToUse = SPToBFIdMap[selectedEventType.id]
+          ? SPToBFIdMap[selectedEventType.id]
+            : selectedEventType.id;
+          fetchEventsBySport(sportIdToUse, transformedEvents);
+        } else if (selectedCompetition.id) {
+          const sportIdToUse = SPToBFIdMap[selectedEventType.id]
+            ? SPToBFIdMap[selectedEventType.id]
+            : selectedEventType.id;
+          fetchEventsByCompetition(sportIdToUse, selectedCompetition.id, transformedEvents);
+        }
+    } else {
+        console.log(`[ExchEventsTable] updateEvents - No matches found, clearing events`);
+        setEvents([]);
       }
+    } catch (error) {
+      console.error("Error fetching events in updateEvents:", error);
+      setEvents([]);
+    } finally {
+      setLoadingMatches(false);
     }
   };
 
@@ -295,127 +436,211 @@ const EventsTable: React.FC<StoreProps> = (props) => {
     try {
       const response = await USABET_API.get("/match/homeMatchesV2");
 
+      // Handle different API response structures:
+      // Structure 1: { data: [...], status: true } - response.data.data is array, response.data.status is true
+      // Structure 2: { data: { data: [...], status: true } } - nested
+      // Structure 3: response.data is directly the array
+      let allMatches: any[] = [];
+      
+      console.log(`[ExchEventsTable] API Response structure:`, {
+        hasData: !!response?.data,
+        dataIsArray: Array.isArray(response?.data),
+        hasDataData: !!response?.data?.data,
+        dataDataIsArray: Array.isArray(response?.data?.data),
+        dataStatus: response?.data?.status,
+        responseStatus: response?.status,
+        sampleData: response?.data?.[0] || response?.data?.data?.[0],
+      });
+      
       if (response?.data?.status === true && Array.isArray(response.data.data)) {
-        // Get sport ID and name from selectedEventType
-        const targetSportId = selectedEventType.id;
-        const targetSportName = selectedEventType.name;
-        const targetSportSlug = selectedEventType.slug || "";
+        // Structure: { data: { data: [...], status: true } }
+        allMatches = response.data.data;
+      } else if (Array.isArray(response?.data?.data) && response?.data?.status === true) {
+        // Same as above, different check order
+        allMatches = response.data.data;
+      } else if (Array.isArray(response?.data)) {
+        // Direct structure: response.data is the array
+        allMatches = response.data;
+      }
 
-        console.log(`[ExchEventsTable] Filtering for sport:`, {
-          id: targetSportId,
-          name: targetSportName,
-          slug: targetSportSlug,
-          totalMatches: response.data.data.length,
-        });
+      console.log(`[ExchEventsTable] Extracted matches:`, {
+        count: allMatches.length,
+        firstMatch: allMatches[0],
+      });
 
-        // Filter matches by sport_id and sport_name
-        // For cricket (id: "4"), we want strict matching by both ID and name
-        const filteredMatches = response.data.data.filter((match: any) => {
-          const sportId = String(match.sportId || match.sport_id || "").trim();
-          const sportName = String(match.sportName || match.sport_name || "").trim();
-          
-          // Match by sport ID (exact match)
-          const idMatch = sportId === targetSportId;
-          
-          // Match by sport name (case-insensitive, exact or contains)
-          const normalizedSportName = sportName.toLowerCase();
-          const normalizedTargetName = targetSportName.toLowerCase();
-          const nameMatch = sportName && targetSportName &&
-            (normalizedSportName === normalizedTargetName ||
-             normalizedSportName.includes(normalizedTargetName) ||
-             normalizedTargetName.includes(normalizedSportName));
-          
-          // For cricket specifically, require both ID and name to match for strict filtering
-          // For other sports, match by ID or name
-          const isCricket = targetSportId === "4" || targetSportSlug === "cricket" || normalizedTargetName === "cricket";
-          
-          if (isCricket) {
-            // Strict matching for cricket: both ID and name must match
-            return idMatch && nameMatch;
-          } else {
-            // For other sports, match by ID or name
-            return idMatch || nameMatch;
+      if (allMatches.length > 0) {
+        // Get sport info from URL (e.g., "cricket" from /exchange_sports/cricket)
+        const urlSlug = getSportSlugFromUrl();
+        const urlSportId = getSportIdFromUrl();
+        
+        // Get sport name from slug
+        let targetSportName = selectedEventType.name;
+        if (urlSlug) {
+          const sportType = EXCHANGE_EVENT_TYPES.find(
+            (sport) => sport.slug.toLowerCase() === urlSlug
+          );
+          if (sportType) {
+            targetSportName = sportType.name;
           }
-        });
+        }
+        
+        // Use URL-based sport ID if available, otherwise use selectedEventType
+        const targetSportId = urlSportId || selectedEventType.id;
 
-        console.log(`[ExchEventsTable] Filtered matches:`, {
-          sport: targetSportName,
-          filteredCount: filteredMatches.length,
-          sampleMatch: filteredMatches[0] ? {
-            sportId: filteredMatches[0].sportId || filteredMatches[0].sport_id,
-            sportName: filteredMatches[0].sportName || filteredMatches[0].sport_name,
-            matchName: filteredMatches[0].match_name || filteredMatches[0].matchName,
-          } : null,
-        });
+        // Filter by sport from URL (e.g., cricket, football, etc.)
+        let filteredMatches = allMatches;
+        if (urlSlug && urlSportId) {
+          filteredMatches = allMatches.filter((match: any) => {
+            const apiSportId = String(match.sport_id || match.sportId || "").trim();
+            const apiSportName = String(match.sport_name || match.sportName || "").trim();
+            
+            // Match by sport ID (exact match)
+            const idMatch = apiSportId === targetSportId;
+            
+            // Match by sport name (case-insensitive)
+            const normalizedApiSportName = apiSportName.toLowerCase();
+            const normalizedTargetSportName = targetSportName.toLowerCase();
+            const nameMatch = apiSportName && targetSportName &&
+              (normalizedApiSportName === normalizedTargetSportName ||
+               normalizedApiSportName.includes(normalizedTargetSportName) ||
+               normalizedTargetSportName.includes(normalizedApiSportName));
+            
+            // Require both ID and name to match for strict filtering
+            return idMatch && nameMatch;
+          });
+
+          console.log(`[ExchEventsTable] fetchMatchesFromAPI - Filtered by URL sport:`, {
+            urlSlug: urlSlug,
+            urlSportId: urlSportId,
+            targetSportId: targetSportId,
+            targetSportName: targetSportName,
+            totalMatches: allMatches.length,
+            filteredCount: filteredMatches.length,
+            sampleMatch: filteredMatches[0] ? {
+              sportId: filteredMatches[0].sport_id || filteredMatches[0].sportId,
+              sportName: filteredMatches[0].sport_name || filteredMatches[0].sportName,
+              matchName: filteredMatches[0].match_name || filteredMatches[0].matchName,
+            } : null,
+          });
+    } else {
+          console.log(`[ExchEventsTable] fetchMatchesFromAPI - No URL filter, showing all matches:`, {
+            urlPath: pathLocation?.pathname,
+            totalMatches: allMatches.length,
+          });
+        }
 
         // Transform API data to EventDTO format
+        // API response structure: match_id, match_name, match_date, sport_id, sport_name, series_id, series_name, etc.
         const transformedEvents: EventDTO[] = filteredMatches.map((match: any) => {
-          // Get homeTeam and awayTeam
-          const homeTeam = match.homeTeam || match.home_team || "";
-          const awayTeam = match.awayTeam || match.away_team || "";
+          // Extract team names from match_name if available (e.g., "Canterbury Kings v Central Stags")
+          let homeTeam = match.homeTeam || match.home_team || "";
+          let awayTeam = match.awayTeam || match.away_team || "";
           
-          // Get event name - prioritize match_name, then eventName/event_name
+          // Try to parse team names from match_name if not directly available
+          const matchName = match.match_name || match.matchName || "";
+          if (matchName && !homeTeam && !awayTeam) {
+            const teamMatch = matchName.match(/^(.+?)\s+v\s+(.+)$/i);
+            if (teamMatch) {
+              homeTeam = teamMatch[1].trim();
+              awayTeam = teamMatch[2].trim();
+            }
+          }
+          
+          // Get event name - prioritize match_name from API response
           let eventName = match.match_name || match.matchName || match.eventName || match.event_name || "";
           if (!eventName && homeTeam && awayTeam) {
             eventName = `${homeTeam} V ${awayTeam}`;
           } else if (!eventName) {
-            eventName = match.eventId || match.event_id || "Event";
+            eventName = match.match_id || match.matchId || match.eventId || match.event_id || "Event";
           }
 
-          // Get match date - prioritize match_date, then openDate/open_date
+          // Get match date - prioritize match_date from API response
           const matchDate = match.match_date || match.matchDate;
           const openDate = match.openDate || match.open_date || matchDate || new Date().toISOString();
 
+          // Get sport info directly from API response (no filtering)
+          const apiSportId = match.sport_id || match.sportId || "";
+          const apiSportName = match.sport_name || match.sportName || "";
+
           return {
-            eventId: match.eventId || match.event_id || "",
+            eventId: match.match_id || match.matchId || match.eventId || match.event_id || "",
             eventName: eventName,
             eventSlug: eventName
               .toLowerCase()
               .replace(/\s+/g, "-")
               .replace(/[^a-z0-9-]/g, ""),
-            sportId: match.sportId || match.sport_id || targetSportId,
-            sportName: match.sportName || match.sport_name || targetSportName,
-            competitionId: match.competitionId || match.competition_id || "",
-            competitionName: match.competitionName || match.competition_name || "",
+            sportId: apiSportId,
+            sportName: apiSportName,
+            competitionId: match.series_id || match.competitionId || match.competition_id || "",
+            competitionName: match.series_name || match.competitionName || match.competition_name || "",
             openDate: openDate,
             status: match.status || "UPCOMING",
             providerName: match.providerName || match.provider_name || "BetFair",
             homeTeam: homeTeam,
             awayTeam: awayTeam,
-            marketId: match.marketId || match.market_id || "",
+            marketId: match.market_id || match.marketId || "",
             markets: match.markets || {},
-            enabled: match.enabled !== false,
-            forcedInplay: match.forcedInplay || match.forced_inplay || false,
+            enabled: match.is_active !== 0 && match.enabled !== false,
+            forcedInplay: match.manual_inplay || match.forcedInplay || match.forced_inplay || false,
             virtualEvent: match.virtualEvent || match.virtual_event || false,
-            favorite: match.favorite || false,
+            favorite: match.is_favorites || match.favorite || false,
+            inplay: match.inplay || match.inPlay || match.in_play || false,
+            runners: match.runners || [],
+            totalMatched: match.totalMatched || 0,
             ...match, // Include any additional fields from API
           };
         });
 
-        // Update events in store (even if empty, to clear previous data)
-        if (!pathParams["competition"]) {
-          const sportIdToUse = SPToBFIdMap[targetSportId]
-            ? SPToBFIdMap[targetSportId]
-            : targetSportId;
+        console.log(`[ExchEventsTable] Transformed all matches:`, {
+          totalTransformed: transformedEvents.length,
+          sports: [...new Set(transformedEvents.map(e => e.sportName))],
+        });
+
+        // Set events in local state
+        if (transformedEvents.length > 0) {
+          console.log(`[ExchEventsTable] fetchMatchesFromAPI - Setting ${transformedEvents.length} events to state`);
+          setEvents(transformedEvents);
           
-          if (transformedEvents.length > 0) {
-            console.log(`[ExchEventsTable] Updating store with ${transformedEvents.length} events for ${targetSportName}`);
+          // Also update Redux store for compatibility
+          if (!pathParams["competition"]) {
+            const currentSportId = selectedEventType.id;
+            const sportIdToUse = SPToBFIdMap[currentSportId]
+              ? SPToBFIdMap[currentSportId]
+              : currentSportId;
             fetchEventsBySport(sportIdToUse, transformedEvents);
-          } else {
-            console.log(`[ExchEventsTable] No matches found for ${targetSportName} (ID: ${targetSportId}), clearing events`);
-            // Clear events if no matches found
-            fetchEventsBySport(sportIdToUse, []);
           }
+        } else {
+          console.log(`[ExchEventsTable] No matches found, clearing events`);
+          setEvents([]);
+        }
+      } else {
+        console.warn(`[ExchEventsTable] No matches found in API response`, {
+          responseData: response?.data,
+          responseStatus: response?.status,
+          dataIsArray: Array.isArray(response?.data),
+          dataDataIsArray: Array.isArray(response?.data?.data),
+          dataStatus: response?.data?.status,
+        });
+        // Clear events in local state
+        setEvents([]);
+        // Also clear Redux store
+        if (!pathParams["competition"]) {
+          const sportIdToUse = SPToBFIdMap[selectedEventType.id]
+          ? SPToBFIdMap[selectedEventType.id]
+            : selectedEventType.id;
+          fetchEventsBySport(sportIdToUse, []);
         }
       }
     } catch (error) {
       console.error("Error fetching matches from API:", error);
-      // Fallback to static events if API fails
+      // Clear events in local state on error
+      setEvents([]);
+      // Also clear Redux store
       if (!pathParams["competition"]) {
         const sportIdToUse = SPToBFIdMap[selectedEventType.id]
           ? SPToBFIdMap[selectedEventType.id]
           : selectedEventType.id;
-        fetchEventsBySport(sportIdToUse, events);
+        fetchEventsBySport(sportIdToUse, []);
       }
     } finally {
       setLoadingMatches(false);
@@ -425,19 +650,15 @@ const EventsTable: React.FC<StoreProps> = (props) => {
   useEffect(() => {
     if (!pathParams["competition"]) {
       // Fetch from API for all sports based on selectedEventType
+      console.log(`[ExchEventsTable] useEffect triggered - fetching matches for selectedEventType:`, selectedEventType);
       fetchMatchesFromAPI();
     }
-  }, [selectedEventType]);
+  }, [selectedEventType.id, selectedEventType.slug]);
 
   useEffect(() => {
     if (pathParams["competition"] && !events) {
-      fetchEventsByCompetition(
-        SPToBFIdMap[selectedEventType.id]
-          ? SPToBFIdMap[selectedEventType.id]
-          : selectedEventType.id,
-        selectedCompetition.id,
-        events
-      );
+      // Fetch from API when competition is selected but no events are available
+      updateEvents();
     }
   }, [selectedCompetition]);
 
@@ -451,7 +672,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
       if (!pathParams["competition"]) {
         fetchMatchesFromAPI();
       } else {
-        updateEvents();
+      updateEvents();
       }
     }, 60 * 1000);
     return () => {
@@ -474,7 +695,15 @@ const EventsTable: React.FC<StoreProps> = (props) => {
 
   useEffect(() => {
     if (loggedIn && topicUrls?.matchOddsTopic) {
-      if (selectedEventType.id === "4" && events) {
+      // Get sport slug from URL to dynamically determine if we should subscribe to WebSocket
+      const urlSlug = getSportSlugFromUrl();
+      const sportIdFromUrl = getSportIdFromUrl();
+      // Check if current sport matches URL slug or if selectedEventType matches URL
+      const shouldSubscribe = 
+        (urlSlug && selectedEventType.slug === urlSlug) ||
+        (sportIdFromUrl && selectedEventType.id === sportIdFromUrl);
+      
+      if (shouldSubscribe && events) {
         updateMatchOddsTopic(
           topicUrls?.matchOddsTopic,
           topicUrls?.matchOddsBaseUrl
@@ -498,7 +727,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         setWsChannels(subs);
       }
     }
-  }, [betFairWSConnected, events, selectedEventType, loggedIn]);
+  }, [betFairWSConnected, events, selectedEventType, loggedIn, pathLocation]);
 
   const getCompetitionSlug = (competitionName: string) => {
     return competitionName

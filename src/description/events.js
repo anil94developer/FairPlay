@@ -11670,9 +11670,90 @@ export const fetchEventsFromAPI = async (USABET_API, sportId, sportName) => {
   }
 };
 
+// Helper function to get sport ID from slug
+// Usage: import { getSportIdFromSlug } from '../description/events';
+//        const sportId = getSportIdFromSlug("cricket"); // Returns "4"
+export const getSportIdFromSlug = (slug) => {
+  if (!slug) return null;
+  
+  const normalizedSlug = slug.toLowerCase();
+  
+  // Map of slug to sport ID (from EXCH_SPORTS_MAP)
+  const slugToIdMap = {
+    tennis: "2",
+    football: "1",
+    soccer: "1",
+    cricket: "4",
+    horseracing: "7",
+    greyhound: "4339",
+    basketball: "7522",
+    baseball: "7511",
+    binary: "99990",
+    politics: "2378961",
+    kabaddi: "99994",
+    futsal: "sr_sport_29",
+    darts: "sr_sport_22",
+    volleyball: "sr_sport_23",
+    tabletennis: "sr_sport_20",
+    icehockey: "sr_sport_4",
+    mma: "sr_sport_117",
+    rugby: "sr_sport_12",
+  };
+  
+  return slugToIdMap[normalizedSlug] || null;
+};
+
+// Helper function to get sport name from slug
+// Usage: import { getSportNameFromSlug } from '../description/events';
+//        const sportName = getSportNameFromSlug("cricket"); // Returns "Cricket"
+export const getSportNameFromSlug = (slug) => {
+  if (!slug) return null;
+  
+  const normalizedSlug = slug.toLowerCase();
+  
+  // Map of slug to sport name
+  const slugToNameMap = {
+    tennis: "Tennis",
+    football: "Football",
+    soccer: "Football",
+    cricket: "Cricket",
+    horseracing: "Horse Racing",
+    greyhound: "GreyHound",
+    basketball: "basketball",
+    baseball: "baseball",
+    binary: "Binary",
+    politics: "Politics",
+    kabaddi: "Kabaddi",
+    futsal: "Futsal",
+    darts: "Darts",
+    volleyball: "Volleyball",
+    tabletennis: "Table Tennis",
+    icehockey: "Ice Hockey",
+    mma: "MMA",
+    rugby: "Rugby",
+  };
+  
+  return slugToNameMap[normalizedSlug] || null;
+};
+
 // Function to fetch cricket matches from API (convenience function)
 // Usage: import { fetchCricketEventsFromAPI } from '../description/events';
 //        const cricketEvents = await fetchCricketEventsFromAPI(USABET_API);
 export const fetchCricketEventsFromAPI = async (USABET_API) => {
   return fetchEventsFromAPI(USABET_API, "4", "Cricket");
+};
+
+// Function to fetch events from API by slug (dynamic)
+// Usage: import { fetchEventsFromAPIBySlug } from '../description/events';
+//        const events = await fetchEventsFromAPIBySlug(USABET_API, "cricket");
+export const fetchEventsFromAPIBySlug = async (USABET_API, slug) => {
+  const sportId = getSportIdFromSlug(slug);
+  const sportName = getSportNameFromSlug(slug);
+  
+  if (!sportId || !sportName) {
+    console.warn(`[events.js] Could not find sport ID/name for slug: ${slug}`);
+    return [];
+  }
+  
+  return fetchEventsFromAPI(USABET_API, sportId, sportName);
 };

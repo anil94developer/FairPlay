@@ -27,11 +27,13 @@ import {
   getUpcomingEvents,
 } from "../../store/exchangeSports/exchangeSportsSelectors";
 import moment from "moment";
-import { Notification } from "../../models/Notification";
+type Notification = {
+  message: string;
+};
 // import "../../assets/global_styles/marquee.scss";
 import AdminNotification from "../../components/AdminNotifications/AdminNotification";
 import CloseIcon from "@material-ui/icons/Close";
-import { ReactComponent as ScrollIcons } from "../../assets/images/Notifications/notifi-scroll-icon.svg?react";
+import ScrollIcons from "../../assets/images/Notifications/notifi-scroll-icon.svg";
 import { AuthResponse } from "../../models/api/AuthResponse";
 // import { Carousel } from 'react-responsive-carousel';
 import TrendingGames from "../../components/ProviderSidebar/TrendingGames";
@@ -55,6 +57,7 @@ import {
   setExchEvent,
 } from "../../store/exchangeSports/exchangeSportsActions";
 import USABET_API from "../../api-services/usabet-api";
+import { fetchSportsFromAPI, transformSportsToTabs, SportTabData } from "../../util/sportsApiUtil";
 
 type InplayEventsObj = {
   sportId: string;
@@ -99,6 +102,8 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
     setCompetition,
     setExchEvent,
   } = props;
+  
+  const history = useHistory();
   const pathLocation = useLocation();
   const [statusNew, setStatusNew] = useState<Status>(Status.LIVE_MATCH);
   const [showNotificationModal, setShowNotificationModal] =
@@ -111,8 +116,29 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
   const [favouriteEvents, setFavouriteEvents] = useState<EventDTO[]>([]);
   const [inplayEvents, setInplayEvents] = useState<InplayEventsObj[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const history = useHistory();
+  const [sportsTabs, setSportsTabs] = useState<SportTabData[]>(sideHeaderTabs);
   const windowSize = useWindowSize();
+
+  const getSportTabLabel = (sport: SportTabData): string => {
+    const candidates = [sport?.langKey, sport?.text].filter(Boolean) as string[];
+    for (const key of candidates) {
+      const val = langData?.[key];
+      if (val) return val;
+    }
+
+    // Fallback: derive from route slug or raw text
+    const routeSlug =
+      typeof sport?.route === "string" && sport.route.includes("/exchange_sports/")
+        ? sport.route.split("/exchange_sports/")[1]?.split("/")[0]
+        : "";
+    const raw = routeSlug || sport?.text || sport?.langKey || "Sport";
+
+    return String(raw)
+      .replace(/[_-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
 
   const updateEvents = useCallback((statusnew) => {
     switch (statusnew) {
@@ -165,6 +191,18 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
     loggedIn && fetchNotifications();
   }, [loggedIn, notificationUpdated]);
 
+  useEffect(() => {
+    // Fetch sports from API to include Casino and QTech/Diamond
+    const fetchSports = async () => {
+      const sports = await fetchSportsFromAPI();
+      if (sports.length > 0) {
+        const transformedTabs = transformSportsToTabs(sports);
+        setSportsTabs(transformedTabs);
+      }
+    };
+    fetchSports();
+  }, []);
+
   // Sport ID mapping for filtering
   const sportIdMap: { [key: string]: string[] } = {
     "4": ["4"], // Cricket
@@ -180,18 +218,75 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
   const fetchInplayMatches = async () => {
     setLoading(true);
     try {
-      const response = await USABET_API.get("/match/homeMatchesV2");
+      const response = await USABET_API.get("/match/homeMatchesOpen");
+
+      // Check for invalid token response
+      if (response?.data) {
+        const data = response.data;
+        if (
+          data.status === false &&
+          data.logout === true &&
+          (data.msg?.includes("Invalid token") ||
+           data.msg?.includes("access token is invalid") ||
+           data.message?.includes("Invalid token") ||
+           data.message?.includes("access token is invalid"))
+        ) {
+          console.warn("[ExchInplayEventsView] Invalid token detected, redirecting to login");
+          sessionStorage.clear();
+          history.replace("/login");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Handle different API response structures
+      let allMatches: any[] = [];
+      
+      console.log(`[ExchInplayEventsView] API Response structure:`, {
+        hasData: !!response?.data,
+        dataIsArray: Array.isArray(response?.data),
+        hasDataData: !!response?.data?.data,
+        dataDataIsArray: Array.isArray(response?.data?.data),
+        dataStatus: response?.data?.status,
+        responseStatus: response?.status,
+        sampleData: response?.data?.[0] || response?.data?.data?.[0],
+      });
 
       if (response?.data?.status === true && Array.isArray(response.data.data)) {
+        // Structure: { data: { data: [...], status: true } }
+        allMatches = response.data.data;
+      } else if (Array.isArray(response?.data?.data) && response?.data?.status === true) {
+        // Same as above, different check order
+        allMatches = response.data.data;
+      } else if (Array.isArray(response?.data)) {
+        // Direct structure: response.data is the array
+        allMatches = response.data;
+      } else if (response?.data && typeof response.data === 'object') {
+        // If response.data is an object, try to find an array property
+        const dataKeys = Object.keys(response.data);
+        for (const key of dataKeys) {
+          if (Array.isArray(response.data[key])) {
+            allMatches = response.data[key];
+            break;
+          }
+        }
+      }
+
+      console.log(`[ExchInplayEventsView] Extracted matches:`, {
+        count: allMatches.length,
+        firstMatch: allMatches[0],
+      });
+
+      if (allMatches.length > 0) {
         // Filter for inplay events only
-        const inplayEvents = response.data.data.filter((event: any) => {
+        const inplayEvents = allMatches.filter((event: any) => {
           // Primary check: inplay flag
           if (event.inplay === true || event.inPlay === true || event.in_play === true) {
             return true;
           }
           
           // Secondary check: status is IN_PLAY
-          if (event.status === "IN_PLAY") {
+          if (event.status === "IN_PLAY" || event.status === "INPLAY") {
             return true;
           }
           
@@ -221,10 +316,10 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
         });
 
         // Transform API data to InplayEventsObj format
-        const groupedEventsMap = new Map<string, InplayEventsObj>();
+    const groupedEventsMap = new Map<string, InplayEventsObj>();
 
         inplayEvents.forEach((event: any) => {
-          // Ensure we have a valid sportId
+      // Ensure we have a valid sportId
           const sportId = event.sportId || event.sport_id || "unknown";
           const sportName = event.sportName || event.sport_name || "Unknown Sport";
 
@@ -239,12 +334,23 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
 
           const sport = groupedEventsMap.get(sportId)!;
 
-          // Get homeTeam and awayTeam
-          const homeTeam = event.homeTeam || event.home_team || "";
-          const awayTeam = event.awayTeam || event.away_team || "";
-          
           // Get event name - prioritize match_name, then eventName/event_name
           let eventName = event.match_name || event.matchName || event.eventName || event.event_name || "";
+          
+          // Extract homeTeam and awayTeam from match_name if not directly available
+          let homeTeam = event.homeTeam || event.home_team || "";
+          let awayTeam = event.awayTeam || event.away_team || "";
+          
+          // If team names not available, try to extract from match_name (e.g., "India v USA")
+          if (!homeTeam || !awayTeam) {
+            const matchNameParts = eventName.split(/\s+v(?:s)?\s+/i);
+            if (matchNameParts.length === 2) {
+              homeTeam = matchNameParts[0]?.trim() || "";
+              awayTeam = matchNameParts[1]?.trim() || "";
+            }
+          }
+          
+          // Fallback: construct event name from teams if we have them
           if (!eventName && homeTeam && awayTeam) {
             eventName = `${homeTeam} V ${awayTeam}`;
           } else if (!eventName) {
@@ -255,9 +361,58 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
           const matchDate = event.match_date || event.matchDate;
           const openDate = event.openDate || event.open_date || matchDate || new Date().toISOString();
 
+          // Transform runners from API format to matchOdds format
+          // API format: runners[].selection_name, runners[].ex.availableToBack[], runners[].ex.availableToLay[]
+          // Expected format: matchOdds.runners[].runnerName, matchOdds.runners[].backPrices[], matchOdds.runners[].layPrices[]
+          const transformedRunners = (event.runners || []).map((runner: any) => {
+            const availableToBack = runner.ex?.availableToBack || [];
+            const availableToLay = runner.ex?.availableToLay || [];
+            
+            // Helper function to parse price and size
+            const parsePrice = (val: any): number | null => {
+              if (val === "--" || val === null || val === undefined || val === "") return null;
+              const num = typeof val === "number" ? val : parseFloat(String(val));
+              return isNaN(num) ? null : num;
+            };
+            
+            return {
+              runnerId: String(runner.selectionId || runner.selection_id || ""),
+              runnerName: runner.selection_name || runner.selectionName || runner.name || "",
+              status: runner.status || "ACTIVE",
+              backPrices: availableToBack
+                .filter((price: any) => {
+                  const priceVal = parsePrice(price.price);
+                  return priceVal !== null && priceVal > 0;
+                })
+                .map((price: any) => ({
+                  price: parsePrice(price.price),
+                  size: parsePrice(price.size),
+                }))
+                .filter((p: any) => p.price !== null), // Final filter to ensure we have valid prices
+              layPrices: availableToLay
+                .filter((price: any) => {
+                  const priceVal = parsePrice(price.price);
+                  return priceVal !== null && priceVal > 0;
+                })
+                .map((price: any) => ({
+                  price: parsePrice(price.price),
+                  size: parsePrice(price.size),
+                }))
+                .filter((p: any) => p.price !== null), // Final filter to ensure we have valid prices
+            };
+          });
+
+          // Create matchOdds object if we have runners
+          const matchOdds = transformedRunners.length > 0 ? {
+            marketId: event.market_id || event.marketId || "",
+            marketName: event.market_name || event.marketName || "Match Odds",
+            status: event.status || "UPCOMING",
+            runners: transformedRunners,
+          } : undefined;
+
           // Transform to EventDTO format
           const eventDTO: EventDTO = {
-            eventId: event.eventId || event.event_id || "",
+            eventId: event.eventId || event.event_id || event.match_id || "",
             eventName: eventName,
             eventSlug: eventName
               .toLowerCase()
@@ -265,8 +420,8 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
               .replace(/[^a-z0-9-]/g, ""),
             sportId: sportId,
             sportName: sportName,
-            competitionId: event.competitionId || event.competition_id || "",
-            competitionName: event.competitionName || event.competition_name || "",
+            competitionId: event.competitionId || event.competition_id || event.series_id || "",
+            competitionName: event.competitionName || event.competition_name || event.series_name || "",
             openDate: openDate,
             status: event.status || "UPCOMING",
             providerName: event.providerName || event.provider_name || "BetFair",
@@ -278,8 +433,29 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
             forcedInplay: event.forcedInplay || event.forced_inplay || false,
             virtualEvent: event.virtualEvent || event.virtual_event || false,
             favorite: event.favorite || false,
-            ...event, // Include any additional fields from API
+            matchOdds: matchOdds, // Add transformed matchOdds
+            ...event, // Include any additional fields from API (is_lock, etc.)
           };
+          
+          // Debug logging for first few events
+          if (sport.events.length < 3) {
+            console.log(`[ExchInplayEventsView] Transformed event ${sport.events.length + 1}:`, {
+              eventName,
+              homeTeam,
+              awayTeam,
+              matchOdds: matchOdds ? {
+                marketId: matchOdds.marketId,
+                runnersCount: matchOdds.runners.length,
+                runners: matchOdds.runners.map(r => ({
+                  name: r.runnerName,
+                  backPrices: r.backPrices.length,
+                  layPrices: r.layPrices.length,
+                })),
+              } : null,
+              is_lock: event.is_lock,
+              status: event.status,
+            });
+          }
 
           sport.events.push(eventDTO);
         });
@@ -319,25 +495,25 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
       const groupedEventsMap = new Map<string, InplayEventsObj>();
       mockDataSource.forEach((event: any) => {
         const sportId = event.sportId || "unknown";
-        if (!groupedEventsMap.has(sportId)) {
-          groupedEventsMap.set(sportId, {
-            sportId: sportId,
-            sportName: event.sportName || "Unknown Sport",
-            sportSlug: (event.sportName || "unknown")
-              .toLowerCase()
-              .replace(/\s+/g, "-"),
-            events: [],
-          });
-        }
-        const sport = groupedEventsMap.get(sportId)!;
-        const eventDTO: EventDTO = {
-          ...event,
-          eventSlug: event.eventName
-            ? event.eventName.toLowerCase().replace(/\s+/g, "-")
-            : "",
-        };
-        sport.events.push(eventDTO);
-      });
+      if (!groupedEventsMap.has(sportId)) {
+        groupedEventsMap.set(sportId, {
+          sportId: sportId,
+          sportName: event.sportName || "Unknown Sport",
+          sportSlug: (event.sportName || "unknown")
+            .toLowerCase()
+            .replace(/\s+/g, "-"),
+          events: [],
+        });
+      }
+      const sport = groupedEventsMap.get(sportId)!;
+      const eventDTO: EventDTO = {
+        ...event,
+        eventSlug: event.eventName
+          ? event.eventName.toLowerCase().replace(/\s+/g, "-")
+          : "",
+      };
+      sport.events.push(eventDTO);
+    });
       setInplayEvents(Array.from(groupedEventsMap.values()));
     } finally {
       setLoading(false);
@@ -354,7 +530,7 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
       if (statusNew === Status.LIVE_MATCH || statusNew === Status.SPORT) {
         fetchInplayMatches();
       } else {
-        updateEvents(statusNew);
+      updateEvents(statusNew);
       }
     }, 30000);
     return () => {
@@ -633,7 +809,7 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
                   >
                     {langData?.["all"]}
                   </button>
-                  {sideHeaderTabs?.map(
+                  {sportsTabs?.map(
                     (sport) =>
                       sport.text !== "Multi markets" && (
                         <button
@@ -649,7 +825,7 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
                           }}
                         >
                           <sport.img className="sub-header-icons" />
-                          {langData?.[sport.langKey]}
+                          {getSportTabLabel(sport)}
                         </button>
                       )
                   )}
@@ -682,10 +858,10 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
               {langData?.["loading"] || "Loading..."}
             </div>
           ) : (
-            <InplayEventsTable
-              inplayEvents={getEvents()}
-              mobBanners={apiWebBanners}
-            />
+          <InplayEventsTable
+            inplayEvents={getEvents()}
+            mobBanners={apiWebBanners}
+          />
           )}
           {/* )} */}
         </IonCol>

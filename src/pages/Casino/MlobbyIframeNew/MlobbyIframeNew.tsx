@@ -40,8 +40,20 @@ const MlobbyIframeNew: React.FC<StoreProps> = (props) => {
   ) => {
     if (loggedIn) {
       setLoading(true);
-      const claims = sessionStorage.getItem("jwt_token").split(".")[1];
-      const userStatus = JSON.parse(window.atob(claims)).status;
+      let userStatus = 0;
+      try {
+        const jwtToken = sessionStorage.getItem("jwt_token");
+        if (jwtToken) {
+          const claims = jwtToken.split(".")[1];
+          if (claims) {
+            userStatus = JSON.parse(window.atob(claims)).status;
+          }
+        }
+      } catch (error) {
+        console.error("Error decoding JWT token in MlobbyIframeNew:", error);
+        // Default to status 0 if decoding fails
+        userStatus = 0;
+      }
 
       if (userStatus === 0 || userStatus === 3) {
         return history.push(`/home`);

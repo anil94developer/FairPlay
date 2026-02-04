@@ -303,7 +303,7 @@ const MyBets: React.FC<StoreProps> = (props) => {
     setLoading(true);
     try {
       // Fetch data from API
-      const response = await USABET_API.get("/match/homeMatchesV2");
+      const response = await USABET_API.get("/match/homeMatchesOpen");
 
       if (response?.data?.status === true && Array.isArray(response.data.data)) {
         let allMatches = response.data.data;

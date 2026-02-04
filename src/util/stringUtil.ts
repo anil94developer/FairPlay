@@ -26,6 +26,8 @@ import { ReactComponent as RugbyImg } from "../assets/images/sidebar/rugby.svg?r
 import { ReactComponent as MMAImg } from "../assets/images/sidebar/mma.svg?react";
 import { ReactComponent as BinaryImg } from "../assets/images/sidebar/binary.svg?react";
 import { ReactComponent as KabaddiImg } from "../assets/images/sidebar/kabaddi.svg?react";
+import { ReactComponent as CasinoImg } from "../assets/images/sidebar/casino.svg?react";
+import { ReactComponent as DimondImg } from "../assets/images/sidebar/dimond.svg?react";
 import { BRAND_DOMAIN } from "../constants/Branding";
 
 import moment from "moment/moment";
@@ -224,6 +226,12 @@ export const SportIconMapInplay = {
   sr_sport_12: RugbyImg,
   "99994": KabaddiImg, // Kabaddi
   "sr:sport:138": KabaddiImg, // Kabaddi SportRadar format
+  "-100": CasinoImg, // Casino
+  "QT": DimondImg, // QTech/Dimond
+  "qtech": DimondImg, // QTech/Dimond (lowercase variant)
+  "dimond": DimondImg, // Dimond (alternative spelling)
+  "diamond": DimondImg, // Diamond (alternative spelling)
+  "casino": CasinoImg, // Casino (lowercase variant)
 };
 
 const SportIdByNameMap: { [key: string]: string } = {

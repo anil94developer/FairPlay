@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { connect, useSelector } from "react-redux";
 
 import { RootState } from "../../models/RootState";
@@ -99,6 +99,9 @@ const FMTable: React.FC<StoreProps> = (props) => {
     bettingInprogress,
   } = props;
 
+  // Ensure fmData is always an array to prevent iteration errors
+  const safeFmData = Array.isArray(fmData) ? fmData : [];
+
   const {
     oneClickBettingEnabled,
     oneClickBettingStake,
@@ -132,6 +135,7 @@ const FMTable: React.FC<StoreProps> = (props) => {
     eventTypeID: null,
   });
   const [marketLimits, setMarketLimits] = useState<any>({});
+  const marketLimitsRef = useRef<any>({});
   const [filteredFancyMarketsData, setFilteredFancyMarketsData] = useState<
     FancyMarketDTO[]
   >([]);
@@ -197,41 +201,66 @@ const FMTable: React.FC<StoreProps> = (props) => {
 
   useEffect(() => {
     let localFancyCategories = new Set<string>();
-    for (const fm of fmData) {
-      if (fm?.marketId && !fm?.marketLimits && !marketLimits[fm?.marketId]) {
+    
+    for (const fm of safeFmData) {
+      if (fm?.marketId && !fm?.marketLimits && !marketLimitsRef.current[fm?.marketId]) {
         //setting a default value and the calling the fetch bet limits
         //so that fetch market limits is not multiple times for a single market
-        marketLimits[fm?.marketId] = {
+        marketLimitsRef.current[fm?.marketId] = {
           minStake: 100,
           maxStake: 100,
           maxOdd: 4,
         };
+        // Update state for display purposes
+        setMarketLimits({ ...marketLimitsRef.current });
         // fetchBetLimits(fm?.marketId, fm?.category);
       }
-      localFancyCategories.add(fm.category);
+      if (fm?.category) {
+        localFancyCategories.add(fm.category);
+      }
     }
-    fmData.map((fm) => localFancyCategories.add(fm.category));
+    
     setFancyCategories(localFancyCategories);
-  }, [fmData]);
-
+    
+    // Debug logging
+    if (process.env.NODE_ENV === 'development' && safeFmData.length > 0) {
+      console.log("[FMTable] Categories found:", Array.from(localFancyCategories));
+      console.log("[FMTable] Total markets:", safeFmData.length);
+      console.log("[FMTable] Sample market category:", safeFmData[0]?.category);
+      console.log("[FMTable] Sample market:", safeFmData[0]);
+    }
+  }, [safeFmData]);
+  
   const handletabs = useCallback(async (localFancyCategory: string) => {
     setFilteredFancyMarketsData(
       localFancyCategory === "All"
-        ? fmData
-        : fmData.filter((fm) => {
+        ? safeFmData
+        : safeFmData.filter((fm) => {
             return fm.category === localFancyCategory;
           })
     );
-  }, []);
+  }, [safeFmData]);
 
+  // Initialize filtered data when data is available (only when data length changes)
+  const prevDataLengthRef = useRef(0);
+  
   useEffect(() => {
-    handletabs("All");
-  }, []);
+    // Only initialize if data length changed (new data arrived)
+    if (safeFmData.length > 0 && safeFmData.length !== prevDataLengthRef.current) {
+      // Initialize with all data (equivalent to "All" tab)
+      setFilteredFancyMarketsData(safeFmData);
+      prevDataLengthRef.current = safeFmData.length;
+    } else if (safeFmData.length === 0 && prevDataLengthRef.current > 0) {
+      // Clear filtered data when data is cleared
+      setFilteredFancyMarketsData([]);
+      prevDataLengthRef.current = 0;
+    }
+  }, [safeFmData.length]);
 
   const cFactor = CURRENCY_TYPE_FACTOR[getCurrencyTypeFromToken()];
 
   const getFancyMarketsByGroup = (category: string) => {
-    return fmData
+    return safeFmData
       .filter((fm) => fm.category === category)
       .sort((a, b) => {
         if (a?.sort - b?.sort != 0) {

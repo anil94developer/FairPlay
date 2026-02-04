@@ -6,7 +6,7 @@ import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { connect } from "react-redux";
 import { NavLink, useHistory, useLocation, useParams } from "react-router-dom";
 import { SelectedObj } from "../../models/ExchangeSportsState";
@@ -109,6 +109,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
   const [favouriteEvents, setFavouriteEvents] = useState<EventDTO[]>([]);
   const [loadingMatches, setLoadingMatches] = useState<boolean>(false);
   const [events, setEvents] = useState<EventDTO[]>([]);
+  const enrichedUpcomingEventIdsRef = useRef<Set<string>>(new Set());
 
   const tableFields = [
     {
@@ -160,38 +161,215 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         : teamType === "away"
         ? eventData.awayTeam
         : teamType;
-    if (!eventData?.matchOdds?.runners) {
-      return [];
+
+    const teamId =
+      teamType === "home"
+        ? eventData.homeTeamId
+        : teamType === "away"
+        ? eventData.awayTeamId
+        : teamType;
+
+    // Normalize team name for matching
+    const normalizeName = (name: string) => {
+      if (!name) return "";
+      return name.toLowerCase().trim().replace(/\s+/g, " ");
+    };
+
+    const teamNormalized = normalizeName(team || "");
+    
+    // Check both eventData.matchOdds (direct) and eventData.markets?.matchOdds?.[0] (nested)
+    const matchOdds = eventData.matchOdds || eventData.markets?.matchOdds?.[0];
+
+    // Add safety checks
+    if (!matchOdds || !matchOdds.runners || matchOdds.runners.length === 0) {
+      return null;
     }
-    for (let runner of eventData.matchOdds.runners) {
-      if (
-        runner.runnerName.toLowerCase() === team.toLowerCase() ||
-        runner.runnerName.toLowerCase().includes(team.toLowerCase())
-      ) {
+
+    // For "draw" team type, look for runners with "draw" in the name
+    if (teamType === "draw") {
+      for (let runner of matchOdds.runners) {
+        const runnerName = normalizeName(runner.runnerName || "");
+        if (runnerName.includes("draw") || runnerName === "draw") {
         return [
           {
             type: "back-odd",
-            price: runner?.backPrices[0]?.price,
-            size: runner?.backPrices[0]?.size,
+              price: runner?.backPrices?.[0]?.price,
+              size: runner?.backPrices?.[0]?.size,
+              outcomeId: runner?.runnerId,
+              outcomeName: runner.runnerName,
+            },
+            {
+              type: "lay-odd",
+              price: runner?.layPrices?.[0]?.price,
+              size: runner?.layPrices?.[0]?.size,
             outcomeId: runner.runnerId,
+              outcomeName: runner.runnerName,
+            },
+          ];
+        }
+      }
+      return null;
+    }
+
+    // For home/away teams, try multiple matching strategies
+    for (let runner of matchOdds.runners) {
+      const runnerName = normalizeName(runner.runnerName || "");
+      
+      // Skip draw runners when looking for home/away
+      if (runnerName.includes("draw")) {
+        continue;
+      }
+
+      // Strategy 1: Exact match
+      if (runnerName === teamNormalized) {
+        return [
+          {
+            type: "back-odd",
+            price: runner?.backPrices?.[0]?.price,
+            size: runner?.backPrices?.[0]?.size,
+            outcomeId: runner?.runnerId,
             outcomeName: runner.runnerName,
           },
           {
             type: "lay-odd",
-            price: runner?.layPrices[0]?.price,
-            size: runner?.layPrices[0]?.size,
+            price: runner?.layPrices?.[0]?.price,
+            size: runner?.layPrices?.[0]?.size,
+            outcomeId: runner.runnerId,
+            outcomeName: runner.runnerName,
+          },
+        ];
+      }
+
+      // Strategy 2: Runner name contains team name
+      if (teamNormalized && runnerName.includes(teamNormalized)) {
+        return [
+          {
+            type: "back-odd",
+            price: runner?.backPrices?.[0]?.price,
+            size: runner?.backPrices?.[0]?.size,
+            outcomeId: runner?.runnerId,
+            outcomeName: runner.runnerName,
+          },
+          {
+            type: "lay-odd",
+            price: runner?.layPrices?.[0]?.price,
+            size: runner?.layPrices?.[0]?.size,
+            outcomeId: runner.runnerId,
+            outcomeName: runner.runnerName,
+          },
+        ];
+      }
+
+      // Strategy 3: Team name contains runner name
+      if (teamNormalized && teamNormalized.includes(runnerName)) {
+        return [
+          {
+            type: "back-odd",
+            price: runner?.backPrices?.[0]?.price,
+            size: runner?.backPrices?.[0]?.size,
+            outcomeId: runner?.runnerId,
+            outcomeName: runner.runnerName,
+          },
+          {
+            type: "lay-odd",
+            price: runner?.layPrices?.[0]?.price,
+            size: runner?.layPrices?.[0]?.size,
+            outcomeId: runner.runnerId,
+            outcomeName: runner.runnerName,
+          },
+        ];
+      }
+
+      // Strategy 4: Match by runnerId if teamId is available
+      if (teamId && runner.runnerId === teamId) {
+        return [
+          {
+            type: "back-odd",
+            price: runner?.backPrices?.[0]?.price,
+            size: runner?.backPrices?.[0]?.size,
+            outcomeId: runner?.runnerId,
+            outcomeName: runner.runnerName,
+          },
+          {
+            type: "lay-odd",
+            price: runner?.layPrices?.[0]?.price,
+            size: runner?.layPrices?.[0]?.size,
             outcomeId: runner.runnerId,
             outcomeName: runner.runnerName,
           },
         ];
       }
     }
+
+    // If no match found and we have runners, try positional matching
+    // First non-draw runner = home, second non-draw runner = away
+    if (matchOdds.runners.length >= 2) {
+      const nonDrawRunners = matchOdds.runners.filter(
+        (r: any) => !normalizeName(r.runnerName || "").includes("draw")
+      );
+      
+      if (teamType === "home" && nonDrawRunners.length > 0) {
+        const runner = nonDrawRunners[0];
+        return [
+          {
+            type: "back-odd",
+            price: runner?.backPrices?.[0]?.price,
+            size: runner?.backPrices?.[0]?.size,
+            outcomeId: runner?.runnerId,
+            outcomeName: runner.runnerName,
+          },
+          {
+            type: "lay-odd",
+            price: runner?.layPrices?.[0]?.price,
+            size: runner?.layPrices?.[0]?.size,
+            outcomeId: runner.runnerId,
+            outcomeName: runner.runnerName,
+          },
+        ];
+      }
+      
+      if (teamType === "away" && nonDrawRunners.length > 1) {
+        const runner = nonDrawRunners[1];
+        return [
+          {
+            type: "back-odd",
+            price: runner?.backPrices?.[0]?.price,
+            size: runner?.backPrices?.[0]?.size,
+            outcomeId: runner?.runnerId,
+            outcomeName: runner.runnerName,
+          },
+          {
+            type: "lay-odd",
+            price: runner?.layPrices?.[0]?.price,
+            size: runner?.layPrices?.[0]?.size,
+            outcomeId: runner.runnerId,
+            outcomeName: runner.runnerName,
+          },
+        ];
+      }
+    }
+
     return null;
   };
 
   useEffect(() => {
     if (!pathParams["competition"]) {
       setCompetition({ id: "", name: "", slug: "" });
+    } else {
+      // Extract competition from URL and set it in Redux
+      // This will be used for filtering matches
+      const competitionSlug = pathParams["competition"];
+      // Check if series_id is in URL query params
+      const urlParams = new URLSearchParams(window.location.search);
+      const seriesId = urlParams.get("series_id");
+      
+      if (seriesId) {
+        // If series_id is in URL, we'll use it for filtering
+        // The competition name will be set from API data in updateEvents
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[ExchEventsTable] Found series_id in URL:', seriesId);
+        }
+      }
     }
   }, [pathParams]);
 
@@ -222,13 +400,29 @@ const EventsTable: React.FC<StoreProps> = (props) => {
       const slug = match[1].toLowerCase();
       // Try to find sport ID from EXCH_SPORTS_MAP or EXCHANGE_EVENT_TYPES
       if (EXCH_SPORTS_MAP[slug]) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[ExchEventsTable] getSportIdFromUrl - Found ID from EXCH_SPORTS_MAP:`, {
+            slug: slug,
+            id: EXCH_SPORTS_MAP[slug]
+          });
+        }
         return EXCH_SPORTS_MAP[slug];
       }
       const sportType = EXCHANGE_EVENT_TYPES.find(
         (sport) => sport.slug.toLowerCase() === slug
       );
       if (sportType) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[ExchEventsTable] getSportIdFromUrl - Found ID from EXCHANGE_EVENT_TYPES:`, {
+            slug: slug,
+            id: sportType.id,
+            name: sportType.name
+          });
+        }
         return sportType.id;
+      }
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`[ExchEventsTable] getSportIdFromUrl - No ID found for slug:`, slug);
       }
     }
     return null;
@@ -256,7 +450,25 @@ const EventsTable: React.FC<StoreProps> = (props) => {
   const updateEvents = async () => {
     setLoadingMatches(true);
     try {
-      const response = await USABET_API.get("/match/homeMatchesV2");
+      const response = await USABET_API.get("/match/homeMatchesOpen");
+
+      // Check for invalid token response
+      if (response?.data) {
+        const data = response.data;
+        if (
+          data.status === false &&
+          data.logout === true &&
+          (data.msg?.includes("Invalid token") ||
+           data.msg?.includes("access token is invalid") ||
+           data.message?.includes("Invalid token") ||
+           data.message?.includes("access token is invalid"))
+        ) {
+          console.warn("[ExchEventsTable] Invalid token detected in updateEvents, redirecting to login");
+          sessionStorage.clear();
+          history.replace("/login");
+          return;
+        }
+      }
 
       // Handle different API response structures
       let allMatches: any[] = [];
@@ -275,7 +487,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         // Get sport info from URL (e.g., "cricket" from /exchange_sports/cricket)
         const urlSlug = getSportSlugFromUrl();
         const urlSportId = getSportIdFromUrl();
-        alert(urlSlug + " " + urlSportId);
+        // alert(urlSlug + " " + urlSportId);
         // Get sport name from slug
         let targetSportName = selectedEventType.name;
         if (urlSlug) {
@@ -290,6 +502,16 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         // Use URL-based sport ID if available, otherwise use selectedEventType
         const targetSportId = urlSportId || selectedEventType.id;
 
+        // Map of sport names that are equivalent (e.g., "Soccer" = "Football")
+        const sportNameAliases: { [key: string]: string[] } = {
+          "Football": ["Soccer", "Football"],
+          "Soccer": ["Soccer", "Football"],
+          "GreyHound": ["Greyhound Racing", "GreyHound", "Greyhound"],
+          "Greyhound Racing": ["Greyhound Racing", "GreyHound", "Greyhound"],
+          "Horse Racing": ["Horse Racing", "Horse Race"],
+          "Tennis": ["Tennis"],
+        };
+
         console.log(`[ExchEventsTable] Filtering by URL:`, {
           urlSlug: urlSlug,
           urlSportId: urlSportId,
@@ -300,42 +522,253 @@ const EventsTable: React.FC<StoreProps> = (props) => {
        
         // Filter by sport from URL (e.g., cricket, football, etc.)
         if (urlSlug && urlSportId) {
+          // Log sample matches before filtering to see what sport IDs are in the API
+          if (process.env.NODE_ENV === 'development' && allMatches.length > 0) {
+            const sampleSportIds = [...new Set(allMatches.slice(0, 20).map((m: any) => ({
+              sport_id: m.sport_id,
+              sportId: m.sportId,
+              sport_name: m.sport_name || m.sportName,
+              raw_sport_id: m.sport_id,
+              raw_sportId: m.sportId,
+              type_sport_id: typeof m.sport_id,
+              type_sportId: typeof m.sportId,
+            })))];
+            console.log(`[ExchEventsTable] Sample sport IDs from API (first 20 matches):`, sampleSportIds);
+            console.log(`[ExchEventsTable] Target sport ID for filtering:`, {
+              targetSportId: targetSportId,
+              targetSportIdType: typeof targetSportId,
+              urlSlug: urlSlug,
+              urlSportId: urlSportId,
+            });
+          }
          
           filteredMatches = allMatches.filter((match: any) => {
-            const apiSportId = String(match.sport_id || match.sportId || "").trim();
-            const apiSportName = String(match.sport_name || match.sportName || "").trim();
+            // Try multiple ways to get sport ID (handle both string and number)
+            const apiSportId = String(match.sport_id ?? match.sportId ?? "").trim();
+            const apiSportName = String(match.sport_name ?? match.sportName ?? "").trim();
             
-            // Match by sport ID (exact match)
-            const idMatch = apiSportId === targetSportId;
+            // Also try as number for comparison
+            const apiSportIdNum = match.sport_id ?? match.sportId;
+            const targetSportIdNum = targetSportId ? Number(targetSportId) : null;
             
-            // Match by sport name (case-insensitive)
-            const normalizedApiSportName = apiSportName.toLowerCase();
-            const normalizedTargetSportName = targetSportName.toLowerCase();
-            const nameMatch = apiSportName && targetSportName &&
-              (normalizedApiSportName === normalizedTargetSportName ||
-               normalizedApiSportName.includes(normalizedTargetSportName) ||
-               normalizedTargetSportName.includes(normalizedApiSportName));
+            // Match by sport ID (exact match) - PRIMARY FILTER
+            // Try both string and number comparison
+            const idMatchString = apiSportId === targetSportId;
+            const idMatchNumber = targetSportIdNum !== null && apiSportIdNum !== null && 
+                                  Number(apiSportIdNum) === targetSportIdNum;
+            const idMatch = idMatchString || idMatchNumber;
             
-            // Require both ID and name to match for strict filtering
-            return idMatch && nameMatch;
+            if (!idMatch) {
+              return false; // If ID doesn't match, exclude
+            }
+            
+            // ID matches - include the match
+            // Name matching is only for logging/debugging, not a requirement
+            if (process.env.NODE_ENV === 'development' && apiSportName && targetSportName) {
+              const normalizedApiSportName = apiSportName.toLowerCase().trim();
+              const normalizedTargetSportName = targetSportName.toLowerCase().trim();
+              
+              // Log if names don't match (for debugging)
+              if (normalizedApiSportName !== normalizedTargetSportName) {
+                // Check if names are aliases
+                const targetAliases = sportNameAliases[targetSportName] || [targetSportName];
+                const apiAliases = sportNameAliases[apiSportName] || [apiSportName];
+                const hasMatchingAlias = targetAliases.some(alias => 
+                  apiAliases.some(apiAlias => 
+                    alias.toLowerCase() === apiAlias.toLowerCase()
+                  )
+                );
+                
+                if (!hasMatchingAlias) {
+                  console.log(`[ExchEventsTable] Sport ID matches but name differs:`, {
+                    apiSportId: apiSportId,
+                    apiSportIdNum: apiSportIdNum,
+                    apiSportName: apiSportName,
+                    targetSportId: targetSportId,
+                    targetSportName: targetSportName,
+                    matchName: match.match_name || match.matchName,
+                  });
+                }
+              }
+            }
+            
+            return true; // Include match if ID matches
           });
 
           console.log(`[ExchEventsTable] Filtered by sport:`, {
             sport: targetSportName,
+            targetSportId: targetSportId,
+            urlSlug: urlSlug,
+            totalMatchesBeforeFilter: allMatches.length,
             filteredCount: filteredMatches.length,
             sampleMatch: filteredMatches[0] ? {
               sportId: filteredMatches[0].sport_id || filteredMatches[0].sportId,
+              sportIdType: typeof (filteredMatches[0].sport_id || filteredMatches[0].sportId),
               sportName: filteredMatches[0].sport_name || filteredMatches[0].sportName,
               matchName: filteredMatches[0].match_name || filteredMatches[0].matchName,
             } : null,
+            allFilteredSportIds: [...new Set(filteredMatches.map((m: any) => m.sport_id || m.sportId))],
           });
         }
 
-        // Filter by competition if competition is selected
-        if (pathParams["competition"] && selectedCompetition.id) {
-          filteredMatches = filteredMatches.filter((match: any) => {
-            const competitionId = String(match.series_id || match.competitionId || match.competition_id || "").trim();
-            return competitionId === selectedCompetition.id;
+        // Filter by competition/series if competition slug is in URL
+        if (pathParams["competition"]) {
+          const competitionSlug = pathParams["competition"].toLowerCase();
+          
+          // Get series_id from URL query parameter if available
+          const urlParams = new URLSearchParams(window.location.search);
+          const urlSeriesId = urlParams.get("series_id");
+          
+          // First, try to find competition from API data and extract series_id
+          let targetSeriesId: string | null = urlSeriesId || null;
+          let targetSeriesName: string | null = null;
+          const isPseudoCompetitionSeries =
+            !!targetSeriesId &&
+            String(targetSeriesId).trim() === String(targetSportId).trim();
+
+          // If series_id equals sport_id (common for racing feeds), it is not a real series filter.
+          // Example URL: /exchange_sports/horseracing/horse-racing?series_id=7
+          // In this case we should NOT filter by series_id, otherwise we hide valid events.
+          if (isPseudoCompetitionSeries) {
+            if (process.env.NODE_ENV === "development") {
+              console.warn("[ExchEventsTable] Detected pseudo competition series_id (equals sport_id). Skipping series filter.", {
+                competitionSlug,
+                targetSeriesId,
+                targetSportId,
+              });
+            }
+          }
+          
+          // If we have series_id from URL, find the series name from API data
+          if (targetSeriesId && !isPseudoCompetitionSeries) {
+            const competitionMatch = filteredMatches.find((match: any) => {
+              const matchSeriesId = String(match.series_id || match.seriesId || match.competitionId || match.competition_id || "").trim();
+              return matchSeriesId === targetSeriesId;
+            });
+            
+            if (competitionMatch) {
+              targetSeriesName = competitionMatch.series_name || competitionMatch.seriesName || competitionMatch.competitionName || competitionMatch.competition_name || "";
+            }
+    } else {
+            // Find the first match to get series_id by slug
+            const competitionMatch = filteredMatches.find((match: any) => {
+              const matchSeriesName = (match.series_name || match.seriesName || match.competitionName || match.competition_name || "").toLowerCase();
+              const matchCompetitionSlug = matchSeriesName
+                .replace(/[^a-z0-9]/g, " ")
+                .replace(/ +/g, " ")
+                .trim()
+                .split(" ")
+                .join("-");
+              return matchCompetitionSlug === competitionSlug;
+            });
+            
+            // Extract series_id and series_name from the match
+            if (competitionMatch) {
+              targetSeriesId = String(competitionMatch.series_id || competitionMatch.seriesId || competitionMatch.competitionId || competitionMatch.competition_id || "").trim();
+              targetSeriesName = competitionMatch.series_name || competitionMatch.seriesName || competitionMatch.competitionName || competitionMatch.competition_name || "";
+            }
+          }
+          
+          // Set competition in Redux if not already set or if it's different
+          if (!isPseudoCompetitionSeries && targetSeriesId && targetSeriesName && 
+              (!selectedCompetition.id || selectedCompetition.id !== targetSeriesId || selectedCompetition.slug !== competitionSlug)) {
+            setCompetition({
+              id: targetSeriesId,
+              name: targetSeriesName,
+              slug: competitionSlug,
+            });
+            
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[ExchEventsTable] Set competition from URL:', {
+                seriesId: targetSeriesId,
+                seriesName: targetSeriesName,
+                slug: competitionSlug,
+                fromUrlParam: !!urlSeriesId
+              });
+            }
+          }
+          
+          // Filter matches by series_id (primary method - most reliable)
+          if (!isPseudoCompetitionSeries && targetSeriesId) {
+            const beforeFilterCount = filteredMatches.length;
+            
+            // Log sample data before filtering
+            if (process.env.NODE_ENV === 'development' && beforeFilterCount > 0) {
+              console.log('[ExchEventsTable] Before series_id filter:', {
+                targetSeriesId: targetSeriesId,
+                urlSeriesId: urlSeriesId,
+                sampleMatches: filteredMatches.slice(0, 5).map((m, idx) => ({
+                  index: idx,
+                  matchName: m.match_name || m.matchName,
+                  series_id: m.series_id,
+                  seriesId: m.seriesId,
+                  competitionId: m.competitionId,
+                  competition_id: m.competition_id,
+                  series_name: m.series_name,
+                  seriesName: m.seriesName,
+                  allFields: Object.keys(m).filter(k => k.toLowerCase().includes('series') || k.toLowerCase().includes('competition'))
+                }))
+              });
+            }
+            
+            filteredMatches = filteredMatches.filter((match: any) => {
+              // Try all possible field names for series_id
+              const matchSeriesId = String(
+                match.series_id || 
+                match.seriesId || 
+                match.competitionId || 
+                match.competition_id ||
+                ""
+              ).trim();
+              
+              const isMatch = matchSeriesId === targetSeriesId;
+              
+              return isMatch;
+            });
+            
+            console.log(`[ExchEventsTable] Filtered by series_id:`, {
+              targetSeriesId: targetSeriesId,
+              urlSeriesId: urlSeriesId,
+              beforeFilter: beforeFilterCount,
+              afterFilter: filteredMatches.length,
+              filteredMatches: filteredMatches.slice(0, 3).map(m => ({
+                matchName: m.match_name || m.matchName,
+                seriesId: m.series_id || m.seriesId,
+                seriesName: m.series_name || m.seriesName
+              }))
+            });
+          } else if (!isPseudoCompetitionSeries && selectedCompetition.id) {
+            // Fallback: use selectedCompetition.id if we have it
+            filteredMatches = filteredMatches.filter((match: any) => {
+              const matchSeriesId = String(match.series_id || match.seriesId || match.competitionId || match.competition_id || "").trim();
+              return matchSeriesId === selectedCompetition.id;
+            });
+          } else if (!isPseudoCompetitionSeries) {
+            // Last resort: match by slug
+            filteredMatches = filteredMatches.filter((match: any) => {
+              const matchSeriesName = (match.series_name || match.seriesName || match.competitionName || match.competition_name || "").toLowerCase();
+              const matchCompetitionSlug = matchSeriesName
+                .replace(/[^a-z0-9]/g, " ")
+                .replace(/ +/g, " ")
+                .trim()
+                .split(" ")
+                .join("-");
+              return matchCompetitionSlug === competitionSlug;
+            });
+          }
+          
+          console.log(`[ExchEventsTable] Final filtered by competition/series:`, {
+            competitionSlug: competitionSlug,
+            urlSeriesId: urlSeriesId,
+            targetSeriesId: targetSeriesId,
+            selectedCompetitionId: selectedCompetition.id,
+            filteredCount: filteredMatches.length,
+            totalMatchesBeforeFilter: allMatches.length,
+            sampleMatch: filteredMatches[0] ? {
+              seriesId: filteredMatches[0].series_id || filteredMatches[0].seriesId,
+              seriesName: filteredMatches[0].series_name || filteredMatches[0].seriesName,
+              matchName: filteredMatches[0].match_name || filteredMatches[0].matchName,
+            } : null,
           });
         }
 
@@ -370,6 +803,55 @@ const EventsTable: React.FC<StoreProps> = (props) => {
           const apiSportId = match.sport_id || match.sportId || selectedEventType.id;
           const apiSportName = match.sport_name || match.sportName || selectedEventType.name;
 
+          // Transform runners from API format to matchOdds format
+          // API format: runners[].selection_name, runners[].ex.availableToBack[], runners[].ex.availableToLay[]
+          // Expected format: matchOdds.runners[].runnerName, matchOdds.runners[].backPrices[], matchOdds.runners[].layPrices[]
+          const transformedRunners = (match.runners || []).map((runner: any) => {
+            const availableToBack = runner.ex?.availableToBack || [];
+            const availableToLay = runner.ex?.availableToLay || [];
+            
+            // Helper function to parse price and size
+            const parsePrice = (val: any): number | null => {
+              if (val === "--" || val === null || val === undefined || val === "") return null;
+              const num = typeof val === "number" ? val : parseFloat(String(val));
+              return isNaN(num) ? null : num;
+            };
+            
+            return {
+              runnerId: String(runner.selectionId || runner.selection_id || ""),
+              runnerName: runner.selection_name || runner.selectionName || runner.name || "",
+              status: runner.status || "ACTIVE",
+              backPrices: availableToBack
+                .filter((price: any) => {
+                  const priceVal = parsePrice(price.price);
+                  return priceVal !== null && priceVal > 0;
+                })
+                .map((price: any) => ({
+                  price: parsePrice(price.price),
+                  size: parsePrice(price.size),
+                }))
+                .filter((p: any) => p.price !== null), // Final filter to ensure we have valid prices
+              layPrices: availableToLay
+                .filter((price: any) => {
+                  const priceVal = parsePrice(price.price);
+                  return priceVal !== null && priceVal > 0;
+                })
+                .map((price: any) => ({
+                  price: parsePrice(price.price),
+                  size: parsePrice(price.size),
+                }))
+                .filter((p: any) => p.price !== null), // Final filter to ensure we have valid prices
+            };
+          });
+
+          // Create matchOdds object if we have runners
+          const matchOdds = transformedRunners.length > 0 ? {
+            marketId: match.market_id || match.marketId || "",
+            marketName: match.market_name || match.marketName || "Match Odds",
+            status: match.status || "UPCOMING",
+            runners: transformedRunners,
+          } : undefined;
+
           return {
             eventId: match.match_id || match.matchId || match.eventId || match.event_id || "",
             eventName: eventName,
@@ -395,6 +877,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
             inplay: match.inplay || match.inPlay || match.in_play || false,
             runners: match.runners || [],
             totalMatched: match.totalMatched || 0,
+            matchOdds: matchOdds, // Add transformed matchOdds
             ...match, // Include any additional fields from API
           };
         });
@@ -418,8 +901,27 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         console.log(`[ExchEventsTable] updateEvents - No matches found, clearing events`);
         setEvents([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching events in updateEvents:", error);
+      
+      // Check for invalid token in error response
+      if (error?.response?.data) {
+        const data = error.response.data;
+        if (
+          data.status === false &&
+          data.logout === true &&
+          (data.msg?.includes("Invalid token") ||
+           data.msg?.includes("access token is invalid") ||
+           data.message?.includes("Invalid token") ||
+           data.message?.includes("access token is invalid"))
+        ) {
+          console.warn("[ExchEventsTable] Invalid token in error, redirecting to login");
+          sessionStorage.clear();
+          history.replace("/login");
+          return;
+        }
+      }
+      
       setEvents([]);
     } finally {
       setLoadingMatches(false);
@@ -434,7 +936,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
 
     setLoadingMatches(true);
     try {
-      const response = await USABET_API.get("/match/homeMatchesV2");
+      const response = await USABET_API.get("/match/homeMatchesOpen");
 
       // Handle different API response structures:
       // Structure 1: { data: [...], status: true } - response.data.data is array, response.data.status is true
@@ -487,45 +989,281 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         // Use URL-based sport ID if available, otherwise use selectedEventType
         const targetSportId = urlSportId || selectedEventType.id;
 
+        // Map of sport names that are equivalent (e.g., "Soccer" = "Football")
+        const sportNameAliases: { [key: string]: string[] } = {
+          "Football": ["Soccer", "Football"],
+          "Soccer": ["Soccer", "Football"],
+          "GreyHound": ["Greyhound Racing", "GreyHound", "Greyhound"],
+          "Greyhound Racing": ["Greyhound Racing", "GreyHound", "Greyhound"],
+          "Horse Racing": ["Horse Racing", "Horse Race"],
+          "Tennis": ["Tennis"],
+        };
+
         // Filter by sport from URL (e.g., cricket, football, etc.)
         let filteredMatches = allMatches;
         if (urlSlug && urlSportId) {
+          // Log sample matches before filtering to see what sport IDs are in the API
+          if (process.env.NODE_ENV === 'development' && allMatches.length > 0) {
+            const sampleSportIds = [...new Set(allMatches.slice(0, 20).map((m: any) => ({
+              sport_id: m.sport_id,
+              sportId: m.sportId,
+              sport_name: m.sport_name || m.sportName,
+              raw_sport_id: m.sport_id,
+              raw_sportId: m.sportId,
+              type_sport_id: typeof m.sport_id,
+              type_sportId: typeof m.sportId,
+            })))];
+            console.log(`[ExchEventsTable] fetchMatchesFromAPI - Sample sport IDs from API (first 20 matches):`, sampleSportIds);
+            console.log(`[ExchEventsTable] fetchMatchesFromAPI - Target sport ID for filtering:`, {
+              targetSportId: targetSportId,
+              targetSportIdType: typeof targetSportId,
+              urlSlug: urlSlug,
+              urlSportId: urlSportId,
+            });
+          }
+          
           filteredMatches = allMatches.filter((match: any) => {
-            const apiSportId = String(match.sport_id || match.sportId || "").trim();
-            const apiSportName = String(match.sport_name || match.sportName || "").trim();
+            // Try multiple ways to get sport ID (handle both string and number)
+            const apiSportId = String(match.sport_id ?? match.sportId ?? "").trim();
+            const apiSportName = String(match.sport_name ?? match.sportName ?? "").trim();
             
-            // Match by sport ID (exact match)
-            const idMatch = apiSportId === targetSportId;
+            // Also try as number for comparison
+            const apiSportIdNum = match.sport_id ?? match.sportId;
+            const targetSportIdNum = targetSportId ? Number(targetSportId) : null;
             
-            // Match by sport name (case-insensitive)
-            const normalizedApiSportName = apiSportName.toLowerCase();
-            const normalizedTargetSportName = targetSportName.toLowerCase();
-            const nameMatch = apiSportName && targetSportName &&
-              (normalizedApiSportName === normalizedTargetSportName ||
-               normalizedApiSportName.includes(normalizedTargetSportName) ||
-               normalizedTargetSportName.includes(normalizedApiSportName));
+            // Match by sport ID (exact match) - PRIMARY FILTER
+            // Try both string and number comparison
+            const idMatchString = apiSportId === targetSportId;
+            const idMatchNumber = targetSportIdNum !== null && apiSportIdNum !== null && 
+                                  Number(apiSportIdNum) === targetSportIdNum;
+            const idMatch = idMatchString || idMatchNumber;
             
-            // Require both ID and name to match for strict filtering
-            return idMatch && nameMatch;
+            if (!idMatch) {
+              return false; // If ID doesn't match, exclude
+            }
+            
+            // ID matches - include the match
+            // Name matching is only for logging/debugging, not a requirement
+            if (process.env.NODE_ENV === 'development' && apiSportName && targetSportName) {
+              const normalizedApiSportName = apiSportName.toLowerCase().trim();
+              const normalizedTargetSportName = targetSportName.toLowerCase().trim();
+              
+              // Log if names don't match (for debugging)
+              if (normalizedApiSportName !== normalizedTargetSportName) {
+                // Check if names are aliases
+                const targetAliases = sportNameAliases[targetSportName] || [targetSportName];
+                const apiAliases = sportNameAliases[apiSportName] || [apiSportName];
+                const hasMatchingAlias = targetAliases.some(alias => 
+                  apiAliases.some(apiAlias => 
+                    alias.toLowerCase() === apiAlias.toLowerCase()
+                  )
+                );
+                
+                if (!hasMatchingAlias) {
+                  console.log(`[ExchEventsTable] fetchMatchesFromAPI - Sport ID matches but name differs:`, {
+                    apiSportId: apiSportId,
+                    apiSportIdNum: apiSportIdNum,
+                    apiSportName: apiSportName,
+                    targetSportId: targetSportId,
+                    targetSportName: targetSportName,
+                    matchName: match.match_name || match.matchName,
+                  });
+                }
+              }
+            }
+            
+            return true; // Include match if ID matches
           });
 
           console.log(`[ExchEventsTable] fetchMatchesFromAPI - Filtered by URL sport:`, {
             urlSlug: urlSlug,
             urlSportId: urlSportId,
             targetSportId: targetSportId,
+            targetSportIdType: typeof targetSportId,
             targetSportName: targetSportName,
             totalMatches: allMatches.length,
             filteredCount: filteredMatches.length,
             sampleMatch: filteredMatches[0] ? {
               sportId: filteredMatches[0].sport_id || filteredMatches[0].sportId,
+              sportIdType: typeof (filteredMatches[0].sport_id || filteredMatches[0].sportId),
               sportName: filteredMatches[0].sport_name || filteredMatches[0].sportName,
               matchName: filteredMatches[0].match_name || filteredMatches[0].matchName,
             } : null,
+            allFilteredSportIds: [...new Set(filteredMatches.map((m: any) => m.sport_id || m.sportId))],
           });
     } else {
           console.log(`[ExchEventsTable] fetchMatchesFromAPI - No URL filter, showing all matches:`, {
             urlPath: pathLocation?.pathname,
             totalMatches: allMatches.length,
+          });
+        }
+
+        // Filter by competition/series if competition slug is in URL
+        if (pathParams["competition"]) {
+          const competitionSlug = pathParams["competition"].toLowerCase();
+          
+          // Get series_id from URL query parameter if available
+          const urlParams = new URLSearchParams(window.location.search);
+          const urlSeriesId = urlParams.get("series_id");
+          
+          // First, try to find competition from API data and extract series_id
+          let targetSeriesId: string | null = urlSeriesId || null;
+          let targetSeriesName: string | null = null;
+          const isPseudoCompetitionSeries =
+            !!targetSeriesId &&
+            String(targetSeriesId).trim() === String(targetSportId).trim();
+
+          // If series_id equals sport_id (common for racing feeds), it is not a real series filter.
+          if (isPseudoCompetitionSeries) {
+            if (process.env.NODE_ENV === "development") {
+              console.warn("[ExchEventsTable] fetchMatchesFromAPI - Detected pseudo competition series_id (equals sport_id). Skipping series filter.", {
+                competitionSlug,
+                targetSeriesId,
+                targetSportId,
+              });
+            }
+          }
+          
+          // If we have series_id from URL, find the series name from API data
+          if (targetSeriesId && !isPseudoCompetitionSeries) {
+            const competitionMatch = filteredMatches.find((match: any) => {
+              const matchSeriesId = String(match.series_id || match.seriesId || match.competitionId || match.competition_id || "").trim();
+              return matchSeriesId === targetSeriesId;
+            });
+            
+            if (competitionMatch) {
+              targetSeriesName = competitionMatch.series_name || competitionMatch.seriesName || competitionMatch.competitionName || competitionMatch.competition_name || "";
+            }
+          } else {
+            // Find the first match to get series_id by slug
+            const competitionMatch = filteredMatches.find((match: any) => {
+              const matchSeriesName = (match.series_name || match.seriesName || match.competitionName || match.competition_name || "").toLowerCase();
+              const matchCompetitionSlug = matchSeriesName
+                .replace(/[^a-z0-9]/g, " ")
+                .replace(/ +/g, " ")
+                .trim()
+                .split(" ")
+                .join("-");
+              return matchCompetitionSlug === competitionSlug;
+            });
+            
+            // Extract series_id and series_name from the match
+            if (competitionMatch) {
+              targetSeriesId = String(competitionMatch.series_id || competitionMatch.seriesId || competitionMatch.competitionId || competitionMatch.competition_id || "").trim();
+              targetSeriesName = competitionMatch.series_name || competitionMatch.seriesName || competitionMatch.competitionName || competitionMatch.competition_name || "";
+            }
+          }
+          
+          // Set competition in Redux if not already set or if it's different
+          if (!isPseudoCompetitionSeries && targetSeriesId && targetSeriesName && 
+              (!selectedCompetition.id || selectedCompetition.id !== targetSeriesId || selectedCompetition.slug !== competitionSlug)) {
+            setCompetition({
+              id: targetSeriesId,
+              name: targetSeriesName,
+              slug: competitionSlug,
+            });
+            
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[ExchEventsTable] fetchMatchesFromAPI - Set competition from URL:', {
+                seriesId: targetSeriesId,
+                seriesName: targetSeriesName,
+                slug: competitionSlug,
+                fromUrlParam: !!urlSeriesId
+              });
+            }
+          }
+          
+          // Filter matches by series_id (primary method - most reliable)
+          if (!isPseudoCompetitionSeries && targetSeriesId) {
+            const beforeFilterCount = filteredMatches.length;
+            
+            // Log sample data before filtering
+            if (process.env.NODE_ENV === 'development' && beforeFilterCount > 0) {
+              console.log('[ExchEventsTable] fetchMatchesFromAPI - Before series_id filter:', {
+                targetSeriesId: targetSeriesId,
+                urlSeriesId: urlSeriesId,
+                sampleMatches: filteredMatches.slice(0, 5).map((m, idx) => ({
+                  index: idx,
+                  matchName: m.match_name || m.matchName,
+                  series_id: m.series_id,
+                  seriesId: m.seriesId,
+                  competitionId: m.competitionId,
+                  competition_id: m.competition_id,
+                  series_name: m.series_name,
+                  seriesName: m.seriesName,
+                }))
+              });
+            }
+            
+            const matchesBeforeSeriesFilter = [...filteredMatches];
+            filteredMatches = filteredMatches.filter((match: any, index: number) => {
+              // Try all possible field names for series_id
+              const matchSeriesId = String(
+                match.series_id || 
+                match.seriesId || 
+                match.competitionId || 
+                match.competition_id ||
+                ""
+              ).trim();
+              
+              const isMatch = matchSeriesId === targetSeriesId;
+              
+              // Debug logging for first few matches
+              if (process.env.NODE_ENV === 'development' && index < 3) {
+                console.log('[ExchEventsTable] fetchMatchesFromAPI - Series ID comparison:', {
+                  matchSeriesId: matchSeriesId,
+                  targetSeriesId: targetSeriesId,
+                  isMatch: isMatch,
+                  matchName: match.match_name || match.matchName,
+                });
+              }
+              
+              return isMatch;
+            });
+            
+            console.log(`[ExchEventsTable] fetchMatchesFromAPI - Filtered by series_id:`, {
+              targetSeriesId: targetSeriesId,
+              urlSeriesId: urlSeriesId,
+              beforeFilter: beforeFilterCount,
+              afterFilter: filteredMatches.length,
+              filteredMatches: filteredMatches.slice(0, 3).map(m => ({
+                matchName: m.match_name || m.matchName,
+                seriesId: m.series_id || m.seriesId,
+                seriesName: m.series_name || m.seriesName
+              }))
+            });
+          } else if (!isPseudoCompetitionSeries && selectedCompetition.id) {
+            // Fallback: use selectedCompetition.id if we have it
+            filteredMatches = filteredMatches.filter((match: any) => {
+              const matchSeriesId = String(match.series_id || match.seriesId || match.competitionId || match.competition_id || "").trim();
+              return matchSeriesId === selectedCompetition.id;
+            });
+          } else if (!isPseudoCompetitionSeries) {
+            // Last resort: match by slug
+            filteredMatches = filteredMatches.filter((match: any) => {
+              const matchSeriesName = (match.series_name || match.seriesName || match.competitionName || match.competition_name || "").toLowerCase();
+              const matchCompetitionSlug = matchSeriesName
+                .replace(/[^a-z0-9]/g, " ")
+                .replace(/ +/g, " ")
+                .trim()
+                .split(" ")
+                .join("-");
+              return matchCompetitionSlug === competitionSlug;
+            });
+          }
+          
+          console.log(`[ExchEventsTable] fetchMatchesFromAPI - Final filtered by competition/series:`, {
+            competitionSlug: competitionSlug,
+            urlSeriesId: urlSeriesId,
+            targetSeriesId: targetSeriesId,
+            selectedCompetitionId: selectedCompetition.id,
+            filteredCount: filteredMatches.length,
+            totalMatchesBeforeFilter: allMatches.length,
+            sampleMatch: filteredMatches[0] ? {
+              seriesId: filteredMatches[0].series_id || filteredMatches[0].seriesId,
+              seriesName: filteredMatches[0].series_name || filteredMatches[0].seriesName,
+              matchName: filteredMatches[0].match_name || filteredMatches[0].matchName,
+            } : null,
           });
         }
 
@@ -562,6 +1300,55 @@ const EventsTable: React.FC<StoreProps> = (props) => {
           const apiSportId = match.sport_id || match.sportId || "";
           const apiSportName = match.sport_name || match.sportName || "";
 
+          // Transform runners from API format to matchOdds format
+          // API format: runners[].selection_name, runners[].ex.availableToBack[], runners[].ex.availableToLay[]
+          // Expected format: matchOdds.runners[].runnerName, matchOdds.runners[].backPrices[], matchOdds.runners[].layPrices[]
+          const transformedRunners = (match.runners || []).map((runner: any) => {
+            const availableToBack = runner.ex?.availableToBack || [];
+            const availableToLay = runner.ex?.availableToLay || [];
+            
+            // Helper function to parse price and size
+            const parsePrice = (val: any): number | null => {
+              if (val === "--" || val === null || val === undefined || val === "") return null;
+              const num = typeof val === "number" ? val : parseFloat(String(val));
+              return isNaN(num) ? null : num;
+            };
+            
+            return {
+              runnerId: String(runner.selectionId || runner.selection_id || ""),
+              runnerName: runner.selection_name || runner.selectionName || runner.name || "",
+              status: runner.status || "ACTIVE",
+              backPrices: availableToBack
+                .filter((price: any) => {
+                  const priceVal = parsePrice(price.price);
+                  return priceVal !== null && priceVal > 0;
+                })
+                .map((price: any) => ({
+                  price: parsePrice(price.price),
+                  size: parsePrice(price.size),
+                }))
+                .filter((p: any) => p.price !== null), // Final filter to ensure we have valid prices
+              layPrices: availableToLay
+                .filter((price: any) => {
+                  const priceVal = parsePrice(price.price);
+                  return priceVal !== null && priceVal > 0;
+                })
+                .map((price: any) => ({
+                  price: parsePrice(price.price),
+                  size: parsePrice(price.size),
+                }))
+                .filter((p: any) => p.price !== null), // Final filter to ensure we have valid prices
+            };
+          });
+
+          // Create matchOdds object if we have runners
+          const matchOdds = transformedRunners.length > 0 ? {
+            marketId: match.market_id || match.marketId || "",
+            marketName: match.market_name || match.marketName || "Match Odds",
+            status: match.status || "UPCOMING",
+            runners: transformedRunners,
+          } : undefined;
+
           return {
             eventId: match.match_id || match.matchId || match.eventId || match.event_id || "",
             eventName: eventName,
@@ -587,6 +1374,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
             inplay: match.inplay || match.inPlay || match.in_play || false,
             runners: match.runners || [],
             totalMatched: match.totalMatched || 0,
+            matchOdds: matchOdds, // Add transformed matchOdds
             ...match, // Include any additional fields from API
           };
         });
@@ -602,16 +1390,31 @@ const EventsTable: React.FC<StoreProps> = (props) => {
           setEvents(transformedEvents);
           
           // Also update Redux store for compatibility
+          const currentSportId = selectedEventType.id;
+          const sportIdToUse = SPToBFIdMap[currentSportId]
+            ? SPToBFIdMap[currentSportId]
+            : currentSportId;
+          
           if (!pathParams["competition"]) {
-            const currentSportId = selectedEventType.id;
-            const sportIdToUse = SPToBFIdMap[currentSportId]
-              ? SPToBFIdMap[currentSportId]
-              : currentSportId;
             fetchEventsBySport(sportIdToUse, transformedEvents);
+          } else if (selectedCompetition.id) {
+            fetchEventsByCompetition(sportIdToUse, selectedCompetition.id, transformedEvents);
           }
         } else {
           console.log(`[ExchEventsTable] No matches found, clearing events`);
           setEvents([]);
+          
+          // Also clear Redux store
+          const currentSportId = selectedEventType.id;
+          const sportIdToUse = SPToBFIdMap[currentSportId]
+            ? SPToBFIdMap[currentSportId]
+            : currentSportId;
+          
+          if (!pathParams["competition"]) {
+            fetchEventsBySport(sportIdToUse, []);
+          } else if (selectedCompetition.id) {
+            fetchEventsByCompetition(sportIdToUse, selectedCompetition.id, []);
+          }
         }
       } else {
         console.warn(`[ExchEventsTable] No matches found in API response`, {
@@ -624,23 +1427,50 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         // Clear events in local state
         setEvents([]);
         // Also clear Redux store
+        const currentSportId = selectedEventType.id;
+        const sportIdToUse = SPToBFIdMap[currentSportId]
+          ? SPToBFIdMap[currentSportId]
+          : currentSportId;
+        
         if (!pathParams["competition"]) {
-          const sportIdToUse = SPToBFIdMap[selectedEventType.id]
-          ? SPToBFIdMap[selectedEventType.id]
-            : selectedEventType.id;
           fetchEventsBySport(sportIdToUse, []);
+        } else if (selectedCompetition.id) {
+          fetchEventsByCompetition(sportIdToUse, selectedCompetition.id, []);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching matches from API:", error);
+      
+      // Check for invalid token in error response
+      if (error?.response?.data) {
+        const data = error.response.data;
+        if (
+          data.status === false &&
+          data.logout === true &&
+          (data.msg?.includes("Invalid token") ||
+           data.msg?.includes("access token is invalid") ||
+           data.message?.includes("Invalid token") ||
+           data.message?.includes("access token is invalid"))
+        ) {
+          console.warn("[ExchEventsTable] Invalid token in error, redirecting to login");
+          sessionStorage.clear();
+          history.replace("/login");
+          return;
+        }
+      }
+      
       // Clear events in local state on error
       setEvents([]);
       // Also clear Redux store
+      const currentSportId = selectedEventType.id;
+      const sportIdToUse = SPToBFIdMap[currentSportId]
+        ? SPToBFIdMap[currentSportId]
+        : currentSportId;
+      
       if (!pathParams["competition"]) {
-        const sportIdToUse = SPToBFIdMap[selectedEventType.id]
-          ? SPToBFIdMap[selectedEventType.id]
-          : selectedEventType.id;
         fetchEventsBySport(sportIdToUse, []);
+      } else if (selectedCompetition.id) {
+        fetchEventsByCompetition(sportIdToUse, selectedCompetition.id, []);
       }
     } finally {
       setLoadingMatches(false);
@@ -652,8 +1482,15 @@ const EventsTable: React.FC<StoreProps> = (props) => {
       // Fetch from API for all sports based on selectedEventType
       console.log(`[ExchEventsTable] useEffect triggered - fetching matches for selectedEventType:`, selectedEventType);
       fetchMatchesFromAPI();
+    } else {
+      // When competition is in URL, fetch and filter by series_id
+      console.log(`[ExchEventsTable] useEffect triggered - competition in URL, fetching matches:`, {
+        competition: pathParams["competition"],
+        urlParams: window.location.search
+      });
+      fetchMatchesFromAPI();
     }
-  }, [selectedEventType.id, selectedEventType.slug]);
+  }, [selectedEventType.id, selectedEventType.slug, pathParams["competition"], pathLocation?.search]);
 
   useEffect(() => {
     if (pathParams["competition"] && !events) {
@@ -799,9 +1636,19 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         );
         break;
       case Status.UPCOMING:
-        return events.filter(
-          (event) => event.status === "UPCOMING" && !event.virtualEvent
-        );
+        // API often returns upcoming racing markets as "SUSPENDED" (still upcoming).
+        // Use date-based upcoming detection (from today onwards) instead of strict status === "UPCOMING".
+        return events.filter((event) => {
+          if (event.virtualEvent || event.catId === "SR VIRTUAL") return false;
+          if (event.status === "IN_PLAY") return false;
+          if (event.forcedInplay) return false;
+          if (event.openDate) {
+            // Show from today's date (00:00) onwards (today + future dates)
+            return moment(event.openDate).isSameOrAfter(moment().startOf("day"));
+          }
+          // fallback: keep legacy behavior if openDate missing
+          return event.status === "UPCOMING";
+        });
         break;
       case Status.VIRTUAL:
         return events?.filter(
@@ -813,6 +1660,137 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         break;
     }
   };
+
+  // Fetch upcoming match market details for events that don't have runner/odds data yet.
+  // Triggered when user selects the Upcoming filter.
+  useEffect(() => {
+    const shouldEnrich =
+      eventFilter === Status.UPCOMING && Array.isArray(events) && events.length > 0;
+    if (!shouldEnrich) return;
+
+    let cancelled = false;
+
+    const enrichUpcoming = async () => {
+      try {
+        // Only enrich events missing matchOdds runners (common for Horse Racing / Greyhound)
+        const candidates = getEvents(Status.UPCOMING).filter((e: any) => {
+          const eventId = String(e?.eventId || "");
+          if (!eventId) return false;
+          if (enrichedUpcomingEventIdsRef.current.has(eventId)) return false;
+
+          const hasRunners =
+            (e?.matchOdds?.runners && e.matchOdds.runners.length > 0) ||
+            (e?.markets?.matchOdds?.[0]?.runners &&
+              e.markets.matchOdds[0].runners.length > 0);
+          if (hasRunners) return false;
+
+          const matchId = String(e?.eventId || e?.match_id || e?.matchId || "");
+          const marketId = String(
+            (e as any)?.market_id || (e as any)?.marketId || e?.marketId || ""
+          );
+
+          return !!matchId && !!marketId;
+        });
+
+        if (candidates.length === 0) return;
+
+        // Limit requests per click to avoid flooding the API
+        const batch = candidates.slice(0, 10);
+
+        const parsePrice = (val: any): number | null => {
+          if (val === "--" || val === null || val === undefined || val === "") return null;
+          const num = typeof val === "number" ? val : parseFloat(String(val));
+          return isNaN(num) ? null : num;
+        };
+
+        const results = await Promise.allSettled(
+          batch.map(async (e: any) => {
+            const matchId = String(e?.eventId || e?.match_id || e?.matchId || "");
+            const marketId = String(
+              (e as any)?.market_id || (e as any)?.marketId || e?.marketId || ""
+            );
+
+            const resp = await USABET_API.post("/match/matchDetailsOpen", {
+              market_id: marketId,
+              match_id: matchId,
+            });
+
+            const payload = resp?.data;
+            const rows = payload?.status === true && Array.isArray(payload?.data) ? payload.data : [];
+            const first = rows?.[0];
+
+            return { eventId: String(e?.eventId || ""), details: first };
+          })
+        );
+
+        if (cancelled) return;
+
+        setEvents((prev) => {
+          if (!Array.isArray(prev) || prev.length === 0) return prev;
+
+          const next = [...prev];
+
+          for (const res of results) {
+            if (res.status !== "fulfilled") continue;
+            const { eventId, details } = res.value || {};
+            if (!eventId) continue;
+
+            enrichedUpcomingEventIdsRef.current.add(eventId);
+
+            if (!details) continue;
+
+            const transformedRunners = (details.runners || []).map((runner: any) => {
+              const availableToBack = runner.ex?.availableToBack || [];
+              const availableToLay = runner.ex?.availableToLay || [];
+              return {
+                runnerId: String(runner.selectionId || runner.selection_id || ""),
+                runnerName: runner.selection_name || runner.selectionName || runner.name || "",
+                status: runner.status || "ACTIVE",
+                backPrices: availableToBack
+                  .map((p: any) => ({ price: parsePrice(p.price), size: parsePrice(p.size) }))
+                  .filter((p: any) => p.price !== null && p.price > 0),
+                layPrices: availableToLay
+                  .map((p: any) => ({ price: parsePrice(p.price), size: parsePrice(p.size) }))
+                  .filter((p: any) => p.price !== null && p.price > 0),
+              };
+            });
+
+            const matchOdds =
+              transformedRunners.length > 0
+                ? {
+                    marketId: details.market_id || details.marketId || "",
+                    marketName: details.market_name || details.marketName || "Match Odds",
+                    status: details.status || "UPCOMING",
+                    runners: transformedRunners,
+                  }
+                : undefined;
+
+            const idx = next.findIndex((x) => String((x as any)?.eventId) === eventId);
+            if (idx >= 0) {
+              next[idx] = {
+                ...(next[idx] as any),
+                // keep original event fields, but attach detailed runners/market status
+                matchOdds: matchOdds,
+                ...(details?.status ? { status: details.status } : {}),
+              };
+            }
+          }
+
+          return next;
+        });
+      } catch (err) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[ExchEventsTable] Failed to enrich upcoming events via matchDetailsOpen:", err);
+        }
+      }
+    };
+
+    enrichUpcoming();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [eventFilter, events, pathLocation?.pathname]);
 
   useEffect(() => {
     setFavouriteEvents(favourites);

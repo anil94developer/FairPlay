@@ -104,6 +104,20 @@ const InplayEventsTable: React.FC<StoreProps> = (props) => {
   const [matchOddsBaseUrl, setMatchOddsBaseUrl] = useState<string>("");
   const [matchOddsTopic, setMatchOddsTopic] = useState<string>("");
 
+  const getSportSectionLabel = (iEvent: InplayEventsObj): string => {
+    const fromLangKey = langData?.[getSportLangKeyByName(iEvent?.sportName)];
+    if (fromLangKey) return fromLangKey;
+
+    if (iEvent?.sportName) return iEvent.sportName;
+
+    const raw = iEvent?.sportSlug || iEvent?.sportId || "Sport";
+    return String(raw)
+      .replace(/[_-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   const tableFields = [
     {
       key: "schedle",
@@ -171,19 +185,129 @@ const InplayEventsTable: React.FC<StoreProps> = (props) => {
         ? eventData.awayTeamId
         : teamType;
 
-    const teamLowerCase = team?.toLowerCase();
-    const matchOdds = eventData.markets?.matchOdds?.[0];
+    // Normalize team name for matching
+    const normalizeName = (name: string) => {
+      if (!name) return "";
+      return name.toLowerCase().trim().replace(/\s+/g, " ");
+    };
+
+    const teamNormalized = normalizeName(team || "");
+    
+    // Check both eventData.matchOdds (direct) and eventData.markets?.matchOdds?.[0] (nested)
+    const matchOdds = eventData.matchOdds || eventData.markets?.matchOdds?.[0];
 
     // Add safety checks
-    if (!matchOdds || !matchOdds.runners) return null;
+    if (!matchOdds || !matchOdds.runners || matchOdds.runners.length === 0) {
+      // Debug logging for missing matchOdds
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`[ExchInplayEventsTable] No matchOdds or runners for event:`, {
+          eventName: eventData.eventName,
+          hasMatchOdds: !!eventData.matchOdds,
+          hasMarketsMatchOdds: !!eventData.markets?.matchOdds?.[0],
+          matchOddsRunners: eventData.matchOdds?.runners?.length || 0,
+          marketsRunners: eventData.markets?.matchOdds?.[0]?.runners?.length || 0,
+        });
+      }
+      return null;
+    }
 
+    // For "draw" team type, look for runners with "draw" in the name
+    if (teamType === "draw") {
+      for (let runner of matchOdds.runners) {
+        const runnerName = normalizeName(runner.runnerName || "");
+        if (runnerName.includes("draw") || runnerName === "draw") {
+          return [
+            {
+              type: "back-odd",
+              price: runner?.backPrices?.[0]?.price,
+              size: runner?.backPrices?.[0]?.size,
+              outcomeId: runner?.runnerId,
+              outcomeName: runner.runnerName,
+            },
+            {
+              type: "lay-odd",
+              price: runner?.layPrices?.[0]?.price,
+              size: runner?.layPrices?.[0]?.size,
+              outcomeId: runner.runnerId,
+              outcomeName: runner.runnerName,
+            },
+          ];
+        }
+      }
+      return null;
+    }
+
+    // For home/away teams, try multiple matching strategies
     for (let runner of matchOdds.runners) {
-      let runnerLowCase = runner.runnerName.toLowerCase();
-      if (
-        runnerLowCase === teamLowerCase ||
-        runnerLowCase.includes(teamLowerCase) ||
-        runner.runnerId === teamId
-      ) {
+      const runnerName = normalizeName(runner.runnerName || "");
+      
+      // Skip draw runners when looking for home/away
+      if (runnerName.includes("draw")) {
+        continue;
+      }
+
+      // Strategy 1: Exact match
+      if (runnerName === teamNormalized) {
+        return [
+          {
+            type: "back-odd",
+            price: runner?.backPrices?.[0]?.price,
+            size: runner?.backPrices?.[0]?.size,
+            outcomeId: runner?.runnerId,
+            outcomeName: runner.runnerName,
+          },
+          {
+            type: "lay-odd",
+            price: runner?.layPrices?.[0]?.price,
+            size: runner?.layPrices?.[0]?.size,
+            outcomeId: runner.runnerId,
+            outcomeName: runner.runnerName,
+          },
+        ];
+      }
+
+      // Strategy 2: Runner name contains team name
+      if (teamNormalized && runnerName.includes(teamNormalized)) {
+        return [
+          {
+            type: "back-odd",
+            price: runner?.backPrices?.[0]?.price,
+            size: runner?.backPrices?.[0]?.size,
+            outcomeId: runner?.runnerId,
+            outcomeName: runner.runnerName,
+          },
+          {
+            type: "lay-odd",
+            price: runner?.layPrices?.[0]?.price,
+            size: runner?.layPrices?.[0]?.size,
+            outcomeId: runner.runnerId,
+            outcomeName: runner.runnerName,
+          },
+        ];
+      }
+
+      // Strategy 3: Team name contains runner name
+      if (teamNormalized && teamNormalized.includes(runnerName)) {
+        return [
+          {
+            type: "back-odd",
+            price: runner?.backPrices?.[0]?.price,
+            size: runner?.backPrices?.[0]?.size,
+            outcomeId: runner?.runnerId,
+            outcomeName: runner.runnerName,
+          },
+          {
+            type: "lay-odd",
+            price: runner?.layPrices?.[0]?.price,
+            size: runner?.layPrices?.[0]?.size,
+            outcomeId: runner.runnerId,
+            outcomeName: runner.runnerName,
+          },
+        ];
+      }
+
+      // Strategy 4: Match by runnerId if teamId is available
+      if (teamId && runner.runnerId === teamId) {
         return [
           {
             type: "back-odd",
@@ -202,6 +326,55 @@ const InplayEventsTable: React.FC<StoreProps> = (props) => {
         ];
       }
     }
+
+    // If no match found and we have runners, try positional matching
+    // First non-draw runner = home, second non-draw runner = away
+    if (matchOdds.runners.length >= 2) {
+      const nonDrawRunners = matchOdds.runners.filter(
+        (r: any) => !normalizeName(r.runnerName || "").includes("draw")
+      );
+      
+      if (teamType === "home" && nonDrawRunners.length > 0) {
+        const runner = nonDrawRunners[0];
+        return [
+          {
+            type: "back-odd",
+            price: runner?.backPrices?.[0]?.price,
+            size: runner?.backPrices?.[0]?.size,
+            outcomeId: runner?.runnerId,
+            outcomeName: runner.runnerName,
+          },
+          {
+            type: "lay-odd",
+            price: runner?.layPrices?.[0]?.price,
+            size: runner?.layPrices?.[0]?.size,
+            outcomeId: runner.runnerId,
+            outcomeName: runner.runnerName,
+          },
+        ];
+      }
+      
+      if (teamType === "away" && nonDrawRunners.length > 1) {
+        const runner = nonDrawRunners[1];
+        return [
+          {
+            type: "back-odd",
+            price: runner?.backPrices?.[0]?.price,
+            size: runner?.backPrices?.[0]?.size,
+            outcomeId: runner?.runnerId,
+            outcomeName: runner.runnerName,
+          },
+          {
+            type: "lay-odd",
+            price: runner?.layPrices?.[0]?.price,
+            size: runner?.layPrices?.[0]?.size,
+            outcomeId: runner.runnerId,
+            outcomeName: runner.runnerName,
+          },
+        ];
+      }
+    }
+
     return null;
   };
 
@@ -282,12 +455,48 @@ const InplayEventsTable: React.FC<StoreProps> = (props) => {
     }
   }, [betFairWSConnected, inplayEvents, loggedIn]);
 
-  const GetSportIcon = ({ sportId }) => {
-    const IconComponent = SportIconMapInplay[sportId];
+  const GetSportIcon = ({ sportId, sportName }) => {
+    const raw = String(sportId ?? "").trim();
+    const candidates = [
+      raw,
+      raw.replace(/_/g, ":"), // sr_sport_20 -> sr:sport:20
+      raw.replace(/:/g, "_"), // sr:sport:20 -> sr_sport_20
+    ].filter(Boolean);
 
-    if (!IconComponent) {
-      return null; // or a default icon/component
+    let IconComponent: any = null;
+    
+    // First try matching by sport ID
+    for (const key of candidates) {
+      if (SportIconMapInplay[key]) {
+        IconComponent = SportIconMapInplay[key];
+        break;
+      }
     }
+    
+    // If not found by ID, try matching by sport name (case-insensitive)
+    if (!IconComponent && sportName) {
+      const normalizedName = String(sportName).toLowerCase().trim();
+      const nameCandidates = [
+        normalizedName,
+        normalizedName.replace(/\s+/g, "_"),
+        normalizedName.replace(/\s+/g, "-"),
+        normalizedName.replace(/[^a-z0-9]/g, ""),
+      ];
+      
+      for (const nameKey of nameCandidates) {
+        if (SportIconMapInplay[nameKey]) {
+          IconComponent = SportIconMapInplay[nameKey];
+          break;
+        }
+      }
+    }
+
+    // Default fallback icon so headers never render without an icon
+    if (!IconComponent) {
+      IconComponent = SportIconMapInplay["4"]; // Cricket as safe default
+    }
+
+    if (!IconComponent) return null;
 
     return (
       <div>
@@ -328,15 +537,10 @@ const InplayEventsTable: React.FC<StoreProps> = (props) => {
                                       <div className="icon-and-name">
                                         <GetSportIcon
                                           sportId={iEvent.sportId}
+                                          sportName={iEvent.sportName}
                                         />
                                         <div className="ip-event-name">
-                                          {
-                                            langData?.[
-                                              getSportLangKeyByName(
-                                                iEvent.sportName
-                                              )
-                                            ]
-                                          }{" "}
+                                          {getSportSectionLabel(iEvent)}
                                         </div>
                                       </div>
                                     ) : (
@@ -562,8 +766,7 @@ const InplayEventsTable: React.FC<StoreProps> = (props) => {
                                               key={teamType + index}
                                             >
                                               <div className="mob-exchange-btn-odd-row">
-                                                {sEvent.markets
-                                                  ?.matchOdds?.[0] ? (
+                                                {sEvent.matchOdds || sEvent.markets?.matchOdds?.[0] ? (
                                                   getOdds(sEvent, teamType) ? (
                                                     <>
                                                       {getOdds(
@@ -587,11 +790,15 @@ const InplayEventsTable: React.FC<StoreProps> = (props) => {
                                                               ? "back-odd"
                                                               : "lay-odd"
                                                           }
-                                                          disable={sEvent.markets?.matchOdds?.[0]?.status
+                                                          disable={
+                                                            (sEvent.matchOdds?.status || sEvent.markets?.matchOdds?.[0]?.status)
                                                             ?.toLowerCase()
                                                             .includes(
                                                               "suspended"
-                                                            )}
+                                                              ) ||
+                                                            sEvent.is_lock === true ||
+                                                            sEvent.isLock === true
+                                                          }
                                                           valueType={
                                                             !sEvent.markets
                                                               ?.enableMatchOdds &&
@@ -650,7 +857,7 @@ const InplayEventsTable: React.FC<StoreProps> = (props) => {
                                         colSpan={1}
                                         key={teamType + index}
                                       >
-                                        {sEvent?.markets?.matchOdds?.[0] ? (
+                                        {sEvent?.matchOdds || sEvent?.markets?.matchOdds?.[0] ? (
                                           getOdds(sEvent, teamType) ? (
                                             <div className="odds-block">
                                               {getOdds(sEvent, teamType).map(
@@ -663,9 +870,13 @@ const InplayEventsTable: React.FC<StoreProps> = (props) => {
                                                         ? "back-odd"
                                                         : "lay-odd"
                                                     }
-                                                    disable={sEvent.markets?.matchOdds?.[0]?.status
+                                                    disable={
+                                                      (sEvent.matchOdds?.status || sEvent.markets?.matchOdds?.[0]?.status)
                                                       ?.toLowerCase()
-                                                      .includes("suspended")}
+                                                        .includes("suspended") ||
+                                                      sEvent.is_lock === true ||
+                                                      sEvent.isLock === true
+                                                    }
                                                     valueType="matchOdds"
                                                     showSubValueinKformat={true}
                                                     onClick={() => null}

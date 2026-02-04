@@ -44,6 +44,8 @@ import {
 } from "../../constants/whitelabelEnv";
 import SkinIcon from "../../assets/images/common/skin-icon.svg";
 import {ReactComponent as CustomerSupportIcon} from "../../assets/images/common/customer-support.svg?react";
+import { ReactComponent as CasinoIcon } from "../../assets/images/sidebar/casino.svg?react";
+import { ReactComponent as DimondIcon } from "../../assets/images/sidebar/dimond.svg?react";
 
 type StoreProps = {
   allowedConfig: number;
@@ -160,7 +162,7 @@ const SubHeader: React.FC<StoreProps> = (props) => {
       className: "nav-link",
       activeClassName: "active-link",
       buttonClassName: "nav-link-btn",
-      icon: null,
+      icon: <CasinoIcon width={16} height={16} />,
       superScript: null,
       redirectionUrl: "/casino",
       config: CONFIG_PERMISSIONS.live_casino,
@@ -194,7 +196,7 @@ const SubHeader: React.FC<StoreProps> = (props) => {
       className: "nav-link",
       activeClassName: "check-bonus-active",
       buttonClassName: "check-bonus-btn check-bt-blink-animation",
-      icon: null,
+      icon: <DimondIcon width={16} height={16} />,
       superScript: null,
       redirectionUrl: "/profile/bonus",
       disable: false,

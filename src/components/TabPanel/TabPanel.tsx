@@ -1,5 +1,4 @@
 import React from "react";
-import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 
 interface TabPanelProps {
@@ -21,11 +20,7 @@ const TabPanel: React.FC<TabPanelProps> = (props) => {
       className={className}
       {...other}
     >
-      {value === index && (
-        <Box>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
+      {value === index && <Box>{children}</Box>}
     </div>
   );
 };

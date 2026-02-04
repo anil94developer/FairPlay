@@ -19,7 +19,6 @@ import moment, { Moment } from "moment";
 
 import API from "../../api/index";
 import { logout, fetchBettingCurrency } from "../../store";
-import { LedgerRecord } from "../../models/LedgerRecord";
 import Spinner from "../../components/Spinner/Spinner";
 import Alert from "../../components/Alert/Alert";
 
@@ -32,12 +31,23 @@ import {
 import MomentUtils from "@date-io/moment";
 import "./AccountStatement.scss";
 import { getTransactionNameByID, MarketTypeByID } from "../../util/stringUtil";
-import AccountStatementRecord from "./AccountStatementRecord";
 import Modal from "../../components/Modal/Modal";
 import SportSvg from "../../assets/images/sportsbook/icons/sports.svg";
-import CasinoImg from "../../assets/images/sportsbook/icons/casino.svg";
+import CasinoImg from "../../assets/images/sidebar/casino.svg";
 import AccStmtImg from "../../assets/images/icons/acc_stmt.svg";
 import { useHistory } from "react-router-dom";
+
+type LedgerRecord = {
+  transactionId: string;
+  transactionTime: string | number | Date;
+  transactionType: string | number;
+  upLineUser?: string;
+  eventName?: string;
+  marketType: number;
+  marketName?: string;
+  amount: number;
+  balanceAfter: number;
+};
 
 type LedgerProps = {
   fetchBettingCurrency: Function;
@@ -187,7 +197,7 @@ const Ledger: React.FC<LedgerProps> = (props) => {
   const onShowTransactionDetails = (row: LedgerRecord) => {
     setTransactionDetails({
       id: row.transactionId,
-      type: row.transactionType,
+      type: String(row.transactionType),
     });
     setShowTransactionDetailsModal(true);
   };
@@ -460,14 +470,14 @@ function Row(props: { row: LedgerRecord; showTransactionDetails: () => void }) {
             {["0", "1", "2", "3"].includes(row.transactionType.toString())
               ? row.upLineUser +
                 " / " +
-                getTransactionNameByID(row.transactionType)
-              : getTransactionNameByID(row.transactionType)}
+                getTransactionNameByID(String(row.transactionType))
+              : getTransactionNameByID(String(row.transactionType))}
           </div>
           <div className="mob-view">
             <div className="mob-col-section">
               <div>
                 <span className="transacction-img">
-                  {!getTransactionNameByID(row.transactionType).includes(
+                  {!getTransactionNameByID(String(row.transactionType)).includes(
                     "Casino"
                   ) ? (
                     <IonIcon
@@ -492,8 +502,8 @@ function Row(props: { row: LedgerRecord; showTransactionDetails: () => void }) {
                   {["0", "1", "2", "3"].includes(row.transactionType.toString())
                     ? row.upLineUser +
                       " / " +
-                      getTransactionNameByID(row.transactionType)
-                    : getTransactionNameByID(row.transactionType)}
+                      getTransactionNameByID(String(row.transactionType))
+                    : getTransactionNameByID(String(row.transactionType))}
                 </div>
                 <div className="tiny-info-text">
                   TXN ID: {row.transactionId}

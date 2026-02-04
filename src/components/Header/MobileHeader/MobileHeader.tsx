@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 import { ReactComponent as MyBetsImg } from "../../../assets/images/icons/my-bets.svg?react";
 import { ReactComponent as ProfileImg } from "../../../assets/images/icons/user.svg?react";
-import { ReactComponent as CasinoImg } from "../../../assets/images/sportsbook/icons/casino.svg?react";
+import { ReactComponent as CasinoImg } from "../../../assets/images/sidebar/casino.svg?react";
 import { ReactComponent as HomeImg } from "../../../assets/images/sportsbook/icons/home.svg?react";
 import { ReactComponent as SportsImg } from "../../../assets/images/sportsbook/icons/sports.svg?react";
 import { ReactComponent as InplayImg } from "../../../assets/images/sportsbook/inplay_icon.svg?react";

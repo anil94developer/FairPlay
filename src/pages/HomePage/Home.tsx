@@ -179,7 +179,7 @@ const HomePage: React.FC<StoreProps> = (props) => {
   const fetchFavoruiteEvents = async () => {
     setLoadingMatches(true);
     try {
-      const response = await USABET_API.get("/match/homeMatchesV2");
+      const response = await USABET_API.get("/match/homeMatchesOpen");
       if (response?.data?.status === true && Array.isArray(response.data.data)) {
         const transformedEvents = transformApiDataToFavoriteEvents(response.data.data);
         setFavouriteEvents(transformedEvents);

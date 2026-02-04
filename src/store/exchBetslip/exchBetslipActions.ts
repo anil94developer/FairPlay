@@ -174,6 +174,7 @@ const updateSuspendedMarket = (data: any) => {
 };
 
 export const betStatus = async () => {
+  try {
   let response: AxiosResponse<any>;
   response = await API.get("/bs/bet-status", {
     headers: {
@@ -222,6 +223,27 @@ export const betStatus = async () => {
         fetchBetStatusFail({
           status: "FAIL",
           message: `Bet failed - ${response.data.message}`,
+          })
+        );
+      }
+    }
+  } catch (error: any) {
+    // Handle CORS errors and network errors gracefully
+    if (error?.code === "ERR_NETWORK" || error?.message?.includes("CORS") || error?.message?.includes("Network Error")) {
+      console.warn("[betStatus] CORS or network error, skipping bet status check:", error.message);
+      // Don't dispatch error for CORS issues as they're expected in dev environment
+      return;
+    }
+    
+    // Log other errors but don't crash the app
+    console.error("[betStatus] Error fetching bet status:", error);
+    
+    // Optionally dispatch a fail status for non-CORS errors
+    if (error?.response?.data) {
+      store.dispatch(
+        fetchBetStatusFail({
+          status: "FAIL",
+          message: error.response.data.message || "Failed to check bet status",
         })
       );
     }

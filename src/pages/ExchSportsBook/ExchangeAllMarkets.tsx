@@ -5,10 +5,17 @@ import AccordionDetails from "@material-ui/core/AccordionDetails";
 import AccordionSummary from "@material-ui/core/AccordionSummary";
 import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
+import Table from "@material-ui/core/Table";
+import TableBody from "@material-ui/core/TableBody";
+import TableCell from "@material-ui/core/TableCell";
+import TableContainer from "@material-ui/core/TableContainer";
+import TableHead from "@material-ui/core/TableHead";
+import TableRow from "@material-ui/core/TableRow";
+import Paper from "@material-ui/core/Paper";
 
 import ExpandLessSharpIcon from "@material-ui/icons/ExpandLessSharp";
 import moment, { lang } from "moment";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { isIOS } from "react-device-detect";
 import { connect } from "react-redux";
 import { NavLink, useHistory, useLocation, useParams } from "react-router-dom";
@@ -53,6 +60,7 @@ import {
   updateBookMakerMarkets,
   updateEventScorecard,
   getFancyMarketsByEvent,
+  updateSecondaryMatchOdds,
 } from "../../store";
 import {
   checkStompClientSubscriptions,
@@ -118,7 +126,8 @@ import { enableOneClickBetting } from "../../store/exchBetslip/exchBetslipAction
 import OneClickBetting from "../../components/OneClickBetting";
 import EventName from "../../common/EventName/EventName";
 import { eventData } from "../../description/eventData";
-
+import USABET_API from "../../api-services/usabet-api"
+import { useSelector } from "react-redux";
 type StoreProps = {
   selectedEvent: SelectedObj;
   eventData: EventDTO;
@@ -154,6 +163,7 @@ type StoreProps = {
   ) => void;
   setExchEvent: (event: SelectedObj) => void;
   updateEventScorecard: (scorecard: any) => void;
+  updateSecondaryMatchOdds: (payload: any) => void;
   seEventData: SPEventDTO;
   topicUrls: any;
   houseId: string;
@@ -182,6 +192,8 @@ type StoreProps = {
   setOneClickBettingLoading: Function;
   setCashoutInProgress: Function;
   cashoutInProgress: CashoutProgressDTO;
+  commissionEnabled?: boolean;
+  bettingInprogress?: boolean;
 };
 
 type RouteParams = {
@@ -209,6 +221,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     fetchPremiummarketsByEventId,
     setExchEvent,
     updateEventScorecard,
+    updateSecondaryMatchOdds,
     seEventData,
     bmMData,
     topicUrls,
@@ -238,6 +251,8 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     enableOneClickBetting,
     setCashoutInProgress,
     cashoutInProgress,
+    commissionEnabled = false,
+    bettingInprogress = false,
   } = props;
 
   const location = useLocation();
@@ -285,7 +300,18 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     routeParams.eventInfo ? routeParams.eventInfo : ""
   ).split(":");
 
+  // State for match details and fancy data from API
+  const [matchDetails, setMatchDetails] = useState<any[]>([]);
+  const [fancyData, setFancyData] = useState<any[]>([]);
+  const [transformedFancyData, setTransformedFancyData] = useState<FancyMarketDTO[]>([]);
+  const [fancyCategoryMap, setFancyCategoryMap] = useState<any>({});
+  const [loadingMatchDetails, setLoadingMatchDetails] = useState<boolean>(false);
+  const [loadingFancy, setLoadingFancy] = useState<boolean>(false);
+  const [eventData, setEventData] = useState<EventDTO>();
   const isMobile = window.innerWidth > 1120 ? false : true;
+
+  // Use props.eventData directly (comes from Redux) or local eventData state
+  const currentEventData = useMemo(() => props.eventData || eventData, [props.eventData, eventData]);
 
   const [recentGame, setRecentGame] = useState<any>();
   const history = useHistory();
@@ -318,6 +344,14 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     }
   }, [secondaryMatchOdds]);
 
+  // Initialize eventData from props when it changes
+  useEffect(() => {
+    if (props.eventData && (!eventData || props.eventData.eventId !== eventData.eventId)) {
+      setEventData(props.eventData);
+      console.log("[ExchangeAllMarkets] Initialized eventData from props:", props.eventData);
+    }
+  }, [props.eventData?.eventId]);
+
   useEffect(() => {
     unsubscribeAllWsforEvents();
   }, [selectedEvent]);
@@ -328,8 +362,388 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     }
   }, [loggedIn]);
 
+  // Set eventData from selectedEvent or fetch from API
   useEffect(() => {
-    if (loggedIn && eventData) {
+    const fetchMatchDetails = async () => {
+      if (!eventId) {
+        console.log("[ExchangeAllMarkets] No eventId, skipping match details fetch");
+        return;
+      }
+      
+      setLoadingMatchDetails(true);
+      try {
+        console.log("[ExchangeAllMarkets] Fetching match details for eventId:", eventId);
+        const response = await USABET_API.post(`/match/matchDetails`, {
+          match_id: eventId,
+          combine: true,
+        });
+        
+        console.log("[ExchangeAllMarkets] Match details API response:", response?.data);
+
+        let marketsData: any[] = [];
+        if (response?.data?.status === true && Array.isArray(response.data.data)) {
+          marketsData = response.data.data;
+        } else if (Array.isArray(response?.data?.data)) {
+          marketsData = response.data.data;
+        } else if (Array.isArray(response?.data)) {
+          marketsData = response.data;
+        }
+
+        if (marketsData.length > 0) {
+          setMatchDetails(marketsData);
+          console.log("[ExchangeAllMarkets] Match details fetched:", marketsData);
+
+          // Find and process Match Odds market first to update eventData
+          const matchOddsMarket = marketsData.find((market: any) => 
+            market.market_name === "Match Odds" || 
+            market.name === "Match Odds" ||
+            market.market_type === "MATCH_ODDS"
+          );
+
+          if (matchOddsMarket) {
+            console.log("[ExchangeAllMarkets] Found Match Odds market:", matchOddsMarket);
+            
+            // Transform runners from API format to matchOdds format
+            const transformedRunners = (matchOddsMarket.runners || []).map((runner: any) => {
+              const availableToBack = runner.ex?.availableToBack || [];
+              const availableToLay = runner.ex?.availableToLay || [];
+              
+              // Helper function to parse price and size
+              const parsePrice = (val: any): number | null => {
+                if (val === "--" || val === null || val === undefined || val === "") return null;
+                const num = typeof val === "number" ? val : parseFloat(String(val));
+                return isNaN(num) ? null : num;
+              };
+              
+              return {
+                runnerId: String(runner.selectionId || runner.selection_id || ""),
+                runnerName: runner.selection_name || runner.selectionName || runner.name || "",
+                status: runner.status || "ACTIVE",
+                backPrices: availableToBack
+                  .filter((price: any) => {
+                    const priceVal = parsePrice(price.price);
+                    return priceVal !== null && priceVal > 0;
+                  })
+                  .map((price: any) => ({
+                    price: parsePrice(price.price),
+                    size: parsePrice(price.size),
+                  }))
+                  .filter((p: any) => p.price !== null),
+                layPrices: availableToLay
+                  .filter((price: any) => {
+                    const priceVal = parsePrice(price.price);
+                    return priceVal !== null && priceVal > 0;
+                  })
+                  .map((price: any) => ({
+                    price: parsePrice(price.price),
+                    size: parsePrice(price.size),
+                  }))
+                  .filter((p: any) => p.price !== null),
+              };
+            });
+
+            // Update eventData with match odds data
+            if (transformedRunners.length > 0) {
+              const updatedEventData: EventDTO = {
+                ...(currentEventData || {}),
+                matchOdds: {
+                  marketId: matchOddsMarket.market_id || matchOddsMarket.marketId || "",
+                  marketName: matchOddsMarket.market_name || matchOddsMarket.name || "Match Odds",
+                  marketType: matchOddsMarket.market_type || matchOddsMarket.marketType || "MATCH_ODDS",
+                  status: matchOddsMarket.status || "OPEN",
+                  suspended: matchOddsMarket.status === "SUSPENDED",
+                  disabled: matchOddsMarket.is_active === 0,
+                  runners: transformedRunners,
+                  marketTime: matchOddsMarket.match_date ? new Date(matchOddsMarket.match_date) : currentEventData?.openDate,
+                },
+              };
+              setEventData(updatedEventData);
+              console.log("[ExchangeAllMarkets] Updated eventData with match odds:", updatedEventData);
+            }
+          }
+
+          // Transform API data to MatchOddsDTO format and update Redux store for secondary markets
+          marketsData.forEach((market: any) => {
+            // Skip Match Odds market as it's already processed above
+            if (market.market_name === "Match Odds" || market.name === "Match Odds" || market.market_type === "MATCH_ODDS") {
+              return;
+            }
+
+            // Transform runners from API format to MatchOddsDTO format
+            const transformedRunners = (market.runners || []).map((runner: any) => {
+              const availableToBack = runner.ex?.availableToBack || [];
+              const availableToLay = runner.ex?.availableToLay || [];
+              
+              // Helper function to parse price and size
+              const parsePrice = (val: any): number | null => {
+                if (val === "--" || val === null || val === undefined || val === "") return null;
+                const num = typeof val === "number" ? val : parseFloat(String(val));
+                return isNaN(num) ? null : num;
+              };
+              
+              return {
+                runnerId: String(runner.selectionId || runner.selection_id || ""),
+                runnerName: runner.selection_name || runner.selectionName || runner.name || "",
+                status: runner.status || "ACTIVE",
+                backPrices: availableToBack
+                  .filter((price: any) => {
+                    const priceVal = parsePrice(price.price);
+                    return priceVal !== null && priceVal > 0;
+                  })
+                  .map((price: any) => ({
+                    price: parsePrice(price.price),
+                    size: parsePrice(price.size),
+                  }))
+                  .filter((p: any) => p.price !== null),
+                layPrices: availableToLay
+                  .filter((price: any) => {
+                    const priceVal = parsePrice(price.price);
+                    return priceVal !== null && priceVal > 0;
+                  })
+                  .map((price: any) => ({
+                    price: parsePrice(price.price),
+                    size: parsePrice(price.size),
+                  }))
+                  .filter((p: any) => p.price !== null),
+              };
+            });
+
+            // Create MatchOddsDTO payload with runners
+            const matchOddsPayload = {
+              sportId: market.sport_id || currentEventData?.sportId,
+              competitionId: market.competition_id || currentEventData.competitionId,
+              marketId: market.market_id || market.marketId,
+              matchOddsData: {
+                marketId: market.market_id || market.marketId,
+                marketName: market.market_name || market.name || "Market",
+                marketType: market.market_type || market.marketType || "MATCH_ODDS",
+                status: market.status || "OPEN",
+                suspended: market.status === "SUSPENDED",
+                disabled: market.is_active === 0,
+                marketTime: market.match_date ? new Date(market.match_date) : currentEventData?.openDate,
+                runners: transformedRunners,
+              },
+            };
+
+            // Update Redux store with transformed market data
+            updateSecondaryMatchOdds(matchOddsPayload);
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching match details:", error);
+      } finally {
+        setLoadingMatchDetails(false);
+      }
+    };
+
+    if (eventId) {
+      fetchMatchDetails();
+    }
+  }, [eventId, updateSecondaryMatchOdds]);
+
+  // Fetch fancy data from API
+  useEffect(() => {
+    const fetchFancyData = async () => {
+      if (!eventId) return;
+      
+      setLoadingFancy(true);
+      try {
+        const response = await USABET_API.post(`/fancy/getFancies`, {
+          match_id: eventId,
+          combine: true,
+        });
+
+        let fancyMarkets: any[] = [];
+        let categoryMap: any = {};
+        
+        // Handle API response structure: { data: [...], fancy_category: {...}, status: true }
+        if (response?.data) {
+          // Extract fancy_category mapping if available
+          if (response.data.fancy_category && typeof response.data.fancy_category === 'object') {
+            categoryMap = response.data.fancy_category;
+            setFancyCategoryMap(categoryMap);
+          }
+          
+          // Extract data array
+          if (Array.isArray(response.data.data)) {
+            fancyMarkets = response.data.data;
+          } else if (response.data.status === true && Array.isArray(response.data.data)) {
+            fancyMarkets = response.data.data;
+          } else if (Array.isArray(response.data)) {
+            fancyMarkets = response.data;
+          } else if (typeof response.data === 'object') {
+            // If response.data is an object, try to find an array property
+            const dataKeys = Object.keys(response.data);
+            for (const key of dataKeys) {
+              if (Array.isArray(response.data[key]) && key !== 'fancy_category') {
+                fancyMarkets = response.data[key];
+                break;
+              }
+            }
+          }
+        }
+        
+        console.log("[ExchangeAllMarkets] Raw API response:", response?.data);
+        console.log("[ExchangeAllMarkets] Extracted fancyMarkets:", fancyMarkets);
+        console.log("[ExchangeAllMarkets] Category map:", categoryMap);
+        if (fancyMarkets.length > 0) {
+          setFancyData(fancyMarkets);
+          
+          // Transform API data to FancyMarketDTO format for FMTable component
+          const transformed = fancyMarkets.map((fancy: any, index: number) => {
+            if (index === 0) {
+              console.log("[ExchangeAllMarkets] Sample fancy market before transformation:", fancy);
+            }
+            
+            // Extract market ID - API uses fancy_id
+            const marketId = fancy.fancy_id || fancy.market_id || fancy.marketId || fancy.id || "";
+            // Extract market name - API uses name or fancy_name
+            const marketName = fancy.name || fancy.fancy_name || fancy.market_name || fancy.marketName || "";
+            // Extract status - API uses is_active (1 = active, 0 = inactive)
+            const status = fancy.is_active === 0 ? "SUSPENDED" : (fancy.status || "OPEN");
+            
+            // Map category using fancy_category mapping
+            let category = "extramarket";
+            const categoryId = fancy.category !== undefined ? String(fancy.category) : null;
+            const categoryName = categoryId && categoryMap[categoryId] 
+              ? String(categoryMap[categoryId]).toLowerCase()
+              : "";
+            
+            // Map category name to expected format
+            // Check categoryId first for direct mapping, then check categoryName
+            if (categoryId === "1" || categoryName.includes("session")) {
+              category = "sessions";
+            } else if (categoryId === "8" || categoryName.includes("wicket") || categoryName.includes("fall of wicket")) {
+              category = "wpmarket";
+            } else if (categoryId === "6" || categoryName.includes("odd") || categoryName.includes("even")) {
+              category = "oddeven";
+            } else if (categoryId === "2" || categoryName.includes("over by over")) {
+              category = "sessions"; // Over by Over is a type of session
+            } else if (categoryId === "3" || categoryName.includes("ball by ball")) {
+              category = "sessions"; // Ball by Ball is a type of session
+            } else if (categoryId === "9" || categoryName.includes("advance")) {
+              category = "extramarket"; // Total Advance
+            } else if (categoryId === "0" || categoryName.includes("normal")) {
+              category = "extramarket"; // NORMAL maps to extramarket
+            } else {
+              // Default to extramarket for other categories
+              category = "extramarket";
+            }
+            
+            // Extract runners/outcomes - API may not have these yet
+            const runners = fancy.runners || fancy.outcomes || fancy.selections || [];
+            
+            // Extract No/Yes values - API response doesn't have odds yet, so these will be null
+            // Odds will come from WebSocket updates later
+            let layPrice = null;
+            let laySize = null;
+            let backPrice = null;
+            let backSize = null;
+            
+            if (runners.length >= 2) {
+              const noRunner = runners.find((r: any) => 
+                (r.name || r.runnerName || r.outcome_name || "").toLowerCase().includes("no")
+              ) || runners[0];
+              const yesRunner = runners.find((r: any) => 
+                (r.name || r.runnerName || r.outcome_name || "").toLowerCase().includes("yes")
+              ) || runners[1] || runners[0];
+              
+              layPrice = noRunner.price || noRunner.layPrice || noRunner.value || fancy.noValue || null;
+              laySize = noRunner.size || noRunner.laySize || noRunner.rate || fancy.noRate || null;
+              backPrice = yesRunner.price || yesRunner.backPrice || yesRunner.value || fancy.yesValue || null;
+              backSize = yesRunner.size || yesRunner.backSize || yesRunner.rate || fancy.yesRate || null;
+            } else {
+              // Try direct fields
+              layPrice = fancy.noValue || fancy.layPrice || null;
+              laySize = fancy.noRate || fancy.laySize || null;
+              backPrice = fancy.yesValue || fancy.backPrice || null;
+              backSize = fancy.yesRate || fancy.backSize || null;
+            }
+            
+            // Extract limits from API response - use session_min_stack and session_max_stack
+            const minStake = fancy.session_min_stack || fancy.session_before_inplay_min_stack || 100;
+            const maxStake = fancy.session_max_stack || fancy.session_before_inplay_max_stack || 100000;
+            
+            return {
+              marketId: marketId,
+              marketName: marketName,
+              customMarketName: fancy.customMarketName || marketName,
+              status: status,
+              sort: fancy.chronology || fancy.sort || fancy.sortOrder || 0,
+              layPrice: layPrice,
+              backPrice: backPrice,
+              laySize: laySize,
+              backSize: backSize,
+              category: category,
+              commissionEnabled: fancy.commissionEnabled || false,
+              marketLimits: fancy.marketLimits || {
+                minStake: minStake,
+                maxStake: maxStake,
+                maxOdd: fancy.maxOdd || 4,
+                delay: fancy.delay || 0,
+              },
+              suspend: status.toLowerCase().includes("suspended") || fancy.is_lock === true || fancy.isLock === true,
+              disable: fancy.disable || fancy.is_lock === true || fancy.isLock === true || false,
+              limits: {
+                minBetValue: minStake,
+                maxBetValue: maxStake,
+              },
+              isMarketLimitSet: !!fancy.marketLimits,
+            };
+          });
+          
+          setTransformedFancyData(transformed);
+          console.log("[ExchangeAllMarkets] Fancy data transformed:", transformed);
+          console.log("[ExchangeAllMarkets] Sample transformed market:", transformed[0]);
+          console.log("[ExchangeAllMarkets] Total transformed markets:", transformed.length);
+        } else {
+          console.log("[ExchangeAllMarkets] No fancy markets found in response:", response?.data);
+          setTransformedFancyData([]);
+          setFancyData([]);
+        }
+      } catch (error) {
+        console.error("Error fetching fancy data:", error);
+        setTransformedFancyData([]);
+        setFancyData([]);
+      } finally {
+        setLoadingFancy(false);
+      }
+    };
+
+    if (eventId) {
+      fetchFancyData();
+    }
+  }, [eventId]);
+
+  // Determine which tabs are available and update tab value accordingly
+  useEffect(() => {
+    const hasFancyTab = transformedFancyData?.length > 0 || fancyData?.length > 0 || secondaryMarkets?.fancyMarkets?.length > 0;
+    const hasPremiumTab = !["99990", "2378961"].includes(currentEventData?.sportId);
+    
+    // Update tab value to match available tabs
+    if (!hasFancyTab && hasPremiumTab) {
+      // Only Premium tab exists, it should be value 0
+      if (fancyTabVal !== 0) {
+        setFancyTabVal(0);
+      }
+    } else if (hasFancyTab && !hasPremiumTab) {
+      // Only Fancy tab exists, it should be value 0
+      if (fancyTabVal !== 0) {
+        setFancyTabVal(0);
+      }
+    } else if (hasFancyTab && hasPremiumTab) {
+      // Both tabs exist: Fancy = 0, Premium = 1
+      if (fancyTabVal > 1) {
+        setFancyTabVal(0);
+      }
+    } else {
+      // No tabs available, reset to 0
+      setFancyTabVal(0);
+    }
+  }, [fancyData, secondaryMarkets, currentEventData?.sportId, fancyTabVal]);
+
+  useEffect(() => {
+    if (loggedIn && currentEventData) {
       setCFactor(CURRENCY_TYPE_FACTOR[getCurrencyTypeFromToken()]);
       if (topicUrls?.matchOddsTopic) {
         updateMatchOddsTopic(
@@ -338,24 +752,15 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
         );
         subscribeWsForEventOdds(
           topicUrls?.matchOddsTopic,
-          eventData.sportId,
-          eventData.competitionId,
-          eventData.eventId,
-          eventData?.matchOdds?.marketId,
-          eventData.providerName,
-          false
+          currentEventData?.sportId,
+          currentEventData.competitionId,
+          currentEventData.eventId,
+          currentEventData?.matchOdds?.marketId,
+          currentEventData?.providerName
         );
-        subscribeWsForScorecardUrl("/topic/rx_score/", eventData?.eventId);
+        subscribeWsForScorecardUrl("/topic/rx_score/", currentEventData?.eventId);
       }
 
-      if (
-        eventData.sportId === "4" ||
-        eventData.sportId === "2" ||
-        eventData.sportId === "1" ||
-        eventData.sportId === "99990" ||
-        eventData.sportId === "99994" ||
-        eventData.sportId === "2378961"
-      ) {
         if (secondaryMarkets?.bookmakers?.length && topicUrls?.bookMakerTopic) {
           updateBookMakerTopic(
             topicUrls?.bookMakerTopic,
@@ -364,18 +769,18 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
           for (let itm of secondaryMarkets?.bookmakers) {
             subscribeWsForSecondaryMarkets(
               topicUrls?.bookMakerTopic,
-              eventData?.eventId,
+              currentEventData?.eventId,
               itm.marketId
             );
           }
         }
+        
         if (secondaryMarkets?.fancyMarkets?.length && topicUrls?.fancyTopic) {
           updateFancyTopic(topicUrls?.fancyTopic, topicUrls?.fancyBaseUrl);
-          subscribeWsForFancyMarkets(topicUrls?.fancyTopic, eventData?.eventId);
-        }
+          subscribeWsForFancyMarkets(topicUrls?.fancyTopic, currentEventData?.eventId);
       }
 
-      if (topicUrls?.matchOddsTopic) {
+        if (topicUrls?.matchOddsTopic && secondaryMatchOdds?.length > 0) {
         updateMatchOddsTopic(
           topicUrls?.matchOddsTopic,
           topicUrls?.matchOddsBaseUrl
@@ -383,9 +788,9 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
         for (let mo of secondaryMatchOdds) {
           subscribeWsForSecondaryMatchOdds(
             topicUrls?.matchOddsTopic,
-            eventData.eventId,
+              currentEventData?.eventId,
             mo.marketId,
-            eventData.providerName
+              currentEventData?.providerName
           );
         }
       }
@@ -396,6 +801,8 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     loggedIn,
     secondaryMatchOdds,
     secondaryMarkets,
+      currentEventData,
+      topicUrls,
   ]);
 
   const updateMatchOddsTopic = (
@@ -442,28 +849,37 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     }
   };
 
+  // Update tab value based on available tabs - this runs after fancyData is fetched
   useEffect(() => {
-    if (["1", "2"].includes(eventData?.sportId)) setFancyTabVal(1);
-    if (
-      !secondaryMarkets?.fancyMarkets ||
-      secondaryMarkets?.fancyMarkets?.length === 0
-    ) {
+    const hasFancyTab = fancyData?.length > 0 || secondaryMarkets?.fancyMarkets?.length > 0;
+    const hasPremiumTab = !["99990", "2378961"].includes(currentEventData?.sportId);
+    
+    if (!hasFancyTab && hasPremiumTab) {
+      // Only Premium tab exists, it should be value 0
+      setFancyTabVal(0);
+    } else if (hasFancyTab && hasPremiumTab) {
+      // Both tabs exist: Fancy = 0, Premium = 1
+      // For soccer and tennis, default to Premium tab
+      if (["1", "2"].includes(currentEventData?.sportId)) {
       setFancyTabVal(1);
     } else {
       setFancyTabVal(0);
     }
-  }, [secondaryMarkets]);
-
+    } else if (hasFancyTab && !hasPremiumTab) {
+      // Only Fancy tab exists, it should be value 0
+      setFancyTabVal(0);
+    }
+  }, [secondaryMarkets, transformedFancyData, fancyData, currentEventData?.sportId]);
   useEffect(() => {
     updateEventScorecard(null);
     if (
-      eventData?.eventId &&
-      eventData?.sportId == "4" &&
-      eventData?.providerName != "SportRadar"
+      currentEventData?.eventId &&
+      currentEventData?.sportId == "4" &&
+      currentEventData?.providerName != "SportRadar"
     ) {
-      subscribeWsForScorecardUrl("/topic/rx_score/", eventData?.eventId);
+      subscribeWsForScorecardUrl("/topic/rx_score/", currentEventData?.eventId);
     }
-  }, [eventData?.eventId]);
+  }, [currentEventData?.eventId]);
 
   useEffect(() => {
     clearExchcngeBets();
@@ -610,9 +1026,9 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     }
     if (eventData !== null) {
       fetchEvent(
-        eventData?.sportId,
-        eventData?.competitionId,
-        eventData?.eventId,
+        currentEventData?.sportId,
+        currentEventData?.competitionId,
+        currentEventData?.eventId,
         ""
       );
     }
@@ -623,17 +1039,17 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
       isFirstRenderFetchMarkets.current = false;
       return;
     }
-    if (eventData !== null) {
+    if (eventData !== null && eventData !== undefined) {
       fetchMarketNotifications(
-        eventData?.sportId,
-        eventData?.competitionId,
-        eventData.eventId
+        currentEventData?.sportId,
+        currentEventData?.competitionId,
+        currentEventData?.eventId
       );
     }
-  }, [triggerMarketNotifications]);
+  }, [triggerMarketNotifications, eventData]);
 
   useEffect(() => {
-    // if (eventData && eventData.status === 'IN_PLAY') {
+    // if (currentEventData && eventData.status === 'IN_PLAY') {
     //   setTabVal(0);
     // }
     // if (totalOrders && !isMobile) {
@@ -660,26 +1076,26 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
   }, [bets]);
 
   useEffect(() => {
-    if (loggedIn && eventData?.eventId) {
+    if (loggedIn && currentEventData?.eventId) {
       unsubscribePNWsforEvents(houseId);
       unsubscribePNWsforEvents(parentId);
       subscribeWsForNotifications(
         false,
         houseId,
-        eventData?.sportId,
-        eventData?.competitionId,
-        eventData?.eventId
+        currentEventData?.sportId,
+        currentEventData?.competitionId,
+        currentEventData?.eventId
       );
       subscribeWsForNotificationsPerAdminAllMarkets(
         false,
         houseId,
         parentId,
         accountId,
-        eventData?.eventId
+        currentEventData?.eventId
       );
       return () => {
         unsubscribePNWsforEvents(houseId);
-        unsubscribePNWsforEvents(parentId + ":" + eventData?.eventId);
+        unsubscribePNWsforEvents(parentId + ":" + currentEventData?.eventId);
         if (!window.location.pathname.includes("==")) {
           subscribeWsForNotificationsPerAdmin(
             false,
@@ -691,7 +1107,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
         }
       };
     }
-  }, [pushNotifWSConnection, loggedIn, eventData?.eventId]);
+  }, [pushNotifWSConnection, loggedIn, currentEventData?.eventId]);
 
   useEffect(() => {
     if (loggedIn) {
@@ -774,7 +1190,10 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
       return;
     }
     clearInterval(intervalRef.current);
-    betStatus();
+    // Wrap in try-catch to handle errors gracefully
+    betStatus().catch((error) => {
+      console.warn("[ExchangeAllMarkets] Error in betStatus:", error);
+    });
   }, [triggerBetStatus]);
 
   useEffect(() => {
@@ -784,7 +1203,10 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     }
 
     intervalRef.current = setInterval(() => {
-      betStatus();
+      // Wrap in try-catch to handle errors gracefully
+      betStatus().catch((error) => {
+        console.warn("[ExchangeAllMarkets] Error in betStatus interval:", error);
+      });
       clearInterval(intervalRef.current);
     }, BET_TIMEOUT);
 
@@ -800,7 +1222,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
 
     if (isVisible) {
       if (
-        ((eventData?.matchOdds?.runners?.length > 0 ||
+        ((currentEventData?.matchOdds?.runners?.length > 0 ||
           secondaryMatchOdds?.length > 0) &&
           !betFairWSConnected) ||
         ((bmMData?.length > 0 || fmData?.length > 0) && !dreamWSConnected)
@@ -824,7 +1246,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
 
           if (
             !betFairWSConnected &&
-            (eventData?.matchOdds?.runners?.length > 0 ||
+            (currentEventData?.matchOdds?.runners?.length > 0 ||
               secondaryMatchOdds?.length > 0)
           ) {
             connectToBFWS(topicUrls?.matchOddsBaseUrl);
@@ -923,19 +1345,18 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     <div>
       <SEO
         title={BRAND_NAME}
-        name={eventData?.eventName}
-        description={eventData?.eventName}
-        type={eventData?.eventName}
+        name={currentEventData?.eventName}
+        description={currentEventData?.eventName}
+        type={currentEventData?.eventName}
         link={""}
       />
-      {eventData ||
-      atob(routeParams.eventInfo).split(":")[0] === "SportRadar" ? (
+      {(currentEventData || routeParams?.eventInfo) ? (
         <IonRow className="eam-ctn">
           {!virtualScorecard && scorecardID ? (
-            <Script
-              strategy="afterInteractive"
+            <div
               dangerouslySetInnerHTML={{
                 __html: `
+          <script>
           (function(a,b,c,d,e,f,g,h,i){a[e]||(i=a[e]=function(){(a[e].q=a[e].q||[]).push(arguments)},i.l=1*new Date,i.o=f,
           g=b.createElement(c),h=b.getElementsByTagName(c)[0],g.async=1,g.src=d,g.setAttribute("n",e),h.parentNode.insertBefore(g,h)
           )})(window,document,"script", "https://widgets.sir.sportradar.com/8ee45b574e2781d581b0b0a133803906/widgetloader", "SIR", {
@@ -943,6 +1364,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
               language: "en"
           });
           SIR("addWidget", ".sr-widget-1", "match.lmtPlus", {layout: "double", scoreboard: "extended", momentum: "extended", collapseTo: "momentum", matchId:${scorecardID}});
+          </script>
             `,
               }}
             />
@@ -963,30 +1385,30 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
               </div>
             )}
 
-            <MatchInfo eventData={eventData} routeParams={routeParams} />
+            <MatchInfo eventData={currentEventData} routeParams={routeParams} />
 
             {loggedIn && isMobile && (openBets?.length > 0 || eventId) ? (
               <>
                 <Tabs
-                  value={tabVal}
+                  value={tabVal ?? 0}
                   className="eam-all-markets-header-tabs"
                   onChange={(_, newValue) => {
-                    setTabVal(newValue);
+                    setTabVal(newValue ?? 0);
                   }}
                 >
                   <Tab
                     label={langData?.["scorecard"]}
                     value={0}
-                    disabled={["99990"].includes(eventData?.sportId)}
+                    disabled={["99990"].includes(currentEventData?.sportId)}
                   />
-                  {(eventData?.status === "IN_PLAY" ||
+                  {(currentEventData?.status === "IN_PLAY" ||
                     provider === "SportRadar") && (
                     <Tab
                       label={langData?.["live_stream"]}
                       value={1}
                       disabled={
-                        (!(eventData && eventData.status === "IN_PLAY") ||
-                          ["99990"].includes(eventData?.sportId)) &&
+                        (!(currentEventData && currentEventData.status === "IN_PLAY") ||
+                          ["99990"].includes(currentEventData?.sportId)) &&
                         provider !== "SportRadar"
                       }
                       onClick={streamToast}
@@ -1004,10 +1426,10 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                   className="event-stat-mobile-ctn"
                 >
                   <div>
-                    {tabVal === 0 &&
-                    eventData &&
-                    eventData?.sportId !== "99990" &&
-                    eventData?.matchOdds ? (
+                    {                    tabVal === 0 &&
+                    currentEventData &&
+                    currentEventData?.sportId !== "99990" &&
+                    currentEventData?.matchOdds ? (
                       <>
                         <Accordion
                           className="scorecard-accordion"
@@ -1025,9 +1447,9 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                           <AccordionDetails className="scorecard-detail">
                             <div className="widgets">
                               <div>
-                                {eventData &&
-                                eventData?.sportId == "4" &&
-                                eventData?.providerName != "SportRadar" &&
+                                {currentEventData &&
+                                currentEventData?.sportId == "4" &&
+                                currentEventData?.providerName != "SportRadar" &&
                                 !srScorecardEnabled ? (
                                   <CricketScorecard />
                                 ) : IS_NEW_SCORECARD_ENABLED ? (
@@ -1035,7 +1457,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                                     title="sr-scorecard"
                                     id="scorecard-frame"
                                     allowFullScreen={false}
-                                    src={`https://play.winadda.co.in/?sportId=${eventData?.sportId}&eventId=${eventData?.eventId}`}
+                                    src={`https://play.winadda.co.in/?sportId=${currentEventData?.sportId}&eventId=${currentEventData?.eventId}`}
                                     sandbox="allow-same-origin allow-forms allow-scripts allow-top-navigation allow-popups"
                                   ></iframe>
                                 ) : (
@@ -1060,20 +1482,20 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                         {/* {eventData.sportId === '4' ? ( */}
                         <CricketLiveStream
                           eventID={
-                            eventData?.sportId === "99994"
+                            currentEventData?.sportId === "99994"
                               ? secondaryMarkets?.bookmakers?.length > 0
-                                ? eventData?.eventId
+                                ? currentEventData?.eventId
                                 : "sr:match:" + scorecardID
-                              : eventData?.matchOdds?.runners?.length === 0 &&
+                              : currentEventData?.matchOdds?.runners?.length === 0 &&
                                 secondaryMarkets?.bookmakers?.length > 0 &&
                                 premiumMarkets?.markets?.matchOdds.length > 0
                               ? "sr:match:" + scorecardID
-                              : eventData?.eventId
+                              : currentEventData?.eventId
                           }
                           providerUrl={backupStreamUrl}
                           channelId={
-                            eventData?.liveStreamChannelId
-                              ? eventData?.liveStreamChannelId
+                            currentEventData?.liveStreamChannelId
+                              ? currentEventData?.liveStreamChannelId
                               : liveStreamChannelId
                           }
                           clientIp={clientIp}
@@ -1123,11 +1545,11 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
               </div>
             )}
 
-            <MatchInfo eventData={eventData} routeParams={routeParams} />
+            <MatchInfo eventData={currentEventData} routeParams={routeParams} />
 
             {loggedIn &&
             !isMobile &&
-            !["7", "4339", "99990"].includes(eventData?.sportId) ? (
+            !["7", "4339", "99990"].includes(currentEventData?.sportId) ? (
               <Accordion className="scorecard-accordion" defaultExpanded={true}>
                 <AccordionSummary
                   expandIcon={<ExpandLessSharpIcon className="expand-icon" />}
@@ -1139,9 +1561,9 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                 <AccordionDetails className="scorecard-detail">
                   <div className="widgets">
                     <div>
-                      {eventData &&
-                      eventData?.sportId == "4" &&
-                      eventData?.providerName != "SportRadar" &&
+                      {currentEventData &&
+                      currentEventData?.sportId == "4" &&
+                      currentEventData?.providerName != "SportRadar" &&
                       !srScorecardEnabled ? (
                         <CricketScorecard />
                       ) : IS_NEW_SCORECARD_ENABLED ? (
@@ -1149,7 +1571,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                           title="sr-scorecard"
                           id="scorecard-frame"
                           allowFullScreen={false}
-                          src={`https://play.winadda.co.in/?sportId=${eventData?.sportId}&eventId=${eventData?.eventId}`}
+                          src={`https://play.winadda.co.in/?sportId=${currentEventData?.sportId}&eventId=${currentEventData?.eventId}`}
                           sandbox="allow-same-origin allow-forms allow-scripts allow-top-navigation allow-popups"
                         ></iframe>
                       ) : (
@@ -1162,15 +1584,15 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
             ) : null}
 
             {/* temporary condition - because of showing odds for premium in events page match odds are being shown */}
-            {eventData &&
-            eventData?.providerName?.toLowerCase() !== "sportradar" ? (
+            {currentEventData &&
+            currentEventData?.providerName?.toLowerCase() !== "sportradar" ? (
               <IonRow className="eam-table-section">
                 <MatchOddsTable
                   exposureMap={exposureMap ? exposureMap : null}
                   loggedIn={loggedIn}
                   getFormattedMinLimit={getFormattedMinLimit}
                   getFormattedMaxLimit={getFormattedMaxLimit}
-                  eventData={eventData}
+                  eventData={currentEventData}
                   fetchEvent={fetchEvent}
                   marketNotifications={marketNotifications}
                   secondaryMatchOdds={[]}
@@ -1182,7 +1604,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
               </IonRow>
             ) : null}
 
-            {eventData &&
+            {currentEventData &&
             secondaryMarkets?.bookmakers?.length > 0 &&
             secondaryMarkets?.bookmakers[0]?.runners?.length > 0 ? (
               <>
@@ -1192,7 +1614,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                     getFormattedMinLimit={getFormattedMinLimit}
                     getFormattedMaxLimit={getFormattedMaxLimit}
                     bmMData={bmMData}
-                    eventData={eventData}
+                    eventData={currentEventData}
                     exposureMap={exposureMap ? exposureMap : null}
                     fetchEvent={fetchEvent}
                     marketNotifications={marketNotifications}
@@ -1203,15 +1625,15 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
               </>
             ) : null}
 
-            {eventData &&
-            eventData?.providerName?.toLowerCase() !== "sportradar" ? (
+            {currentEventData &&
+            currentEventData?.providerName?.toLowerCase() !== "sportradar" ? (
               <IonRow className="eam-table-section">
                 <MatchOddsTable
                   exposureMap={exposureMap ? exposureMap : null}
                   loggedIn={loggedIn}
                   getFormattedMinLimit={getFormattedMinLimit}
                   getFormattedMaxLimit={getFormattedMaxLimit}
-                  eventData={eventData}
+                  eventData={currentEventData}
                   fetchEvent={fetchEvent}
                   marketNotifications={marketNotifications}
                   secondaryMatchOdds={secondaryMatchOdds?.filter(
@@ -1225,11 +1647,11 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
               </IonRow>
             ) : null}
 
-            {eventData && winnerMarket?.marketName ? (
+            {currentEventData && winnerMarket?.marketName ? (
               <WinnerMarket
                 winnerMarket={winnerMarket}
                 addExchangeBet={addExchangeBet}
-                eventData={eventData}
+                eventData={currentEventData}
                 bets={bets}
                 exposureMap={exposureMap}
                 marketNotifications={marketNotifications}
@@ -1240,28 +1662,41 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
 
             <IonRow className="eam-table-section fancy-tab-section">
               <>
+                {(() => {
+                  const hasFancyTab = transformedFancyData?.length > 0 || fancyData?.length > 0 || secondaryMarkets?.fancyMarkets?.length > 0;
+                  const hasPremiumTab = !["99990", "2378961"].includes(currentEventData?.sportId);
+                  
+                  if (!hasFancyTab && !hasPremiumTab) {
+                    return null; // Don't render tabs if neither is available
+                  }
+                  
+                  return (
                 <Tabs
-                  value={fancyTabVal}
+                      value={fancyTabVal ?? 0}
                   className="fancy-market-tabs"
                   onChange={(_, newValue) => {
-                    setFancyTabVal(newValue);
+                        setFancyTabVal(newValue ?? 0);
                   }}
                 >
-                  {secondaryMarkets?.fancyMarkets?.length > 0 ? (
+                      {/* Fancy tab - show if we have fancy data from API or existing fancy markets */}
+                      {hasFancyTab ? (
                     <Tab
-                      label={langData?.["fancy"]}
+                          label={langData?.["fancy"] || "Fancy"}
                       className="fancy-tab"
                       value={0}
                     />
                   ) : null}
-                  {!["99990", "2378961"].includes(eventData?.sportId) ? (
+                      {/* Premium tab - show for non-virtual sports */}
+                      {hasPremiumTab ? (
                     <Tab
-                      label={langData?.["premium"]}
+                          label={langData?.["premium"] || "Premium"}
                       className="fancy-tab premium-markets"
-                      value={1}
+                          value={hasFancyTab ? 1 : 0}
                     />
                   ) : null}
                 </Tabs>
+                  );
+                })()}
                 <div className="fancy-tab-border"></div>
                 <IonRow>
                   <TabPanel
@@ -1269,8 +1704,37 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                     index={0}
                     className="fancy-tab-ctn"
                   >
-                    {eventData && secondaryMarkets?.fancyMarkets?.length > 0 ? (
+                    {loadingFancy ? (
+                      <div className="no-fancy-msg">
+                        {langData?.["loading"] || "Loading..."}
+                      </div>
+                    ) : transformedFancyData?.length > 0 ? (
                       <>
+                        {/* Display fancy data from API using FMTable component with proper UI */}
+                        <FMTable
+                          fmData={transformedFancyData}
+                          openBets={openBets}
+                          commissionEnabled={commissionEnabled}
+                          addExchangeBet={addExchangeBet}
+                          loggedIn={loggedIn}
+                          getFormattedMinLimit={getFormattedMinLimit}
+                          getFormattedMaxLimit={getFormattedMaxLimit}
+                          bets={bets}
+                          exposureMap={exposureMap ? exposureMap : null}
+                          fancySuspended={false}
+                          fancyDisabled={false}
+                          fetchEvent={fetchEvent}
+                          marketNotifications={marketNotifications}
+                          setBetStartTime={(date) => setStartTime(date)}
+                          setAddNewBet={(val) => setAddNewBet(val)}
+                          setAlertMsg={setAlertMsg}
+                          langData={langData}
+                          bettingInprogress={bettingInprogress}
+                        />
+                      </>
+                    ) : currentEventData && secondaryMarkets?.fancyMarkets?.length > 0 ? (
+                      <>
+                        {/* Fallback to existing fancy markets */}
                         <FMTable
                           loggedIn={loggedIn}
                           getFormattedMinLimit={getFormattedMinLimit}
@@ -1282,17 +1746,24 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                           setAddNewBet={(val) => setAddNewBet(val)}
                         />
                       </>
-                    ) : null}
+                    ) : (
+                      <div className="no-fancy-msg">
+                        {langData?.["no_fancy_markets"] || "No fancy markets available"}
+                      </div>
+                    )}
                   </TabPanel>
 
                   <IonRow className="row-100">
                     {" "}
+                    {(() => {
+                      const hasFancyTab = transformedFancyData?.length > 0 || secondaryMarkets?.fancyMarkets?.length > 0;
+                      return (
                     <TabPanel
                       value={fancyTabVal}
-                      index={1}
+                          index={hasFancyTab ? 1 : 0}
                       className="fancy-tab-ctn premium-iframe-container"
                     >
-                      {!["99990", "2378961"].includes(eventData?.sportId) ? (
+                      {!["99990", "2378961"].includes(currentEventData?.sportId) ? (
                         <>
                           {premiumIframeLoading ? (
                             <div className="no-fancy-msg">
@@ -1313,20 +1784,22 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                         </>
                       ) : null}
                     </TabPanel>
+                      );
+                    })()}
                   </IonRow>
                 </IonRow>
               </>
             </IonRow>
 
-            {eventData &&
-            eventData?.providerName?.toLowerCase() !== "sportradar" ? (
+            {currentEventData &&
+            currentEventData?.providerName?.toLowerCase() !== "sportradar" ? (
               <IonRow className="eam-table-section mb-40">
                 <MatchOddsTable
                   exposureMap={exposureMap ? exposureMap : null}
                   loggedIn={loggedIn}
                   getFormattedMinLimit={getFormattedMinLimit}
                   getFormattedMaxLimit={getFormattedMaxLimit}
-                  eventData={eventData}
+                  eventData={currentEventData}
                   fetchEvent={fetchEvent}
                   marketNotifications={marketNotifications}
                   secondaryMatchOdds={secondaryMatchOdds?.filter(
@@ -1370,7 +1843,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
             <IonCol className="stream-section">
               <div className="sticky-col">
                 {loggedIn &&
-                ((eventData &&
+                ((currentEventData &&
                   (eventData.status === "IN_PLAY" ||
                     eventData.status === "SUSPENDED")) ||
                   provider === "SportRadar") &&
@@ -1385,20 +1858,20 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                       <div className="live-stream-ctn">
                         <CricketLiveStream
                           eventID={
-                            eventData?.sportId === "99994"
+                            currentEventData?.sportId === "99994"
                               ? secondaryMarkets?.bookmakers?.length > 0
-                                ? eventData?.eventId
+                                ? currentEventData?.eventId
                                 : "sr:match:" + scorecardID
-                              : eventData?.matchOdds?.runners?.length === 0 &&
+                              : currentEventData?.matchOdds?.runners?.length === 0 &&
                                 secondaryMarkets?.bookmakers?.length > 0 &&
                                 premiumMarkets?.markets?.matchOdds.length > 0
                               ? "sr:match:" + scorecardID
-                              : eventData?.eventId
+                              : currentEventData?.eventId
                           }
                           providerUrl={backupStreamUrl}
                           channelId={
-                            eventData?.liveStreamChannelId
-                              ? eventData?.liveStreamChannelId
+                            currentEventData?.liveStreamChannelId
+                              ? currentEventData?.liveStreamChannelId
                               : liveStreamChannelId
                           }
                           clientIp={clientIp}
@@ -1675,6 +2148,8 @@ const mapStateToProps = (state: RootState, ownProps) => {
       selectedEvent.id
     ),
     oneClickBettingEnabled: state.exchBetslip.oneClickBettingEnabled,
+    commissionEnabled: state.exchBetslip.commissionEnabled || false,
+    bettingInprogress: state.exchBetslip.bettingInprogress || false,
   };
 };
 
@@ -1715,6 +2190,8 @@ const mapDispatchToProps = (dispatch: Function) => {
     setExchEvent: (event: SelectedObj) => dispatch(setExchEvent(event)),
     updateEventScorecard: (scorecard: any) =>
       dispatch(updateEventScorecard(scorecard)),
+    updateSecondaryMatchOdds: (payload: any) =>
+      dispatch(updateSecondaryMatchOdds(payload)),
     clearExchangeBets: () => dispatch(clearExchcngeBets()),
     setBettingInprogress: (val: boolean) => dispatch(setBettingInprogress(val)),
     setOneClickBettingLoading: (val: boolean) =>

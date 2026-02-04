@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import { useHistory, useLocation } from "react-router-dom";
 import { EXCH_COMPETITIONS_MENU } from "../../constants/CommonConstants";
@@ -26,6 +26,8 @@ import {
   sideHeaderTabs,
   competitionsData,
 } from "./SideHeaderUtil";
+import { getStaticSportsData, transformSportsToTabs, SportTabData } from "../../util/sportsApiUtil";
+import USABET_API from "../../api-services/usabet-api";
 import { ChevronRight, KeyboardArrowDown } from "@material-ui/icons";
 import { getLangCode } from "../../util/localizationUtil";
 import CloseIcon from "@material-ui/icons/Close";
@@ -91,6 +93,16 @@ const SideHeader = (props: Props) => {
   } = props;
 
   const history = useHistory();
+  const [sportsTabs, setSportsTabs] = useState<SportTabData[]>(sideHeaderTabs);
+
+  useEffect(() => {
+    // Use static sports data instead of fetching from API
+    const sports = getStaticSportsData();
+    if (sports.length > 0) {
+      const transformedTabs = transformSportsToTabs(sports);
+      setSportsTabs(transformedTabs);
+    }
+  }, []);
 
   const getUserShortName = () => {
     const name: string = demoUser()
@@ -126,7 +138,7 @@ const SideHeader = (props: Props) => {
         </div>
         <div className="sh-sub-menu">
           <SHSportsTab
-            tabs={sideHeaderTabs}
+            tabs={sportsTabs}
             loggedIn={loggedIn}
             setCompetition={setCompetition}
             closeHandler={closeHandler}
@@ -376,6 +388,14 @@ const SHTab = (props: {
   );
 };
 
+interface CompetitionData {
+  competitionId: string;
+  competitionName: string;
+  sportId: string;
+  sportName: string;
+  enabled: boolean;
+}
+
 const SHSportsTab = (props: {
   tabs;
   loggedIn;
@@ -389,6 +409,94 @@ const SHSportsTab = (props: {
   const [showDropDown, setShowDropDown] = useState<{ [key: string]: boolean }>(
     {}
   );
+  const [sportCompetitions, setSportCompetitions] = useState<{
+    [sportId: string]: CompetitionData[];
+  }>({});
+
+  // Fetch competitions from API
+  useEffect(() => {
+    const fetchCompetitionsFromAPI = async () => {
+      try {
+        const response = await USABET_API.get("/match/homeMatchesOpen");
+        if (response?.data?.status === true && Array.isArray(response.data.data)) {
+          const matches = response.data.data;
+          
+          // Group by sport_id and extract unique series/competitions
+          const competitionsMap: { [sportId: string]: Map<string, CompetitionData> } = {};
+          
+          matches.forEach((match: any) => {
+            const sportId = String(match.sport_id || match.sportId || "");
+            const sportName = match.sport_name || match.sportName || "";
+            const seriesId = String(match.series_id || match.seriesId || match.competitionId || "");
+            const seriesName = match.series_name || match.seriesName || match.competitionName || "";
+            
+            // Skip if missing required data
+            if (!sportId || !seriesId || !seriesName) {
+              return;
+            }
+
+            // Some feeds return a "series" equal to the sport itself for racing
+            // e.g. sport_id: "7" & series_id: "7" & series_name: "Horse Racing".
+            // This is not a real competition and breaks series_id filtering.
+            if (
+              String(seriesId).trim() === String(sportId).trim() ||
+              String(seriesName).trim().toLowerCase() === String(sportName).trim().toLowerCase()
+            ) {
+              return;
+            }
+            
+            // Initialize sport map if not exists
+            if (!competitionsMap[sportId]) {
+              competitionsMap[sportId] = new Map();
+            }
+            
+            // Add unique competition (use seriesId as key to avoid duplicates)
+            if (!competitionsMap[sportId].has(seriesId)) {
+              competitionsMap[sportId].set(seriesId, {
+                competitionId: seriesId,
+                competitionName: seriesName,
+                sportId: sportId,
+                sportName: sportName,
+                enabled: true,
+              });
+            }
+          });
+          
+          // Convert Map to array for each sport
+          const competitionsBySport: { [sportId: string]: CompetitionData[] } = {};
+          Object.keys(competitionsMap).forEach((sportId) => {
+            competitionsBySport[sportId] = Array.from(competitionsMap[sportId].values())
+              .sort((a, b) => a.competitionName.localeCompare(b.competitionName));
+          });
+          
+          setSportCompetitions(competitionsBySport);
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[SHSportsTab] Loaded competitions from API:', competitionsBySport);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching competitions from API:", error);
+        // Fallback to static data on error
+        const fallbackCompetitions: { [sportId: string]: CompetitionData[] } = {};
+        competitionsData.forEach((comp) => {
+          if (!fallbackCompetitions[comp.sportId]) {
+            fallbackCompetitions[comp.sportId] = [];
+          }
+          fallbackCompetitions[comp.sportId].push({
+            competitionId: comp.competitionId,
+            competitionName: comp.competitionName,
+            sportId: comp.sportId,
+            sportName: "",
+            enabled: comp.enabled,
+          });
+        });
+        setSportCompetitions(fallbackCompetitions);
+      }
+    };
+    
+    fetchCompetitionsFromAPI();
+  }, []);
 
   const handleClick = (indv) => {
     setShowDropDown((prev) => ({
@@ -400,20 +508,67 @@ const SHSportsTab = (props: {
 
   const handleCompetitionClick = (indv, compt) => {
     setSelCompetition(compt.competitionId);
+    
+    // Derive sport slug from tab route to avoid mismatches like Soccer(text) vs Football(route)
+    // Example: indv.route = "/exchange_sports/football" -> sportSlug = "football"
+    const sportSlugFromRoute =
+      typeof indv?.route === "string" && indv.route.includes("/exchange_sports/")
+        ? indv.route.split("/exchange_sports/")[1]?.split("/")[0]
+        : null;
+
+    // Generate competition slug from name
+    const competitionSlug = compt.competitionName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, " ")
+      .replace(/ +/g, " ")
+      .trim()
+      .split(" ")
+      .join("-");
+    
+    // Set competition in Redux store with series_id
     setCompetition({
-      id: compt.competitionId,
+      id: compt.competitionId, // This is the series_id
       name: compt.competitionName,
-      slug: compt.competitionName.toLowerCase().replace(/\s+/g, "-"),
+      slug: competitionSlug,
     });
+    
     closeHandler && closeHandler();
-    const slug = compt.competitionName.toLowerCase().replace(/\s+/g, "-");
-    history.push(`/exchange_sports/${indv.text}/${slug}`);
+    
+    // Navigate to competition page with series_id as query parameter
+    const sportSlug = sportSlugFromRoute || indv.text;
+    const url = `/exchange_sports/${sportSlug}/${competitionSlug}?series_id=${compt.competitionId}`;
+    history.push(url);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[SHSportsTab] Navigated to competition:', {
+        sportId: indv.id,
+        sportName: indv.text,
+        sportSlug,
+        seriesId: compt.competitionId,
+        seriesName: compt.competitionName,
+        slug: competitionSlug,
+        url: url
+      });
+    }
   };
 
-  // Get competitions for a specific sport
-  const getCompetitionsForSport = (sportId: string) => {
+  // Get competitions for a specific sport from API data or fallback to static data
+  const getCompetitionsForSport = (sportId: string): CompetitionData[] => {
+    // Try API data first
+    if (sportCompetitions[sportId] && sportCompetitions[sportId].length > 0) {
+      return sportCompetitions[sportId];
+    }
+    
+    // Fallback to static data
     return competitionsData
       .filter((comp) => comp.sportId === sportId && comp.enabled)
+      .map((comp) => ({
+        competitionId: comp.competitionId,
+        competitionName: comp.competitionName,
+        sportId: comp.sportId,
+        sportName: "",
+        enabled: comp.enabled,
+      }))
       .sort((a, b) => a.competitionName.localeCompare(b.competitionName));
   };
 

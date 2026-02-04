@@ -13,7 +13,7 @@ import { eventTypesNameMap } from "../../store/exchangeSports/exchangeSportsSele
 import "./TopMatches.scss";
 import moment from "moment";
 import { isMobile } from "react-device-detect";
-import { sportIconsMap, sportNamesMap } from "./HomePageUtils";
+import { getSportIcon, getSportName } from "./HomePageUtils";
 import CarouselComponent from "../../common/CarouselComponent/CarouselComponent";
 
 type Props = {
@@ -70,6 +70,7 @@ const TopMatches: React.FC<Props> = ({
   };
 
   const handleEventChange = (event: any) => {
+    // Generate competition slug
     const competitionSlug = event.competitionName
       ? event.competitionName
           .toLocaleLowerCase()
@@ -80,6 +81,35 @@ const TopMatches: React.FC<Props> = ({
           .join("-")
       : "league";
 
+    // Generate event slug if not present
+    let eventSlug = event.eventSlug;
+    if (!eventSlug && event.eventName) {
+      eventSlug = event.eventName
+        .toLocaleLowerCase()
+        .replace(/[^a-z0-9]/g, " ")
+        .replace(/ +/g, " ")
+        .trim()
+        .split(" ")
+        .join("-");
+    }
+    if (!eventSlug && event.eventId) {
+      eventSlug = event.eventId.toString();
+    }
+    if (!eventSlug) {
+      eventSlug = "event";
+    }
+
+    // Get sport slug from sportId or sportName
+    let sportSlug = "";
+    if (event?.sportId && eventTypesNameMap[event.sportId]) {
+      sportSlug = eventTypesNameMap[event.sportId].toLowerCase().replace(/\s+/g, "-");
+    } else if (event?.sportName) {
+      sportSlug = event.sportName.toLowerCase().replace(/\s+/g, "-");
+    } else {
+      sportSlug = "cricket"; // Default fallback
+    }
+
+    // Set competition and event in Redux store
     setCompetition({
       id: event.competitionId,
       name: event.competitionName,
@@ -89,39 +119,64 @@ const TopMatches: React.FC<Props> = ({
     setExchEvent({
       id: event.eventId,
       name: event.eventName,
-      slug: event.eventSlug,
+      slug: eventSlug,
     });
 
+    // Get provider name (default to USABET if not provided)
+    const providerName = event?.providerName || "USABET";
+
+    // Navigate based on event type
     if (event?.providerName?.toLowerCase() === "sportradar" && !loggedIn) {
       history.push("/login");
     } else if (event?.catId === "SR VIRTUAL") {
+      // Virtual events route
+      const eventInfo = btoa(
+        `${event.sportId}:${event.competitionId}:${event.eventId}`
+      );
       history.push(
-        `/exchange_sports/virtuals/${eventTypesNameMap[
-          event?.sportId
-        ]?.toLowerCase()}/${competitionSlug}/${event.eventSlug}/${btoa(
-          `${event.sportId}:${event.competitionId}:${event.eventId}`
-        )}`
+        `/exchange_sports/virtuals/${sportSlug}/${competitionSlug}/${eventSlug}/${eventInfo}`
       );
     } else {
+      // Regular events route
+      // Format: providerName:sportId:competitionId:eventId
+      const eventInfo = btoa(
+        `${providerName}:${event.sportId}:${event.competitionId}:${event.eventId}`
+      );
+      
       history.push(
-        `/exchange_sports/${eventTypesNameMap[
-          event?.sportId
-        ]?.toLowerCase()}/${competitionSlug}/${event.eventSlug}/${btoa(
-          `${event.providerName}:${event.sportId}:${event.competitionId}:${event.eventId}`
-        )}`,
+        `/exchange_sports/${sportSlug}/${competitionSlug}/${eventSlug}/${eventInfo}`,
         {
           homeTeam: event?.homeTeam,
           awayTeam: event?.awayTeam,
           openDate: event?.openDate,
+          sportId: event?.sportId,
+          sportName: event?.sportName,
+          competitionId: event?.competitionId,
+          competitionName: event?.competitionName,
+          eventId: event?.eventId,
+          eventName: event?.eventName,
         }
       );
     }
   };
   // Convert FavoriteEventDTO to EventDTO format for component compatibility
-  const adaptedEvents: EventDTO[] = useMemo(
-    () => favouriteEvents.map((event) => adaptFavoriteEventToEventDTO(event)),
-    [favouriteEvents]
-  );
+  const adaptedEvents: EventDTO[] = useMemo(() => {
+    const events = favouriteEvents.map((event) => adaptFavoriteEventToEventDTO(event));
+    
+    // Debug logging in development to see what sportIds and sportNames we're getting
+    if (process.env.NODE_ENV === 'development' && events.length > 0) {
+      console.log('[TopMatches] Sample events with sport data:', events.slice(0, 3).map(e => ({
+        eventId: e.eventId,
+        eventName: e.eventName,
+        sportId: e.sportId,
+        sportIdType: typeof e.sportId,
+        sportName: e.sportName,
+        sportNameType: typeof e.sportName
+      })));
+    }
+    
+    return events;
+  }, [favouriteEvents]);
   if (!favouriteEvents || favouriteEvents.length === 0) {
     return null;
   }
@@ -142,22 +197,50 @@ const TopMatches: React.FC<Props> = ({
           <div
             key={event.eventId}
             className="top-match-card"
-            onClick={() => handleEventChange(event)}
+            onClick={() => {
+              console.log('[TopMatches] Clicked event:', {
+                eventId: event.eventId,
+                eventName: event.eventName,
+                sportId: event.sportId,
+                sportName: event.sportName,
+                competitionId: event.competitionId,
+                competitionName: event.competitionName,
+                providerName: event.providerName,
+              });
+              handleEventChange(event);
+            }}
+            style={{ cursor: 'pointer' }}
           >
             <div className="match-info">
               <div className="category-and-live">
                 <div className="category-name-container">
                   <div className="sport-icon-container">
-                    <img
-                      src={sportIconsMap[event.sportId]}
-                      alt={event.sportName}
-                      className="sport-icon"
-                      height={25}
-                      loading="lazy"
-                    />
-                    <div className="sport-name-top-matches">
-                      {sportNamesMap[event.sportId]}
-                    </div>
+                    {(() => {
+                      const IconComponent = getSportIcon(event.sportId, event.sportName);
+                      const sportName = getSportName(event.sportId, event.sportName);
+                      
+                      // Debug logging in development
+                      if (process.env.NODE_ENV === 'development' && (!event.sportId || !event.sportName)) {
+                        console.log('[TopMatches] Event icon lookup:', {
+                          eventId: event.eventId,
+                          sportId: event.sportId,
+                          sportName: event.sportName,
+                          resolvedName: sportName
+                        });
+                      }
+                      
+                      return (
+                        <>
+                          <IconComponent
+                            className="sport-icon"
+                            style={{ height: '25px', width: 'auto' }}
+                          />
+                          <div className="sport-name-top-matches">
+                            {sportName}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <div className="market-types">

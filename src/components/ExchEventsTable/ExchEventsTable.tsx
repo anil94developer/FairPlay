@@ -450,7 +450,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
   const updateEvents = async () => {
     setLoadingMatches(true);
     try {
-      const response = await USABET_API.get("/match/homeMatchesOpen");
+      const response = await USABET_API.get("/match/homeMatchesV2");
 
       // Check for invalid token response
       if (response?.data) {
@@ -936,7 +936,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
 
     setLoadingMatches(true);
     try {
-      const response = await USABET_API.get("/match/homeMatchesOpen");
+      const response = await USABET_API.get("/match/homeMatchesV2");
 
       // Handle different API response structures:
       // Structure 1: { data: [...], status: true } - response.data.data is array, response.data.status is true
@@ -1636,18 +1636,33 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         );
         break;
       case Status.UPCOMING:
-        // API often returns upcoming racing markets as "SUSPENDED" (still upcoming).
-        // Use date-based upcoming detection (from today onwards) instead of strict status === "UPCOMING".
+        // Only show events that are truly upcoming (not started yet)
         return events.filter((event) => {
+          // Exclude virtual events
           if (event.virtualEvent || event.catId === "SR VIRTUAL") return false;
-          if (event.status === "IN_PLAY") return false;
-          if (event.forcedInplay) return false;
+          
+          // Exclude events that are already in play
+          if (event.status === "IN_PLAY" || event.status === "INPLAY" || event.status === "IN-PLAY") return false;
+          if (event.forcedInplay || event.forcedInPlay || event.inplay || event.inPlay || event.in_play) return false;
+          
+          // Check if event has started based on openDate
           if (event.openDate) {
-            // Show from today's date (00:00) onwards (today + future dates)
-            return moment(event.openDate).isSameOrAfter(moment().startOf("day"));
+            const now = moment();
+            const eventTime = moment(event.openDate);
+            
+            // For tennis (sportId === "2"), check if more than 5 minutes in the future
+            if (event.sportId === "2") {
+              return eventTime.diff(now, "minutes") > 5;
+            }
+            
+            // For other sports, check if event time is in the future (not started yet)
+            return eventTime.diff(now, "seconds") > 0;
           }
-          // fallback: keep legacy behavior if openDate missing
-          return event.status === "UPCOMING";
+          
+          // Fallback: only show if status is explicitly "UPCOMING" and not in play
+          return event.status === "UPCOMING" && 
+                 !event.forcedInplay && 
+                 !event.forcedInPlay;
         });
         break;
       case Status.VIRTUAL:
@@ -1822,22 +1837,66 @@ const EventsTable: React.FC<StoreProps> = (props) => {
 
       {events?.length > 0 ? (
         <div className="events-table-content table-ctn">
-          {favouriteEvents?.length > 0 && (
-            <Tabs variant="scrollable" className="favourite-events">
-              {favouriteEvents.map((event) => (
-                <button
-                  className="favourite-event-item"
-                  onClick={() => handleEventChange(event)}
-                >
-                  <span className="event-name">
-                    {event?.customEventName
-                      ? event.customEventName
-                      : event.eventName}
-                  </span>
-                </button>
-              ))}
-            </Tabs>
-          )}
+          {(() => {
+            // Get all inplay events from the current events list
+            const allInplayEvents = events.filter((event) => {
+              // Check if event is inplay
+              const isInplay = 
+                event.inplay === true || 
+                event.inPlay === true || 
+                event.in_play === true ||
+                event.status === "IN_PLAY" || 
+                event.status === "INPLAY" ||
+                event.forcedInplay === true ||
+                event.forcedInPlay === true;
+              
+              return isInplay;
+            });
+            
+            // Filter for early inplay matches (started within last 2 hours)
+            const now = moment();
+            const earlyInplayEvents = allInplayEvents
+              .filter((event) => {
+                const matchDate = event.match_date || (event as any).matchDate;
+                const openDate = event.openDate || event.open_date || matchDate;
+                if (!openDate) return false;
+                
+                const eventTime = moment(openDate);
+                const hoursSinceStart = now.diff(eventTime, "hours");
+                
+                // Only include matches that started within the last 2 hours (early inplay)
+                return hoursSinceStart >= 0 && hoursSinceStart <= 2;
+              })
+              .sort((a, b) => {
+                // Sort by match date ascending (earliest first)
+                const aDate = a.customOpenDate
+                  ? moment(a.customOpenDate)
+                  : moment(a.openDate || (a as any).match_date);
+                const bDate = b.customOpenDate
+                  ? moment(b.customOpenDate)
+                  : moment(b.openDate || (b as any).match_date);
+                return aDate.diff(bDate, "seconds");
+              })
+              .slice(0, 10); // Limit to max 10 items
+            
+            return earlyInplayEvents.length > 0 ? (
+              <Tabs variant="scrollable" className="favourite-events">
+                {earlyInplayEvents.map((event, index) => (
+                  <button
+                    key={`early-inplay-${event.eventId}-${index}`}
+                    className="favourite-event-item"
+                    onClick={() => handleEventChange(event)}
+                  >
+                    <span className="event-name">
+                      {event?.customEventName
+                        ? event.customEventName
+                        : event.eventName}
+                    </span>
+                  </button>
+                ))}
+              </Tabs>
+            ) : null;
+          })()}
           <TableContainer component={Paper}>
             <Table className="events-table">
               <TableHead className="et-head">

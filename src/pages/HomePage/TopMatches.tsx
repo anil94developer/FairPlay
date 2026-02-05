@@ -281,13 +281,29 @@ const TopMatches: React.FC<Props> = ({
                       ? `${event.homeTeam} V ${event.awayTeam}`
                       : event.eventName}
                   </div>
-                  {event.status === "IN_PLAY" && (
-                    <img
-                      src={LiveEvent}
-                      alt="Live Event"
-                      className="live-img-top-matches"
-                    />
-                  )}
+                  {(() => {
+                    // Check multiple conditions for live status
+                    const status = event?.status?.toUpperCase() || "";
+                    const isInPlay = 
+                      status === "IN_PLAY" || 
+                      status === "INPLAY" || 
+                      status === "IN-PLAY" ||
+                      event?.forcedInplay === true ||
+                      event?.forcedInPlay === true ||
+                      event?.inplay === true ||
+                      event?.inPlay === true ||
+                      event?.in_play === true ||
+                      event?.catId === "INPLAY" ||
+                      event?.catId === "IN_PLAY";
+                    
+                    return isInPlay ? (
+                      <img
+                        src={LiveEvent}
+                        alt="Live Event"
+                        className="live-img-top-matches"
+                      />
+                    ) : null;
+                  })()}
                 </div>
 
                 <div className="event-time-top-matches">

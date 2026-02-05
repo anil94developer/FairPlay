@@ -109,6 +109,10 @@ export const adaptFavoriteEventToEventDTO = (
     providerName: favoriteEvent?.providerName,
     enabled: favoriteEvent?.enabled,
     forcedInplay: favoriteEvent?.forcedInplay,
+    forcedInPlay: favoriteEvent?.forcedInplay, // Alias for consistency
+    inplay: favoriteEvent?.forcedInplay || favoriteEvent?.status?.toUpperCase() === "IN_PLAY" || favoriteEvent?.status?.toUpperCase() === "INPLAY",
+    inPlay: favoriteEvent?.forcedInplay || favoriteEvent?.status?.toUpperCase() === "IN_PLAY" || favoriteEvent?.status?.toUpperCase() === "INPLAY",
+    in_play: favoriteEvent?.forcedInplay || favoriteEvent?.status?.toUpperCase() === "IN_PLAY" || favoriteEvent?.status?.toUpperCase() === "INPLAY",
     virtualEvent: favoriteEvent?.virtualEvent,
     catId: favoriteEvent?.catId,
 

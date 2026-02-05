@@ -278,40 +278,31 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
       });
 
       if (allMatches.length > 0) {
-        // Filter for inplay events only
+        // Filter for inplay events only - strict filtering
         const inplayEvents = allMatches.filter((event: any) => {
-          // Primary check: inplay flag
+          // Primary check: inplay flag (most reliable indicator)
           if (event.inplay === true || event.inPlay === true || event.in_play === true) {
             return true;
           }
           
-          // Secondary check: status is IN_PLAY
-          if (event.status === "IN_PLAY" || event.status === "INPLAY") {
+          // Secondary check: status is IN_PLAY or INPLAY
+          const status = String(event.status || "").toUpperCase();
+          if (status === "IN_PLAY" || status === "INPLAY" || status === "IN-PLAY") {
             return true;
           }
           
-          // Tertiary check: forcedInplay flag
-          if (event.forcedInplay === true || event.forced_inplay === true) {
+          // Tertiary check: forcedInplay flag (manually set to inplay)
+          if (event.forcedInplay === true || event.forcedInPlay === true || event.forced_inplay === true) {
             return true;
           }
           
-          // Fallback: Check if event has started based on match_date or openDate
-          const matchDate = event.match_date || event.matchDate;
-          const openDate = event.openDate || event.open_date || matchDate;
-          if (openDate) {
-            const sportId = event.sportId || event.sport_id || "";
-            const eventTime = moment(openDate);
-            const now = moment();
-            
-            // For tennis (sportId "2"), check if within 5 minutes
-            if (sportId === "2") {
-              return eventTime.diff(now, "minutes") <= 5;
-            }
-            
-            // For other sports, check if event has started (openDate is in the past)
-            return eventTime.diff(now, "seconds") <= 0;
+          // Exclude events that are explicitly not inplay
+          if (status === "UPCOMING" || status === "SUSPENDED" || status === "CLOSED" || status === "FINISHED") {
+            return false;
           }
           
+          // Don't use date-based fallback for inplay detection - only use explicit flags
+          // This ensures we only show events that are truly inplay, not just started
           return false;
         });
 
@@ -460,7 +451,26 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
           sport.events.push(eventDTO);
         });
 
-        const transformedInplayEvents = Array.from(groupedEventsMap.values());
+        // Convert map to array and sort events inside each sport by match/open date (ascending)
+        const transformedInplayEvents = Array.from(groupedEventsMap.values()).map(
+          (sport) => {
+            const sortedEvents = [...sport.events].sort((a, b) => {
+              const aDate = a.customOpenDate
+                ? moment(a.customOpenDate)
+                : moment(a.openDate);
+              const bDate = b.customOpenDate
+                ? moment(b.customOpenDate)
+                : moment(b.openDate);
+              return aDate.diff(bDate, "seconds");
+            });
+
+            return {
+              ...sport,
+              events: sortedEvents,
+            };
+          }
+        );
+
         setInplayEvents(transformedInplayEvents);
       } else {
         // Fallback to mock data if API fails or returns invalid data
@@ -777,22 +787,52 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
             </div>
           ) : null}
 
-          {favouriteEvents?.length > 0 && (
-            <Tabs variant="scrollable" className="favourite-events">
-              {favouriteEvents.map((event) => (
-                <button
-                  className="favourite-event-item"
-                  onClick={() => handleEventChange(event)}
-                >
-                  <span className="event-name">
-                    {event?.customEventName
-                      ? event.customEventName
-                      : event.eventName}
-                  </span>
-                </button>
-              ))}
-            </Tabs>
-          )}
+          {(() => {
+            // Get all inplay events from all sports
+            const allInplayEvents = getEvents()?.flatMap((sport) => sport.events || []) || [];
+            
+            // Filter for early inplay matches (started within last 2 hours)
+            const now = moment();
+            const earlyInplayEvents = allInplayEvents
+              .filter((event) => {
+                const matchDate = event.match_date || event.matchDate;
+                const openDate = event.openDate || event.open_date || matchDate;
+                if (!openDate) return false;
+                
+                const eventTime = moment(openDate);
+                const hoursSinceStart = now.diff(eventTime, "hours");
+                
+                // Only include matches that started within the last 2 hours (early inplay)
+                return hoursSinceStart >= 0 && hoursSinceStart <= 2;
+              })
+              .sort((a, b) => {
+                // Sort by match date ascending (earliest first)
+                const aDate = a.customOpenDate
+                  ? moment(a.customOpenDate)
+                  : moment(a.openDate || a.match_date);
+                const bDate = b.customOpenDate
+                  ? moment(b.customOpenDate)
+                  : moment(b.openDate || b.match_date);
+                return aDate.diff(bDate, "seconds");
+              })
+              .slice(0, 10); // Limit to max 10 items
+            
+            return earlyInplayEvents.length > 0 ? (
+              <Tabs variant="scrollable" className="favourite-events">
+                {earlyInplayEvents.map((event, index) => (
+                  <button
+                    key={`early-inplay-${event.eventId}-${index}`}
+                    className="favourite-event-item"
+                    onClick={() => handleEventChange(event)}
+                  >
+                    <span className="event-name">
+                      {event.eventName}
+                    </span>
+                  </button>
+                ))}
+              </Tabs>
+            ) : null;
+          })()}
           <div className="notifi-live-upcoming-tabs">
             <div className="inplay-status-tabs">
               <div className="time-tabs">

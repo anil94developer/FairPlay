@@ -11595,7 +11595,7 @@ export const events = [
 //        const sportEvents = await fetchEventsFromAPI(USABET_API, sportId, sportName);
 export const fetchEventsFromAPI = async (USABET_API, sportId, sportName) => {
   try {
-    const response = await USABET_API.get("/match/homeMatchesOpen");
+    const response = await USABET_API.get("/match/homeMatchesV2");
 
     if (response?.data?.status === true && Array.isArray(response.data.data)) {
       // Filter matches by sport_id and sport_name

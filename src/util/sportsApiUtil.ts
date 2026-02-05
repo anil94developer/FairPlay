@@ -6,6 +6,10 @@ import { ReactComponent as HorseRacing } from "../assets/images/sidebar/horse_ra
 import { ReactComponent as GreyHound } from "../assets/images/sidebar/grey_hound.svg?react";
 import { ReactComponent as Casino } from "../assets/images/sidebar/casino.svg?react";
 import { ReactComponent as Dimond } from "../assets/images/sidebar/dimond.svg?react";
+import { ReactComponent as Kabaddi } from "../assets/images/sidebar/kabaddi.svg?react";
+import { ReactComponent as Basketball } from "../assets/images/sidebar/basketball.svg?react";
+import { ReactComponent as Baseball } from "../assets/images/sidebar/baseball.svg?react";
+import { ReactComponent as Volleyball } from "../assets/images/sidebar/volleyball.svg?react";
 
 // Map sport names to icons
 const sportIconMap: { [key: string]: any } = {
@@ -14,7 +18,13 @@ const sportIconMap: { [key: string]: any } = {
   Football: Football,
   Tennis: Tennis,
   "Horse Racing": HorseRacing,
+  "Horse Race": HorseRacing,
   "Greyhound Racing": GreyHound,
+  Greyhound: GreyHound,
+  Kabaddi: Kabaddi,
+  Basketball: Basketball,
+  Baseball: Baseball,
+  Volleyball: Volleyball,
   Casino: Casino,
   QTech: Dimond, // Using Dimond icon for QTech/Diamond
 };
@@ -26,7 +36,13 @@ const sportSlugMap: { [key: string]: string } = {
   Football: "football",
   Tennis: "tennis",
   "Horse Racing": "horseracing",
+  "Horse Race": "horseracing",
   "Greyhound Racing": "greyhound",
+  Greyhound: "greyhound",
+  Kabaddi: "kabaddi",
+  Basketball: "basketball",
+  Baseball: "baseball",
+  Volleyball: "volleyball",
   Casino: "casino",
   QTech: "qtech",
 };
@@ -38,7 +54,13 @@ const sportLangKeyMap: { [key: string]: string } = {
   Football: "football",
   Tennis: "tennis",
   "Horse Racing": "horse_race",
+  "Horse Race": "horse_race",
   "Greyhound Racing": "greyhound",
+  Greyhound: "greyhound",
+  Kabaddi: "kabaddi",
+  Basketball: "basketball",
+  Baseball: "baseball",
+  Volleyball: "volleyball",
   Casino: "casino",
   QTech: "qtech",
 };
@@ -124,19 +146,42 @@ export const fetchSportsFromAPI = async (): Promise<SportApiData[]> => {
  */
 export const transformSportsToTabs = (sports: SportApiData[]): SportTabData[] => {
   return sports
+    .filter((sport) => {
+      // Filter out sports that shouldn't appear in sidebar (optional - can be removed if all should show)
+      // For now, show all sports from API
+      return true;
+    })
     .map((sport) => {
       const sportName = sport.name;
       const slug = sportSlugMap[sportName] || sportName.toLowerCase().replace(/\s+/g, "-");
       const langKey = sportLangKeyMap[sportName] || sportName.toLowerCase().replace(/\s+/g, "_");
       
+      // Try to find icon by exact name match first, then try case-insensitive
+      let icon = sportIconMap[sportName];
+      if (!icon) {
+        // Try case-insensitive match
+        const lowerName = sportName.toLowerCase();
+        for (const [key, value] of Object.entries(sportIconMap)) {
+          if (key.toLowerCase() === lowerName) {
+            icon = value;
+            break;
+          }
+        }
+      }
+      
       return {
         id: sport.sport_id,
         text: sportName.toLowerCase().replace(/\s+/g, "_"),
         langKey: langKey,
-        img: sportIconMap[sportName] || Cricket, // Default to Cricket icon if not found
+        img: icon || Cricket, // Default to Cricket icon if not found
         route: sport.is_live_sport === 1 ? (sportName === "Casino" ? "/casino" : "/virtual_sports") : `/exchange_sports/${slug}`,
         showWithoutLogin: true,
       };
+    })
+    .sort((a, b) => {
+      // Optional: Sort sports in a specific order
+      // For now, keep API order
+      return 0;
     });
 };
 

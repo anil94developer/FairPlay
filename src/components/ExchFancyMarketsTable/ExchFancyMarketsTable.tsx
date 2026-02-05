@@ -45,6 +45,7 @@ import { oneClickBetPlaceHandler } from "../../store/exchBetslip/exchBetslipActi
 import { OneClickBettingCountdown } from "../OneClickBetting/OneClickCountdown";
 import { setAlertMsg } from "../../store/common/commonActions";
 import { AlertDTO } from "../../models/Alert";
+import USABET_API from "../../api-services/usabet-api";
 
 type StoreProps = {
   eventData: EventDTO;
@@ -71,6 +72,7 @@ type StoreProps = {
   setAlertMsg: Function;
   langData: any;
   bettingInprogress: boolean;
+  fancyCategoryMap?: any; // Optional: category mapping from API { "0": "NORMAL", "1": "Session Markets", ... }
 };
 
 type OddsInfoMsg = {
@@ -97,8 +99,12 @@ const FMTable: React.FC<StoreProps> = (props) => {
     setAlertMsg,
     langData,
     bettingInprogress,
+    fancyCategoryMap = {},
   } = props;
 
+
+  // alert(JSON.stringify(eventData))
+  console.log("[FMTable] eventData====3333=======:", eventData);
   // Ensure fmData is always an array to prevent iteration errors
   const safeFmData = Array.isArray(fmData) ? fmData : [];
 
@@ -112,21 +118,24 @@ const FMTable: React.FC<StoreProps> = (props) => {
   const [showBooksModal, setShowBooksModal] = useState<boolean>(false);
   const [fancyBookOutcomeId, setFancyBookOutcomeId] = useState<string>();
   const [fancyBookOutcomeName, setFancyBookOutcomeName] = useState<string>();
-  const [fancyCategories, setFancyCategories] = useState<Set<string>>(
-    new Set()
-  );
+
+  const [fancyCategories, setFancyCategories] = useState<Array<{id: string, name: string}>>([]);
+  const [fancyData, setFancyData] = useState<FancyMarketDTO[]>([]);
+
   const [notifications, setNotifications] = useState<Map<String, string>>(
     new Map()
   );
-  const fancyCategoriesOrder = [
-    { fancyCategory: "All", langKey: "all_capital" },
-    { fancyCategory: "sessions", langKey: "sessions" },
-    { fancyCategory: "wpmarket", langKey: "wp_market" },
-    { fancyCategory: "extramarket", langKey: "extra_market" },
-    // { fancyCategory: "BALL_BY_BALL_SESSION", label: "BALL BY BALL" },
-    { fancyCategory: "oddeven", langKey: "odd_even" },
-    // { fancyCategory: "THREE_SELECTIONS", label: "XTRA MARKET" },
+  // Fallback to hardcoded categories if no dynamic categories are found
+  const defaultFancyCategoriesOrder = [
+    { fancyCategory: "All", langKey: "all_capital", label: "All" },
+    { fancyCategory: "sessions", langKey: "sessions", label: "Sessions" },
+    { fancyCategory: "wpmarket", langKey: "wp_market", label: "WP Market" },
+    { fancyCategory: "extramarket", langKey: "extra_market", label: "Extra Market" },
+    { fancyCategory: "oddeven", langKey: "odd_even", label: "Odd Even" },
   ];
+
+  // Create dynamic category order from actual data
+  const [dynamicCategoriesOrder, setDynamicCategoriesOrder] = useState<any[]>([]);
   const [tabVal, setTabVal] = useState(0);
   const [selectedRow, setSelectedRow] = useState<string>("");
   const [infoDilalog, setInfoDialog] = useState<OddsInfoMsg>({
@@ -199,64 +208,6 @@ const FMTable: React.FC<StoreProps> = (props) => {
     }
   };
 
-  useEffect(() => {
-    let localFancyCategories = new Set<string>();
-    
-    for (const fm of safeFmData) {
-      if (fm?.marketId && !fm?.marketLimits && !marketLimitsRef.current[fm?.marketId]) {
-        //setting a default value and the calling the fetch bet limits
-        //so that fetch market limits is not multiple times for a single market
-        marketLimitsRef.current[fm?.marketId] = {
-          minStake: 100,
-          maxStake: 100,
-          maxOdd: 4,
-        };
-        // Update state for display purposes
-        setMarketLimits({ ...marketLimitsRef.current });
-        // fetchBetLimits(fm?.marketId, fm?.category);
-      }
-      if (fm?.category) {
-        localFancyCategories.add(fm.category);
-      }
-    }
-    
-    setFancyCategories(localFancyCategories);
-    
-    // Debug logging
-    if (process.env.NODE_ENV === 'development' && safeFmData.length > 0) {
-      console.log("[FMTable] Categories found:", Array.from(localFancyCategories));
-      console.log("[FMTable] Total markets:", safeFmData.length);
-      console.log("[FMTable] Sample market category:", safeFmData[0]?.category);
-      console.log("[FMTable] Sample market:", safeFmData[0]);
-    }
-  }, [safeFmData]);
-  
-  const handletabs = useCallback(async (localFancyCategory: string) => {
-    setFilteredFancyMarketsData(
-      localFancyCategory === "All"
-        ? safeFmData
-        : safeFmData.filter((fm) => {
-            return fm.category === localFancyCategory;
-          })
-    );
-  }, [safeFmData]);
-
-  // Initialize filtered data when data is available (only when data length changes)
-  const prevDataLengthRef = useRef(0);
-  
-  useEffect(() => {
-    // Only initialize if data length changed (new data arrived)
-    if (safeFmData.length > 0 && safeFmData.length !== prevDataLengthRef.current) {
-      // Initialize with all data (equivalent to "All" tab)
-      setFilteredFancyMarketsData(safeFmData);
-      prevDataLengthRef.current = safeFmData.length;
-    } else if (safeFmData.length === 0 && prevDataLengthRef.current > 0) {
-      // Clear filtered data when data is cleared
-      setFilteredFancyMarketsData([]);
-      prevDataLengthRef.current = 0;
-    }
-  }, [safeFmData.length]);
-
   const cFactor = CURRENCY_TYPE_FACTOR[getCurrencyTypeFromToken()];
 
   const getFancyMarketsByGroup = (category: string) => {
@@ -284,6 +235,198 @@ const FMTable: React.FC<StoreProps> = (props) => {
     }
   }, [marketNotifications]);
 
+  useEffect(() => {
+    const fetchFancy = async () => {
+      // Use eventData from props - check both eventId and id properties
+      let eventIdToUse = eventData?.eventId || eventData?.id;
+      
+      // Fallback: try to extract from marketId in fmData
+      if (!eventIdToUse && safeFmData.length > 0 && safeFmData[0]?.marketId) {
+        const marketIdParts = safeFmData[0].marketId.split('_');
+        eventIdToUse = marketIdParts[0];
+        console.log("[FMTable] Extracted eventId from marketId:", eventIdToUse);
+      }
+      
+      if (!eventIdToUse) {
+        console.log("[FMTable] No eventId available, skipping fetch.");
+        console.log("[FMTable] eventData:", eventData);
+        console.log("[FMTable] eventData?.eventId:", eventData?.eventId);
+        console.log("[FMTable] eventData?.id:", eventData?.id);
+        console.log("[FMTable] safeFmData.length:", safeFmData.length);
+        if (safeFmData.length > 0) {
+          console.log("[FMTable] First market:", safeFmData[0]);
+        }
+        return;
+      }
+      
+      console.log("[FMTable] ✅ Fetching categories for eventId:", eventIdToUse);
+      console.log("[FMTable] eventData received:", eventData);
+      
+      try {
+        const response = await USABET_API.post(`/fancy/getFancies`, {
+          match_id: eventIdToUse,
+          combine: true,
+        });
+        
+        if (response.status === 200 && response.data) {
+          console.log("[FMTable] Fancy API response:", response.data);
+          console.log("[FMTable] fancy_category object:", response.data.fancy_category);
+          
+          // Convert fancy_category object to array
+          const categoryObj = response.data.fancy_category || {};
+          const categoriesArray = Object.entries(categoryObj).map(([id, name]) => ({
+            id: id,
+            name: String(name)
+          }));
+          
+          console.log("[FMTable] Converted categories array:", categoriesArray);
+          console.log("[FMTable] Categories array length:", categoriesArray.length);
+          
+          // Always set categories even if data array is empty
+          if (categoriesArray.length > 0) {
+            setFancyCategories(categoriesArray);
+            console.log("[FMTable] ✅ Set fancyCategories state with", categoriesArray.length, "categories");
+            
+            // Build dynamicCategoriesOrder from API categories
+            const dynamicOrder = categoriesArray.map((fc) => ({
+              fancyCategory: fc.name, // Use the actual category name from API
+              langKey: fc.name.toLowerCase().replace(/\s+/g, '_'),
+              label: fc.name,
+            }));
+            setDynamicCategoriesOrder(dynamicOrder);
+            console.log("[FMTable] ✅ Set dynamicCategoriesOrder with", dynamicOrder.length, "categories");
+          } else {
+            console.warn("[FMTable] ⚠️ No categories found in API response");
+          }
+          
+          if (response.data.data && Array.isArray(response.data.data)) {
+            // Transform raw API data to FancyMarketDTO format
+            const transformedFancyData = response.data.data.map((fancy: any) => {
+              // Extract market ID - API uses fancy_id
+              const marketId = fancy.fancy_id || fancy.market_id || fancy.marketId || fancy.id || "";
+              // Extract market name - API uses name or fancy_name
+              const marketName = fancy.name || fancy.fancy_name || fancy.market_name || fancy.marketName || "";
+              
+              // Extract status
+              let status = "OPEN";
+              if (fancy.GameStatus && fancy.GameStatus !== "") {
+                status = fancy.GameStatus.toUpperCase();
+              } else if (fancy.is_active === 0) {
+                status = "SUSPENDED";
+              } else if (fancy.MarkStatus === "1" || fancy.MarkStatus === 1) {
+                status = "SUSPENDED";
+              } else if (fancy.is_lock === true || fancy.isLock === true) {
+                status = "SUSPENDED";
+              } else if (fancy.status) {
+                status = fancy.status.toUpperCase();
+              }
+              
+              // Map category using fancy_category mapping from API response
+              const categoryId = fancy.category !== undefined ? String(fancy.category) : "0";
+              // Get category name from the categoryObj (fancy_category from API)
+              const categoryName = categoryObj[categoryId] 
+                ? String(categoryObj[categoryId])
+                : categoryId;
+              // Use category name directly (e.g., "Session Markets", "NORMAL", etc.)
+              const category = categoryName || categoryId;
+              
+              // Extract prices
+              const parsePrice = (val: any): number | null => {
+                if (val === null || val === undefined || val === "" || val === "--") return null;
+                const num = typeof val === "number" ? val : parseFloat(String(val));
+                return isNaN(num) ? null : num;
+              };
+              
+              let layPrice = parsePrice(fancy.LayPrice1 || fancy.LayPrice || fancy.layPrice1 || fancy.layPrice || fancy.noValue);
+              let laySize = parsePrice(fancy.LaySize1 || fancy.LaySize || fancy.laySize1 || fancy.laySize || fancy.noRate);
+              let backPrice = parsePrice(fancy.BackPrice1 || fancy.BackPrice || fancy.backPrice1 || fancy.backPrice || fancy.yesValue);
+              let backSize = parsePrice(fancy.BackSize1 || fancy.BackSize || fancy.backSize1 || fancy.backSize || fancy.yesRate);
+              
+              // Extract limits
+              const minStake = fancy.Min || fancy.session_min_stack || fancy.session_before_inplay_min_stack || 100;
+              const maxStake = fancy.Max || fancy.session_max_stack || fancy.session_before_inplay_max_stack || 100000;
+              
+              // Determine suspend/disable status
+              const markStatus = fancy.MarkStatus === "1" || fancy.MarkStatus === 1;
+              const isSuspended = markStatus || fancy.is_lock === true || fancy.isLock === true || 
+                (status === "SUSPENDED" && !fancy.GameStatus);
+              const isDisabled = fancy.is_active === 0 || isSuspended;
+              
+              return {
+                marketId: marketId,
+                marketName: marketName,
+                customMarketName: fancy.customMarketName || marketName,
+                status: status,
+                sort: fancy.chronology !== undefined ? Number(fancy.chronology) : (fancy.sort ? Number(fancy.sort) : 0),
+                layPrice: layPrice,
+                backPrice: backPrice,
+                laySize: laySize,
+                backSize: backSize,
+                category: category,
+                commissionEnabled: fancy.is_commission_applied || fancy.commissionEnabled || false,
+                marketLimits: fancy.marketLimits || {
+                  minStake: minStake,
+                  maxStake: maxStake,
+                  maxOdd: fancy.maxOdd || 4,
+                  delay: fancy.delay || 0,
+                },
+                suspend: isSuspended,
+                disable: isDisabled,
+                limits: {
+                  minBetValue: minStake,
+                  maxBetValue: maxStake,
+                },
+                isMarketLimitSet: !!fancy.marketLimits,
+              };
+            });
+            
+            setFancyData(transformedFancyData);
+            console.log("[FMTable] ✅ Set transformed fancyData with", transformedFancyData.length, "items");
+            console.log("[FMTable] Sample transformed fancy market:", transformedFancyData[0]);
+            
+            // Initialize filteredFancyMarketsData with all data when "All" tab is selected (tabVal === 0)
+            if (tabVal === 0 && transformedFancyData.length > 0) {
+              setFilteredFancyMarketsData(transformedFancyData);
+              console.log("[FMTable] ✅ Initialized filteredFancyMarketsData with all data for 'All' tab");
+            }
+          } else {
+            console.log("[FMTable] No data array in response");
+            setFancyData([]);
+            if (tabVal === 0) {
+              setFilteredFancyMarketsData([]);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("[FMTable] Error fetching fancy categories:", error);
+        setFancyData([]);
+        if (tabVal === 0) {
+          setFilteredFancyMarketsData([]);
+        }
+      }
+    };
+    
+    fetchFancy();
+  }, [eventData?.eventId, eventData?.competitionId, tabVal]);
+  
+  // Initialize filteredFancyMarketsData when fancyData or safeFmData changes and "All" is selected
+  useEffect(() => {
+    if (tabVal === 0) {
+      // "All" is selected - initialize with all available data
+      const allData = fancyData.length > 0 ? fancyData : safeFmData;
+      if (allData.length > 0) {
+        // Only update if the data has changed or filteredFancyMarketsData is empty
+        if (filteredFancyMarketsData.length === 0 || 
+            filteredFancyMarketsData.length !== allData.length ||
+            JSON.stringify(filteredFancyMarketsData) !== JSON.stringify(allData)) {
+          setFilteredFancyMarketsData(allData);
+          console.log("[FMTable] ✅ Initialized filteredFancyMarketsData for 'All' tab with", allData.length, "items");
+        }
+      }
+    }
+  }, [fancyData, safeFmData, tabVal]);
+  // console.log("[FMTable] eventData===========:", eventData);
+ 
   return (
     <>
       <div className="fm-table-ctn">
@@ -295,196 +438,328 @@ const FMTable: React.FC<StoreProps> = (props) => {
             bets?.[0]?.marketType === "FANCY" && (
               <OneClickBettingCountdown delay={bets?.[0]?.delay || 0} />
             )}
-          <TableContainer component={Paper}>
-            <Table className="fm-table">
+          <TableContainer component={Paper} style={{ overflow: 'hidden', width: '100%' }}>
+            <Table className="fm-table" style={{ tableLayout: 'auto', width: '100%' }}>
               <TableHead>
+                {/* Only show tabs if there's fancy data available */}
+                {(safeFmData.length > 0 || fancyData.length > 0) && (
                 <TableRow>
-                  <TableCell className="tabs-table-cell" colSpan={12}>
-                    <div className="tabs-fancy">
-                      {fancyCategories.size > 0 ? (
-                        <span
-                          className={tabVal === 0 ? "sel-tab" : "ind-tab"}
-                          onClick={() => {
-                            handletabs("All");
-                            setTabVal(0);
-                          }}
-                        >
-                          <div>{langData?.["all"]}</div>
-                        </span>
-                      ) : null}
-                      {fancyCategoriesOrder.map((fc, index) => {
-                        return fancyCategories.has(fc.fancyCategory) ? (
-                          <span
-                            className={
-                              tabVal === index + 1 ? "sel-tab" : "ind-tab"
-                            }
-                            onClick={() => {
-                              setTabVal(index + 1);
-                              handletabs(fc.fancyCategory);
-                            }}
-                          >
-                            <div>{langData?.[fc.langKey]}</div>
-                          </span>
-                        ) : null;
-                      })}
+                  <TableCell className="tabs-table-cell" colSpan={12} style={{ padding: 0, overflow: 'hidden', width: '100%' }}>
+                    <div className="tabs-fancy" style={{ width: '100%', overflowX: 'auto', overflowY: 'hidden', display: 'flex', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
+
+                      <span
+                        className={tabVal === 0 ? "sel-tab" : "ind-tab"}
+                        onClick={() => {
+                          setTabVal(0);
+                          // Use fancyData if available, otherwise use safeFmData
+                          const allData = fancyData.length > 0 ? fancyData : safeFmData;
+                          setFilteredFancyMarketsData(allData);
+                          console.log("[FMTable] Showing all markets:", allData.length);
+                        }}
+                      >
+                        <div>{langData?.["all"] || "ALL"}</div>
+                      </span>
+
+                      {/* Use dynamic categories from API */}
+                      {(() => {
+                        console.log("[FMTable] Render check - fancyCategories:", fancyCategories);
+                        console.log("[FMTable] Render check - fancyCategories.length:", fancyCategories.length);
+                        
+                        if (fancyCategories.length > 0) {
+                          console.log("[FMTable] ✅ Rendering API categories");
+                          return fancyCategories.map((fc, index) => {
+                            // Tab index: 0 = "All", 1+ = category tabs
+                            const tabIndex = index + 1;
+                            return (
+                              <span
+                                key={`category-${fc.id}-${index}`}
+                                className={
+                                  tabVal === tabIndex ? "sel-tab" : "ind-tab"
+                                }
+                                onClick={() => {
+                                  setTabVal(tabIndex);
+                                  // Filter data by category ID or name
+                                  // Use fancyData if available, otherwise use safeFmData
+                                  const dataSource = fancyData.length > 0 ? fancyData : safeFmData;
+                                  const filtered = dataSource.filter((fm) => {
+                                    // Check if market's category matches this category ID or name
+                                    const marketCategory = String(fm.category || "").trim();
+                                    return marketCategory === fc.id || marketCategory === fc.name;
+                                  });
+                                  setFilteredFancyMarketsData(filtered);
+                                  console.log(`[FMTable] Filtered by category ${fc.name} (${fc.id}):`, filtered.length, "markets");
+                                }}
+                              >
+                                <div>
+                                  {fc.name}
+                                </div>
+                              </span>
+                            );
+                          });
+                        } else {
+                          console.log("[FMTable] ⚠️ No API categories, using default fallback");
+                          // Fallback to default categories if API categories not loaded
+                          return defaultFancyCategoriesOrder
+                            .filter((d) => d.fancyCategory !== "All")
+                            .map((fc, index) => {
+                              const tabIndex = index + 1;
+                              return (
+                                <span
+                                  key={fc.fancyCategory}
+                                  className={
+                                    tabVal === tabIndex ? "sel-tab" : "ind-tab"
+                                  }
+                                  onClick={() => {
+                                    setTabVal(tabIndex);
+                                    // Use fancyData if available, otherwise use safeFmData
+                                    const dataSource = fancyData.length > 0 ? fancyData : safeFmData;
+                                    const filtered = dataSource.filter((fm) => {
+                                      return fm.category === fc.fancyCategory;
+                                    });
+                                    setFilteredFancyMarketsData(filtered);
+                                  }}
+                                >
+                                  <div>
+                                    {langData?.[fc.langKey] || fc.label || fc.fancyCategory}
+                                  </div>
+                                </span>
+                              );
+                            });
+                        }
+                      })()}
+                            
+
                     </div>
                   </TableCell>
                 </TableRow>
+                )}
               </TableHead>
               <TableBody>
-                {filteredFancyMarketsData &&
-                filteredFancyMarketsData.length > 0 ? (
-                  <>
-                    {fancyCategoriesOrder.map((group) => (
+                {(() => {
+                  // When "All" is selected (tabVal === 0), show all data
+                  // Otherwise, use filteredFancyMarketsData if available
+                  let dataToDisplay: FancyMarketDTO[] = [];
+                  
+                  if (tabVal === 0) {
+                    // "All" is selected - use all available data
+                    dataToDisplay = fancyData.length > 0 ? fancyData : safeFmData;
+                    console.log("[FMTable] 'All' selected - showing all data:", dataToDisplay.length);
+                  } else {
+                    // Category is selected - use filtered data
+                    dataToDisplay = (filteredFancyMarketsData && filteredFancyMarketsData.length > 0)
+                      ? filteredFancyMarketsData
+                      : (fancyData.length > 0 ? fancyData : safeFmData);
+                    console.log("[FMTable] Category selected - showing filtered data:", dataToDisplay.length);
+                  }
+
+                  console.log("[FMTable] Render check - tabVal:", tabVal);
+                  console.log("[FMTable] Render check - safeFmData.length:", safeFmData.length);
+                  console.log("[FMTable] Render check - fancyData.length:", fancyData.length);
+                  console.log("[FMTable] Render check - filteredFancyMarketsData.length:", filteredFancyMarketsData?.length || 0);
+                  console.log("[FMTable] Render check - dataToDisplay.length:", dataToDisplay.length);
+                   
+                  if (dataToDisplay.length > 0) {
+                    // Get unique categories from dataToDisplay
+                    const uniqueCategories = Array.from(new Set(
+                      dataToDisplay.map((fm) => String(fm.category || "").trim()).filter(Boolean)
+                    ));
+                    
+                    console.log("[FMTable] Unique categories in dataToDisplay:", uniqueCategories);
+                    console.log("[FMTable] fancyCategories:", fancyCategories);
+                    console.log("[FMTable] dynamicCategoriesOrder:", dynamicCategoriesOrder);
+                    
+                    // Build category groups from actual data categories
+                    const categoryGroups = uniqueCategories.map((catName) => {
+                      // Find matching category from fancyCategories
+                      const matchedCategory = fancyCategories.find((fc) => 
+                        fc.name === catName || fc.id === catName || String(fc.id) === catName
+                      );
+                      
+                      return {
+                        fancyCategory: catName,
+                        langKey: catName.toLowerCase().replace(/\s+/g, '_'),
+                        label: matchedCategory?.name || catName,
+                      };
+                    });
+                    
+                    console.log("[FMTable] Built categoryGroups:", categoryGroups);
+                    
+                    return (
                       <>
-                        {filteredFancyMarketsData.filter(
-                          (fm) =>
-                            fm.category === group.fancyCategory &&
-                            fancyCategories.has(group.fancyCategory)
-                        ).length > 0 ? (
-                          <>
-                            <Accordion
-                              defaultExpanded={true}
-                              className="markets-accordian"
-                              style={{
-                                position: "relative",
-                              }}
-                            >
-                              <AccordionSummary
-                                expandIcon={
-                                  <ExpandLessSharpIcon className="expand-icon" />
-                                }
-                                aria-controls="panel1a-content"
+                        {/* Render groups based on actual categories in data */}
+                          {categoryGroups
+                           .filter((group) => {
+                             const hasData = dataToDisplay.some((fm) => {
+                               const marketCategory = String(fm.category || "").trim();
+                               return marketCategory === group.fancyCategory;
+                             });
+                             console.log(`[FMTable] Group ${group.fancyCategory} has data:`, hasData);
+                             return hasData;
+                           })
+                          .map((group) => (
+                            <React.Fragment key={group.fancyCategory}>
+                              <Accordion
+                                defaultExpanded={true}
+                                className="markets-accordian"
+                                style={{
+                                  position: "relative",
+                                }}
                               >
+                                <AccordionSummary
+                                  expandIcon={
+                                    <ExpandLessSharpIcon className="expand-icon" />
+                                  }
+                                  aria-controls="panel1a-content"
+                                >
+                                  <FancyHeaderRow
+                                    groupName={langData?.[group.langKey] || group.label || group.fancyCategory}
+                                  />
+                                </AccordionSummary>
                                 <FancyHeaderRow
-                                  groupName={langData?.[group.langKey]}
+                                  groupName={langData?.[group.langKey] || group.label || group.fancyCategory}
+                                  className="row-hidden"
                                 />
-                              </AccordionSummary>
-                              <FancyHeaderRow
-                                groupName={langData?.[group.langKey]}
-                                className="row-hidden"
-                              />
-                              {getFancyMarketsByGroup(group.fancyCategory).map(
-                                (fMarket, index) => {
-                                  return !isFancyDisabled(fMarket.disable) ? (
-                                    <>
-                                      <FancyMarketRow
-                                        eventData={eventData}
-                                        fMarket={fMarket}
-                                        index={index}
-                                        cFactor={cFactor}
-                                        loggedIn={loggedIn}
-                                        openBets={openBets}
-                                        disabledStatus={disabledStatus}
-                                        addExchangeBet={addExchangeBet}
-                                        setShowBooksModal={() => {
-                                          setFancyBookOutcomeId(
-                                            fMarket.marketId
-                                          );
-                                          setFancyBookOutcomeName(
-                                            fMarket.marketName
-                                          );
-                                          setShowBooksModal(true);
-                                        }}
-                                        outcomeOpenBets={openBets.filter(
-                                          (b) =>
-                                            b.marketType === 2 &&
-                                            b.outcomeId === fMarket.marketId
-                                        )}
-                                        exposureMap={exposureMap}
-                                        bets={bets}
-                                        selectedRow={selectedRow}
-                                        setSelectedRow={setSelectedRow}
-                                        // fetchBetLimits={(mId, mcategory) => fetchBetLimits(mId, mcategory)}
-                                        minStake={
-                                          fMarket.isMarketLimitSet
-                                            ? fMarket?.marketLimits?.minStake
-                                              ? fMarket?.marketLimits?.minStake
-                                              : marketLimits[fMarket?.marketId]
-                                                  ?.minStake
-                                            : fMarket.limits.minBetValue
-                                        }
-                                        maxStake={
-                                          fMarket.isMarketLimitSet
-                                            ? fMarket?.marketLimits?.maxStake
-                                              ? fMarket?.marketLimits?.maxStake
-                                              : marketLimits[fMarket?.marketId]
-                                                  ?.maxStake
-                                            : fMarket.limits.maxBetValue
-                                        }
-                                        oddLimit={
-                                          fMarket?.marketLimits?.maxOdd?.toString()
-                                            ? fMarket?.marketLimits?.maxOdd?.toString()
-                                            : marketLimits[fMarket?.marketId]
-                                                ?.maxOdd
-                                        }
-                                        commissionEnabled={commissionEnabled}
-                                        fancySuspended={fancySuspended}
-                                        fancyDisabled={fancyDisabled}
-                                        setBetStartTime={(date) =>
-                                          setBetStartTime(date)
-                                        }
-                                        setAddNewBet={(val) =>
-                                          setAddNewBet(val)
-                                        }
-                                        oneClickBettingEnabled={
-                                          oneClickBettingEnabled
-                                        }
-                                        setAlertMsg={setAlertMsg}
-                                        langData={langData}
-                                        oneClickBettingLoading={
-                                          oneClickBettingLoading ||
-                                          bettingInprogress
-                                        }
-                                        hasScrolledToBetslip={
-                                          hasScrolledToBetslip
-                                        }
-                                        setHasScrolledToBetslip={
-                                          setHasScrolledToBetslip
-                                        }
-                                      />
-                                      {notifications.get(fMarket.marketId) ? (
-                                        <TableRow>
-                                          <TableCell colSpan={5} padding="none">
-                                            <div
-                                              className="marque-new"
-                                              style={{
-                                                animationDuration: `${Math.max(
-                                                  10,
-                                                  notifications.get(
-                                                    fMarket.marketId
-                                                  ).length / 5
-                                                )}s`,
-                                              }}
-                                            >
-                                              <div className="notifi-mssage">
-                                                {notifications.get(
-                                                  fMarket.marketId
-                                                )}
-                                              </div>
-                                            </div>
-                                          </TableCell>
-                                        </TableRow>
-                                      ) : null}
-                                    </>
-                                  ) : null;
-                                }
-                              )}
-                            </Accordion>
-                          </>
-                        ) : null}
+                                {dataToDisplay
+                                  .filter((fm) => {
+                                    const marketCategory = String(fm.category || "").trim();
+                                    return marketCategory === group.fancyCategory;
+                                  })
+                                  .sort((a, b) => {
+                                    if (a?.sort - b?.sort != 0) {
+                                      return a?.sort - b?.sort;
+                                    }
+                                    const aDesc = a.marketName;
+                                    const bDesc = b.marketName;
+                                    if (aDesc > bDesc) return 1;
+                                    else if (aDesc < bDesc) return -1;
+                                    return 0;
+                                  })
+                                  .map(
+                                    (fMarket, index) => {
+                                      return !isFancyDisabled(fMarket.disable) ? (
+                                        <React.Fragment key={`${group.fancyCategory}-${fMarket.marketId}-${index}`}>
+                                          <FancyMarketRow
+                                            eventData={eventData}
+                                            fMarket={fMarket}
+                                            index={index}
+                                            cFactor={cFactor}
+                                            loggedIn={loggedIn}
+                                            openBets={openBets}
+                                            disabledStatus={disabledStatus}
+                                            addExchangeBet={addExchangeBet}
+                                            setShowBooksModal={() => {
+                                              setFancyBookOutcomeId(
+                                                fMarket.marketId
+                                              );
+                                              setFancyBookOutcomeName(
+                                                fMarket.marketName
+                                              );
+                                              setShowBooksModal(true);
+                                            }}
+                                            outcomeOpenBets={openBets.filter(
+                                              (b) => {
+                                                const isFancyMarket = b.marketType === "FANCY" ||
+                                                  (typeof b.marketType === "number" && b.marketType === 2);
+                                                return isFancyMarket && b.outcomeId === fMarket.marketId;
+                                              }
+                                            )}
+                                            exposureMap={exposureMap}
+                                            bets={bets}
+                                            selectedRow={selectedRow}
+                                            setSelectedRow={setSelectedRow}
+                                            // fetchBetLimits={(mId, mcategory) => fetchBetLimits(mId, mcategory)}
+                                            minStake={
+                                              fMarket.isMarketLimitSet
+                                                ? fMarket?.marketLimits?.minStake
+                                                  ? fMarket?.marketLimits?.minStake
+                                                  : marketLimits[fMarket?.marketId]
+                                                    ?.minStake
+                                                : fMarket.limits.minBetValue
+                                            }
+                                            maxStake={
+                                              fMarket.isMarketLimitSet
+                                                ? fMarket?.marketLimits?.maxStake
+                                                  ? fMarket?.marketLimits?.maxStake
+                                                  : marketLimits[fMarket?.marketId]
+                                                    ?.maxStake
+                                                : fMarket.limits.maxBetValue
+                                            }
+                                            oddLimit={
+                                              fMarket?.marketLimits?.maxOdd?.toString()
+                                                ? fMarket?.marketLimits?.maxOdd?.toString()
+                                                : marketLimits[fMarket?.marketId]
+                                                  ?.maxOdd
+                                            }
+                                            commissionEnabled={commissionEnabled}
+                                            fancySuspended={fancySuspended}
+                                            fancyDisabled={fancyDisabled}
+                                            setBetStartTime={(date) =>
+                                              setBetStartTime(date)
+                                            }
+                                            setAddNewBet={(val) =>
+                                              setAddNewBet(val)
+                                            }
+                                            oneClickBettingEnabled={
+                                              oneClickBettingEnabled
+                                            }
+                                            setAlertMsg={setAlertMsg}
+                                            langData={langData}
+                                            oneClickBettingLoading={
+                                              oneClickBettingLoading ||
+                                              bettingInprogress
+                                            }
+                                            hasScrolledToBetslip={
+                                              hasScrolledToBetslip
+                                            }
+                                            setHasScrolledToBetslip={
+                                              setHasScrolledToBetslip
+                                            }
+                                          />
+                                          {notifications.get(fMarket.marketId) ? (
+                                            <TableRow>
+                                              <TableCell colSpan={5} padding="none">
+                                                <div
+                                                  className="marque-new"
+                                                  style={{
+                                                    animationDuration: `${Math.max(
+                                                      10,
+                                                      notifications.get(
+                                                        fMarket.marketId
+                                                      ).length / 5
+                                                    )}s`,
+                                                  }}
+                                                >
+                                                  <div className="notifi-mssage">
+                                                    {notifications.get(
+                                                      fMarket.marketId
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              </TableCell>
+                                            </TableRow>
+                                          ) : null}
+                                        </React.Fragment>
+                                      ) : null;
+                                    }
+                                  )}
+                              </Accordion>
+                            </React.Fragment>
+                          ))}
                       </>
-                    ))}
-                  </>
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={3}>
-                      <div className="fm-table-msg-text">
-                        {langData?.["fancy_markets_not_found_txt"]}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
+                    );
+                  } else {
+                    return (
+                      <TableRow>
+                        <TableCell colSpan={3}>
+                          <div className="fm-table-msg-text">
+                            {langData?.["fancy_markets_not_found_txt"] || "No Fancy Markets for this event"}
+                            
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
+                })()}
               </TableBody>
             </Table>
           </TableContainer>
@@ -501,7 +776,7 @@ const FMTable: React.FC<StoreProps> = (props) => {
             }
             className="light-bg-title game-rules-drawer web-view"
             title="Rules"
-            // size="md"
+          // size="md"
           >
             <div className="game-rules-header">
               <div className="game-rules-title">{langData?.["game_rules"]}</div>
@@ -534,7 +809,7 @@ const FMTable: React.FC<StoreProps> = (props) => {
             className="light-bg-title game-rules-drawer mob-view"
             // TODO: check if this also needs to be changed ??
             title="Rules"
-            // size="md"
+          // size="md"
           >
             <div className="game-rules-header">
               <div className="game-rules-title">{langData?.["game_rules"]}</div>
@@ -568,8 +843,8 @@ const FMTable: React.FC<StoreProps> = (props) => {
               fancyBookOutcomeId={fancyBookOutcomeId}
               exposureMap={
                 exposureMap &&
-                exposureMap &&
-                exposureMap[`${fancyBookOutcomeId}:${fancyBookOutcomeName}`]
+                  exposureMap &&
+                  exposureMap[`${fancyBookOutcomeId}:${fancyBookOutcomeName}`]
                   ? exposureMap[`${fancyBookOutcomeId}:${fancyBookOutcomeName}`]
                   : {}
               }
@@ -630,8 +905,8 @@ const FancyHeaderRow: React.FC<FancyHeaderRowProps> = (props) => {
           className={tF.className}
         >
           {tF.key === "odds-no" ||
-          tF.key === "odds-yes" ||
-          tF.key === "groupName" ? (
+            tF.key === "odds-yes" ||
+            tF.key === "groupName" ? (
             <div className={tF.key.toLowerCase() + "-cell"}>
               {tF.Label?.toLowerCase()}
             </div>
@@ -740,7 +1015,7 @@ const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
               : fMarket.marketName}{" "}
             {fMarket.commissionEnabled
               ? // && commissionEnabled
-                "*"
+              "*"
               : null}
           </div>
         </TableCell>
@@ -801,7 +1076,7 @@ const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
                     seriesName: eventData.competitionName,
                     eventId: eventData.eventId,
                     eventName: eventData.eventName,
-                    eventDate: eventData.openDate,
+                    eventDate: eventData.openDate ? (typeof eventData.openDate === "string" ? eventData.openDate : new Date(eventData.openDate).toISOString()) : "",
                     marketId: fMarket.marketId,
                     marketName: fMarket.marketName,
                     marketType: "FANCY" as const,
@@ -871,7 +1146,7 @@ const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
                     seriesName: eventData.competitionName,
                     eventId: eventData.eventId,
                     eventName: eventData.eventName,
-                    eventDate: eventData.openDate,
+                    eventDate: eventData.openDate ? (typeof eventData.openDate === "string" ? eventData.openDate : new Date(eventData.openDate).toISOString()) : "",
                     marketId: fMarket.marketId,
                     marketName: fMarket.marketName,
                     marketType: "FANCY" as const,
@@ -956,13 +1231,13 @@ const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
           </div>
         </TableCell>
         {disabledStatus.includes(fMarket.status.toLowerCase()) ||
-        isFancySuspended(fMarket.suspend) === true ||
-        isFancyDisabled(fMarket.disable) === true ? (
+          isFancySuspended(fMarket.suspend) === true ||
+          isFancyDisabled(fMarket.disable) === true ? (
           <TableCell key={"row-" + index + "cell-5"}>
             <div className="disabled-odds-cell">
               {fMarket.status.toLowerCase().includes("suspended") ||
-              isFancySuspended(fMarket.suspend) === true ||
-              isFancyDisabled(fMarket.disable) === true
+                isFancySuspended(fMarket.suspend) === true ||
+                isFancyDisabled(fMarket.disable) === true
                 ? "SUSPENDED"
                 : fMarket.status.replace("_", " ")}
             </div>
@@ -970,10 +1245,10 @@ const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
         ) : null}
       </TableRow>
       {!oneClickBettingEnabled &&
-      bets?.length > 0 &&
-      bets?.[0]?.marketName === fMarket?.marketName &&
-      bets?.[0]?.marketId === fMarket?.marketId &&
-      isMobile ? (
+        bets?.length > 0 &&
+        bets?.[0]?.marketName === fMarket?.marketName &&
+        bets?.[0]?.marketId === fMarket?.marketId &&
+        isMobile ? (
         <TableRow
           className="inline-betslip"
           ref={(el) => {
@@ -1003,28 +1278,36 @@ const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
   );
 };
 
-const mapStateToProps = (state: RootState) => {
+const mapStateToProps = (state: RootState, ownProps?: Partial<StoreProps>) => {
   const eventType = state.exchangeSports.selectedEventType;
   const competition = state.exchangeSports.selectedCompetition;
   const event = state.exchangeSports.selectedEvent;
+  
+  // Use eventData from props if provided, otherwise get from Redux state
+  const reduxEventData = getAllMarketsByEvent(
+    state.exchangeSports.events,
+    eventType?.id || "",
+    competition?.id || "",
+    event?.id || ""
+  );
+  
+  console.log("[FMTable mapStateToProps] ownProps?.eventData:", ownProps?.eventData);
+  console.log("[FMTable mapStateToProps] reduxEventData:", reduxEventData);
+  
   return {
-    eventData: getAllMarketsByEvent(
-      state.exchangeSports.events,
-      eventType.id,
-      competition.id,
-      event.id
-    ),
-    fmData: getFancyMarketsByEvent(
+    // Prefer eventData from props (passed from parent), fallback to Redux state
+    eventData: ownProps?.eventData || reduxEventData,
+    fmData: ownProps?.fmData || getFancyMarketsByEvent(
       state.exchangeSports.secondaryMarketsMap,
-      event.id
+      event?.id || ""
     ),
     fancySuspended: isFancyMarketSuspended(
       state.exchangeSports.secondaryMarketsMap,
-      event.id
+      event?.id || ""
     ),
     fancyDisabled: isFancyMarketDisabled(
       state.exchangeSports.secondaryMarketsMap,
-      event.id
+      event?.id || ""
     ),
     bets: state.exchBetslip.bets,
     openBets: state.exchBetslip.openBets,

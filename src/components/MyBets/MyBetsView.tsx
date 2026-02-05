@@ -303,7 +303,7 @@ const MyBets: React.FC<StoreProps> = (props) => {
     setLoading(true);
     try {
       // Fetch data from API
-      const response = await USABET_API.get("/match/homeMatchesOpen");
+      const response = await USABET_API.get("/match/homeMatchesV2");
 
       if (response?.data?.status === true && Array.isArray(response.data.data)) {
         let allMatches = response.data.data;
@@ -335,16 +335,16 @@ const MyBets: React.FC<StoreProps> = (props) => {
             betType: (match.betType || match.bet_type || "BACK") as UserBet["betType"],
             sportId: sportId,
             sessionRuns: match.sessionRuns || match.session_runs || null,
-            rowClassName: "",
+              rowClassName: "",
             categoryType: match.categoryType || match.category_type || "SPORTS",
           };
 
           // Set row className based on bet type
           if (bet.betType === "BACK") {
-            bet.rowClassName = "mb-profit-amount";
-          } else {
-            bet.rowClassName = "mb-loss-amount";
-          }
+          bet.rowClassName = "mb-profit-amount";
+        } else {
+          bet.rowClassName = "mb-loss-amount";
+        }
 
           return bet;
         });
@@ -356,7 +356,7 @@ const MyBets: React.FC<StoreProps> = (props) => {
           return sortDesc ? dateB - dateA : dateA - dateB;
         });
 
-        setBets(betList);
+      setBets(betList);
         setNextPageToken(response.data?.pageToken || null);
       } else {
         // Fallback to empty array if API response is invalid

@@ -26,7 +26,7 @@ import {
   sideHeaderTabs,
   competitionsData,
 } from "./SideHeaderUtil";
-import { getStaticSportsData, transformSportsToTabs, SportTabData } from "../../util/sportsApiUtil";
+import { getStaticSportsData, transformSportsToTabs, SportTabData, fetchSportsFromAPI } from "../../util/sportsApiUtil";
 import USABET_API from "../../api-services/usabet-api";
 import { ChevronRight, KeyboardArrowDown } from "@material-ui/icons";
 import { getLangCode } from "../../util/localizationUtil";
@@ -96,12 +96,37 @@ const SideHeader = (props: Props) => {
   const [sportsTabs, setSportsTabs] = useState<SportTabData[]>(sideHeaderTabs);
 
   useEffect(() => {
-    // Use static sports data instead of fetching from API
-    const sports = getStaticSportsData();
-    if (sports.length > 0) {
-      const transformedTabs = transformSportsToTabs(sports);
-      setSportsTabs(transformedTabs);
-    }
+    // Fetch sports from API to show all available games
+    const fetchSports = async () => {
+      try {
+        const sports = await fetchSportsFromAPI();
+        if (sports.length > 0) {
+          const transformedTabs = transformSportsToTabs(sports);
+          setSportsTabs(transformedTabs);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[SideHeader] Loaded sports from API:', sports.length, 'sports');
+          }
+        } else {
+          // Fallback to static data if API returns empty
+          const staticSports = getStaticSportsData();
+          if (staticSports.length > 0) {
+            const transformedTabs = transformSportsToTabs(staticSports);
+            setSportsTabs(transformedTabs);
+            console.warn('[SideHeader] API returned no sports, using static data');
+          }
+        }
+      } catch (error) {
+        console.error('[SideHeader] Error fetching sports from API:', error);
+        // Fallback to static data on error
+        const staticSports = getStaticSportsData();
+        if (staticSports.length > 0) {
+          const transformedTabs = transformSportsToTabs(staticSports);
+          setSportsTabs(transformedTabs);
+        }
+      }
+    };
+    
+    fetchSports();
   }, []);
 
   const getUserShortName = () => {
@@ -138,7 +163,7 @@ const SideHeader = (props: Props) => {
         </div>
         <div className="sh-sub-menu">
           <SHSportsTab
-            tabs={sportsTabs}
+            tabs={sideHeaderTabs}
             loggedIn={loggedIn}
             setCompetition={setCompetition}
             closeHandler={closeHandler}
@@ -422,6 +447,7 @@ const SHSportsTab = (props: {
           const matches = response.data.data;
           
           // Group by sport_id and extract unique series/competitions
+          // Use a map to handle multiple sport ID formats (e.g., "4" and "sr:sport:21" for Cricket)
           const competitionsMap: { [sportId: string]: Map<string, CompetitionData> } = {};
           
           matches.forEach((match: any) => {
@@ -445,21 +471,29 @@ const SHSportsTab = (props: {
               return;
             }
             
-            // Initialize sport map if not exists
-            if (!competitionsMap[sportId]) {
-              competitionsMap[sportId] = new Map();
-            }
+            // Normalize sport ID for matching (handle variations like "sr_sport_21" vs "sr:sport:21")
+            const normalizedSportId = sportId.replace(/_/g, ":");
             
-            // Add unique competition (use seriesId as key to avoid duplicates)
-            if (!competitionsMap[sportId].has(seriesId)) {
-              competitionsMap[sportId].set(seriesId, {
-                competitionId: seriesId,
-                competitionName: seriesName,
-                sportId: sportId,
-                sportName: sportName,
-                enabled: true,
-              });
-            }
+            // Store under both original and normalized sport ID to handle different formats
+            const sportIdsToStore = [sportId, normalizedSportId].filter((id, index, arr) => arr.indexOf(id) === index);
+            
+            sportIdsToStore.forEach((sid) => {
+              // Initialize sport map if not exists
+              if (!competitionsMap[sid]) {
+                competitionsMap[sid] = new Map();
+              }
+              
+              // Add unique competition (use seriesId as key to avoid duplicates)
+              if (!competitionsMap[sid].has(seriesId)) {
+                competitionsMap[sid].set(seriesId, {
+                  competitionId: seriesId,
+                  competitionName: seriesName,
+                  sportId: sid,
+                  sportName: sportName,
+                  enabled: true,
+                });
+              }
+            });
           });
           
           // Convert Map to array for each sport
@@ -473,25 +507,17 @@ const SHSportsTab = (props: {
           
           if (process.env.NODE_ENV === 'development') {
             console.log('[SHSportsTab] Loaded competitions from API:', competitionsBySport);
+            console.log('[SHSportsTab] Sport IDs found:', Object.keys(competitionsBySport));
           }
+        } else {
+          // If API response is not in expected format, log and use static fallback
+          console.warn('[SHSportsTab] API response format unexpected, using static data');
+          setSportCompetitions({});
         }
       } catch (error) {
         console.error("Error fetching competitions from API:", error);
-        // Fallback to static data on error
-        const fallbackCompetitions: { [sportId: string]: CompetitionData[] } = {};
-        competitionsData.forEach((comp) => {
-          if (!fallbackCompetitions[comp.sportId]) {
-            fallbackCompetitions[comp.sportId] = [];
-          }
-          fallbackCompetitions[comp.sportId].push({
-            competitionId: comp.competitionId,
-            competitionName: comp.competitionName,
-            sportId: comp.sportId,
-            sportName: "",
-            enabled: comp.enabled,
-          });
-        });
-        setSportCompetitions(fallbackCompetitions);
+        // Don't set fallback here - let getCompetitionsForSport handle it per sport
+        setSportCompetitions({});
       }
     };
     
@@ -554,14 +580,35 @@ const SHSportsTab = (props: {
 
   // Get competitions for a specific sport from API data or fallback to static data
   const getCompetitionsForSport = (sportId: string): CompetitionData[] => {
-    // Try API data first
+    // Normalize sport ID for matching (handle variations like "sr_sport_21" vs "sr:sport:21")
+    const normalizedSportId = sportId.replace(/_/g, ":");
+    
+    // Try API data first with original sport ID
     if (sportCompetitions[sportId] && sportCompetitions[sportId].length > 0) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[SHSportsTab] Using dynamic data for sportId: ${sportId}`, sportCompetitions[sportId].length, 'competitions');
+      }
       return sportCompetitions[sportId];
     }
     
+    // Try normalized sport ID
+    if (normalizedSportId !== sportId && sportCompetitions[normalizedSportId] && sportCompetitions[normalizedSportId].length > 0) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[SHSportsTab] Using dynamic data for normalized sportId: ${normalizedSportId}`, sportCompetitions[normalizedSportId].length, 'competitions');
+      }
+      return sportCompetitions[normalizedSportId];
+    }
+    
     // Fallback to static data
-    return competitionsData
-      .filter((comp) => comp.sportId === sportId && comp.enabled)
+    const staticComps = competitionsData
+      .filter((comp) => {
+        // Match by exact sportId or normalized sportId
+        const compSportId = String(comp.sportId);
+        const compNormalized = compSportId.replace(/_/g, ":");
+        return (compSportId === sportId || compSportId === normalizedSportId || 
+                compNormalized === sportId || compNormalized === normalizedSportId) && 
+               comp.enabled;
+      })
       .map((comp) => ({
         competitionId: comp.competitionId,
         competitionName: comp.competitionName,
@@ -570,6 +617,12 @@ const SHSportsTab = (props: {
         enabled: comp.enabled,
       }))
       .sort((a, b) => a.competitionName.localeCompare(b.competitionName));
+    
+    if (process.env.NODE_ENV === 'development' && staticComps.length > 0) {
+      console.log(`[SHSportsTab] Using static data for sportId: ${sportId}`, staticComps.length, 'competitions');
+    }
+    
+    return staticComps;
   };
 
   return (

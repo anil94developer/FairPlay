@@ -5,12 +5,20 @@
   .fm-table-content {
     .MuiPaper-root {
       margin-top: 0px;
+      overflow: hidden;
+      
+      .MuiTableContainer-root {
+        overflow: hidden;
+        width: 100%;
+      }
 
       @media screen and (min-width: 921px) {
         border-radius: 8px 8px 14px 14px;
 
         .fm-table {
           border-style: hidden;
+          table-layout: auto;
+          width: 100%;
 
           .MuiAccordion-root .MuiAccordionSummary-root {
             padding: 0;
@@ -46,11 +54,43 @@
           }
 
           .tabs-table-cell {
+            padding: 0 !important;
+            overflow: hidden !important;
+            position: relative;
+            width: 100%;
+            
             .tabs-fancy {
               display: flex;
               justify-content: flex-start;
               align-items: center;
-              flex-wrap: wrap;
+              flex-wrap: nowrap;
+              overflow-x: auto;
+              overflow-y: hidden;
+              white-space: nowrap;
+              -webkit-overflow-scrolling: touch;
+              scrollbar-width: thin;
+              scrollbar-color: var(--ion-button-color) transparent;
+              width: 100%;
+              padding: 8px 12px;
+              box-sizing: border-box;
+              min-height: 40px;
+              
+              > * {
+                flex-shrink: 0;
+              }
+
+              &::-webkit-scrollbar {
+                height: 4px;
+              }
+
+              &::-webkit-scrollbar-track {
+                background: transparent;
+              }
+
+              &::-webkit-scrollbar-thumb {
+                background: var(--ion-button-color);
+                border-radius: 2px;
+              }
 
               .ind-tab {
                 padding: 4px 15px;
@@ -63,6 +103,8 @@
                 border-radius: 20px;
                 font-size: 10px;
                 margin-right: 6px;
+                flex-shrink: 0;
+                white-space: nowrap;
               }
 
               .ind-tab:hover {
@@ -82,6 +124,8 @@
                 background: var(--ion-button-color);
                 border-radius: 20px;
                 margin-right: 6px;
+                flex-shrink: 0;
+                white-space: nowrap;
               }
             }
           }
@@ -141,20 +185,50 @@
         margin-bottom: 0;
 
         .tabs-table-cell {
+          padding: 0 !important;
+          overflow: visible !important;
+          position: relative;
+          width: 100%;
+          
           .tabs-fancy {
-            display: grid;
-            grid-template-columns: auto auto auto auto auto;
+            display: flex;
+            justify-content: flex-start;
             align-items: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: var(--ion-button-color) transparent;
+            width: 100%;
+            padding: 8px 12px;
+            box-sizing: border-box;
+
+            &::-webkit-scrollbar {
+              height: 4px;
+            }
+
+            &::-webkit-scrollbar-track {
+              background: transparent;
+            }
+
+            &::-webkit-scrollbar-thumb {
+              background: var(--ion-button-color);
+              border-radius: 2px;
+            }
 
             .ind-tab {
-              padding: 8px 0px;
+              padding: 8px 15px;
               cursor: pointer;
               border-radius: 5px;
               font-weight: 600;
               display: flex;
               justify-content: center;
               align-items: center;
+              flex-shrink: 0;
+              white-space: nowrap;
+              margin-right: 6px;
             }
 
             .ind-tab:hover {
@@ -173,6 +247,9 @@
               justify-content: center;
               align-items: center;
               font-size: 10px;
+              flex-shrink: 0;
+              white-space: nowrap;
+              margin-right: 6px;
             }
           }
         }
@@ -180,9 +257,13 @@
 
       .fm-table {
         border-radius: 6px;
-        overflow: hidden;
+        overflow: visible;
         border-collapse: separate;
         border-spacing: 0 2px;
+        
+        .tabs-table-cell {
+          overflow: hidden !important;
+        }
 
         @media screen and (max-width: 920px) {
           border-radius: 0;

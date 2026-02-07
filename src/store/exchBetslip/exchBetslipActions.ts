@@ -1,5 +1,6 @@
 import { AxiosResponse } from "axios";
 import API from "../../api";
+import USABET_API from "../../api-services/usabet-api";
 import {
   BinaryBetrequest,
   BsResponse,
@@ -250,53 +251,113 @@ export const betStatus = async () => {
   }
 };
 
-export const fetchOpenBets = (eventId: string[] | string, sportId?: string) => {
+export const fetchOpenBets = (eventId: string[] | string, sportId?: string, page: number = 1, limit: number = 100) => {
   return async (dispatch: Function) => {
     if (eventId) {
       try {
-        // Dummy data instead of API call
-        const dummyResponse = {
-          data: {
-            orders: [
-              {
-                id: "open-bet-001",
-                eventId: Array.isArray(eventId) ? eventId[0] : eventId,
-                eventName: "Team A vs Team B",
-                stakeAmount: 100,
-                oddValue: 1.5,
-                outcomeDesc: "Team A",
-                betType: "BACK",
-                marketType: "MATCH_ODDS",
-                marketName: "Match Odds",
-                sportId: sportId || "4",
-                betPlacedTime: new Date().toISOString(),
-              },
-              {
-                id: "open-bet-002",
-                eventId: Array.isArray(eventId) ? eventId[0] : eventId,
-                eventName: "Team C vs Team D",
-                stakeAmount: 200,
-                oddValue: 0.9,
-                outcomeDesc: "Team D",
-                betType: "LAY",
-                marketType: "BOOKMAKER",
-                marketName: "Bookmaker",
-                sportId: sportId || "1",
-                betPlacedTime: new Date(Date.now() - 3600000).toISOString(),
-              },
-            ],
-            totalOrders: 2,
-          },
+        // Normalize eventId - if array, use first one for single match_id search
+        // For multiple matches, we could extend this later
+        const matchId = Array.isArray(eventId) ? eventId[0] : eventId;
+        
+        // Prepare request payload matching the API structure
+        const requestPayload = {
+          page: page,
+          limit: limit,
+          search: {
+            match_id: matchId,
+            delete_status: [0] // Only fetch non-deleted bets (0 = active)
+          }
         };
-        // const opBets = openBetsList.concat(dummyResponse.data);
+
+        console.log("[fetchOpenBets] Request payload:", requestPayload);
+
+        // Call the API
+        const response = await USABET_API.post("/bet/openBets", requestPayload);
+        
+        console.log("[fetchOpenBets] API response:", response?.data);
+
+        // Transform API response to UserBet format
+        // API response structure:
+        // {
+        //   "data": [
+        //     {
+        //       "metadata": [{ "total": 2, "total_profit": 200, "page": 1 }],
+        //       "data": [{ bet objects }]
+        //     }
+        //   ],
+        //   "status": true
+        // }
+        let orders: any[] = [];
+        let totalOrders = 0;
+
+        if (response?.data?.status === true && Array.isArray(response.data.data)) {
+          const eventIdArray = Array.isArray(eventId) ? eventId : [eventId];
+          
+          // Handle nested structure: response.data.data is an array of objects with metadata and data
+          response.data.data.forEach((group: any) => {
+            // Extract metadata for total count
+            if (Array.isArray(group.metadata) && group.metadata.length > 0) {
+              totalOrders = group.metadata[0].total || totalOrders;
+            }
+            
+            // Extract bets from data array
+            if (Array.isArray(group.data)) {
+              const mappedBets = group.data.map((bet: any) => {
+                // Map API response fields to UserBet format
+                return {
+                  id: bet.bet_id || bet.id || `bet-${bet.match_id}-${Date.now()}`,
+                  betId: bet.bet_id || bet.id,
+                  eventId: bet.match_id || bet.event_id || eventIdArray[0],
+                  eventName: bet.match_name || bet.event_name || "",
+                  marketId: bet.market_id || "",
+                  marketName: bet.market_name || bet.name || "Match Odds",
+                  marketType: (bet.event_type || bet.market_type || bet.marketType || "MATCH_ODDS") as any,
+                  outcomeId: bet.selection_id || bet.outcome_id || bet.runner_id || "",
+                  outcomeDesc: bet.selection_name || bet.outcome_desc || bet.outcome_name || bet.runner_name || "",
+                  betType: (bet.is_back === 1 || bet.is_back === "1" || bet.is_back === true) ? "BACK" : "LAY" as "BACK" | "LAY",
+                  oddValue: bet.odds || bet.odd_value || bet.oddValue || 0,
+                  stakeAmount: bet.stack || bet.stake_amount || bet.stakeAmount || bet.amount || 0,
+                  betPlacedTime: bet.createdAt || bet.created_at || bet.bet_placed_time || bet.betPlacedTime || new Date().toISOString(),
+                  unmatched: bet.is_matched === 0 || bet.is_matched === "0" || bet.is_matched === false,
+                  sessionRuns: bet.session_runs || bet.sessionRuns || null,
+                  // Additional fields from API
+                  profit: bet.profit || 0,
+                  p_l: bet.p_l || 0,
+                  liability: bet.liability || 0,
+                  size: bet.size || 0,
+                  is_matched: bet.is_matched || 0,
+                  is_fancy: bet.is_fancy || 0,
+                  sportId: bet.sport_id || bet.sportId || sportId,
+                  sportName: bet.sport_name || bet.sportName || "",
+                  seriesId: bet.series_id || bet.seriesId || "",
+                  seriesName: bet.series_name || bet.seriesName || "",
+                  // Preserve all original fields
+                  ...bet
+                };
+              });
+              
+              orders = orders.concat(mappedBets);
+            }
+          });
+          
+          // If no metadata found, use orders length
+          if (totalOrders === 0) {
+            totalOrders = orders.length;
+          }
+        }
+
+        console.log("[fetchOpenBets] Transformed orders:", orders);
+        console.log("[fetchOpenBets] Total orders:", totalOrders);
+
         dispatch(
           fetchOpenBetsSuccess(
-            dummyResponse.data.orders,
-            dummyResponse.data.totalOrders
+            orders,
+            totalOrders
           )
         );
       } catch (err) {
-        dispatch(fetchOpenBetsSuccess([]));
+        console.error("[fetchOpenBets] Error fetching open bets:", err);
+        dispatch(fetchOpenBetsSuccess([], 0));
       }
     }
   };
@@ -597,40 +658,65 @@ export const oneClickBetPlaceHandler = async (
       }
 
       dispatch(setOneClickBettingLoading(true));
-
-      switch (data.marketType) {
-        case "MO": {
-          url = "/place-matchodds-bet";
-          break;
-        }
-        case "BM": {
-          url = "/place-bookmaker-bet";
-          break;
-        }
-        case "FANCY": {
-          url = "/place-fancy-bet";
-          break;
-        }
-        case "PREMIUM": {
-          url = "/place-premium-bet";
-          break;
-        }
-      }
     }
 
     // setAddNewBet(true);
     let response: AxiosResponse<BsResponse>;
     try {
-      response = await API.post(
-        "/bs" + url,
-        { ...bets[0], amount: oneClickBettingStake },
-        {
-          headers: {
-            Authorization: sessionStorage.getItem("jwt_token"),
-          },
-          timeout: 1000 * 20,
-        }
-      );
+      const betData = { ...bets[0], amount: oneClickBettingStake };
+      
+      // Check if this is a FANCY bet - use different API endpoint
+      if (betData.marketType === "FANCY") {
+        // Use /bet/saveFancyBet API for fancy bets
+        // Request body structure:
+        // {
+        //   "is_back": 1,
+        //   "fancy_id": "35196653_4991637",
+        //   "run": 160,
+        //   "size": 100,
+        //   "stack": 100
+        // }
+        const fancyId = betData.eventId && betData.marketId 
+          ? `${betData.marketId}`
+          : betData.marketId || "";
+        
+        const saveFancyBetPayload = {
+          is_back: betData.betType === "BACK" ? 1 : 0,
+          fancy_id: fancyId,
+          run: Number(parseFloat(String(betData.sessionPrice || betData.displayOddValue || 0))),
+          size: Number(parseFloat(String(betData.amount || 0))), // Stake amount
+          stack: Number(parseFloat(String(betData.amount || 0))) // Stake amount
+        };
+
+        console.log("[oneClickBetPlaceHandler] Placing fancy bet with payload:", JSON.stringify(saveFancyBetPayload, null, 2));
+        
+        response = await USABET_API.post("/bet/saveFancyBet", saveFancyBetPayload);
+        
+        console.log("[oneClickBetPlaceHandler] saveFancyBet API response:", response?.data);
+      } else {
+        // Use /bet/saveBet API for other bet types (MO, BM, etc.)
+        // Request body structure:
+        // {
+        //   "is_back": 1,
+        //   "market_id": "1.253318288",
+        //   "odds": 1.17,
+        //   "selection_id": 235,
+        //   "stack": 100
+        // }
+        const saveBetPayload = {
+          is_back: betData.betType === "BACK" ? 1 : 0,
+          market_id: String(betData.marketId || ""),
+          odds: Number(parseFloat(String(betData.oddValue || 0))),
+          selection_id: Number(parseInt(String(betData.outcomeId || "0"), 10)),
+          stack: Number(parseFloat(String(betData.amount || 0)))
+        };
+
+        console.log("[oneClickBetPlaceHandler] Placing bet with payload:", JSON.stringify(saveBetPayload, null, 2));
+        
+        response = await USABET_API.post("/bet/saveBet", saveBetPayload);
+        
+        console.log("[oneClickBetPlaceHandler] saveBet API response:", response?.data);
+      }
 
       if (binaryPayload !== null) {
         response = await API.post("/binary/single-bet", binaryPayload, {
@@ -654,18 +740,47 @@ export const oneClickBetPlaceHandler = async (
       return false;
     }
 
-    if (response && response?.status === 200) {
-      // setTimeout(() => {
-      //   dispatch(setOneClickBettingLoading(false));
-      //   dispatch(clearExchcngeBets());
-      // }, bets[0]?.delay * 1000);
+    // Check if API response is successful
+    const responseData = response?.data as any;
+    const isSuccess = response?.status === 200 || 
+                     responseData?.status === true || 
+                     responseData?.status === "true" ||
+                     (responseData?.msg && responseData?.msg?.toLowerCase().includes("success"));
+    
+    if (response && isSuccess) {
+      console.log("[oneClickBetPlaceHandler] Bet placed successfully, calling openBets API...");
+      
+      // Hide loader immediately after success
+      dispatch(setOneClickBettingLoading(false));
+      
+      // Show processing message - use API message if available, otherwise default
+      const successMessage = responseData?.msg || 
+                            langData?.["bet_being_processed_txt"] || 
+                            "Your bet is being processed...";
+      dispatch(
+        setAlertMsg({
+          type: "success",
+          message: successMessage,
+        })
+      );
+      
+      // Call bet/openBets API after successful bet placement
+      if (bets[0]?.eventId) {
+        console.log("[oneClickBetPlaceHandler] Fetching open bets for eventId:", bets[0].eventId);
+        dispatch(fetchOpenBets(bets[0].eventId, bets[0].sportId));
+      }
+      
+      // Clear bets from betslip after successful placement
+      dispatch(clearExchcngeBets());
     } else {
+      // Hide loader on error
+      dispatch(setOneClickBettingLoading(false));
       dispatch(
         setAlertMsg({
           type: "error",
-          message: response?.data?.message
-            ? response.data.message
-            : langData?.["bet_placed_txt"],
+          message: response?.data?.message || response?.data?.msg
+            ? response.data.message || response.data.msg
+            : langData?.["bet_placed_txt"] || "Failed to place bet",
         })
       );
     }

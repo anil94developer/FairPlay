@@ -2,14 +2,15 @@ import axios from "axios";
 import { createBrowserHistory } from "history";
 
 // Dedicated client for USA Bet v1 endpoints.
-// Configure via env: REACT_APP_USABET_API_BASE_URL=https://1sports.in/api/v1
+// Configure via env: REACT_APP_USABET_API_BASE_URL=https://usabet9.com/api/v1/
 //
-// DEV mode: use Vite proxy to avoid CORS (baseURL "/api" -> proxied to https://1sports.in/api/v1)
+// DEV mode: use Vite proxy to avoid CORS (baseURL "/api" -> proxied to https://usabet9.com/api/v1/)
 const USABET_API = axios.create({
-  baseURL: import.meta.env.DEV
+  baseURL:  
+   import.meta.env.DEV
     ? "/api"
     : import.meta.env.REACT_APP_USABET_API_BASE_URL ||
-      "https://1sports.in/api/v1",
+      "https://usabet9.com/api/v1/",
   // Match your working implementation (some deployments rely on cookies / cf_clearance)
   withCredentials: true,
   timeout: 10000, // 10 seconds

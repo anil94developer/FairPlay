@@ -218,7 +218,7 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
   const fetchInplayMatches = async () => {
     setLoading(true);
     try {
-      const response = await USABET_API.get("/match/homeMatchesOpen");
+      const response = await USABET_API.get("/match/homematchesV2");
 
       // Check for invalid token response
       if (response?.data) {

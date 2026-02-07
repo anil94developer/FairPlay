@@ -94,6 +94,11 @@ const SideHeader = (props: Props) => {
 
   const history = useHistory();
   const [sportsTabs, setSportsTabs] = useState<SportTabData[]>(sideHeaderTabs);
+  const [userDetails, setUserDetails] = useState<{ username: string; fullName: string; shortName: string }>({
+    username: "",
+    fullName: "",
+    shortName: "",
+  });
 
   useEffect(() => {
     // Fetch sports from API to show all available games
@@ -129,11 +134,102 @@ const SideHeader = (props: Props) => {
     fetchSports();
   }, []);
 
+  // Fetch user details from API
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      if (!loggedIn || demoUser()) {
+        setUserDetails({
+          username: langData?.["demo_user"] || "Demo User",
+          fullName: langData?.["demo_user"] || "Demo User",
+          shortName: "D",
+        });
+        return;
+      }
+
+      try {
+        const username = sessionStorage.getItem("username");
+        if (!username) {
+          // Fallback to JWT token data
+          const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
+          setUserDetails({
+            username: username || name || "",
+            fullName: name || username || "",
+            shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
+          });
+          return;
+        }
+
+        // Try to fetch user profile from API
+        try {
+          const response = await USABET_API.get(`/user/profile`, {
+            params: { username },
+          });
+          
+          if (response?.data?.status === true && response?.data?.data) {
+            const userData = response.data.data;
+            const fullName = userData.fullName || userData.name || userData.firstName + " " + userData.lastName || username;
+            setUserDetails({
+              username: username,
+              fullName: fullName,
+              shortName: fullName ? fullName[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
+            });
+            console.log("[SideHeader] User details fetched from API:", userData);
+          } else {
+            // Fallback to JWT token data
+            const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
+            setUserDetails({
+              username: username || "",
+              fullName: name || username || "",
+              shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
+            });
+          }
+        } catch (apiError) {
+          console.warn("[SideHeader] Error fetching user profile from API, using fallback:", apiError);
+          // Fallback to JWT token data
+          const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
+          setUserDetails({
+            username: username || "",
+            fullName: name || username || "",
+            shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
+          });
+        }
+      } catch (error) {
+        console.error("[SideHeader] Error fetching user details:", error);
+        // Fallback to JWT token data
+        const username = sessionStorage.getItem("username") || "";
+        const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
+        setUserDetails({
+          username: username || "",
+          fullName: name || username || "",
+          shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
+        });
+      }
+    };
+
+    if (loggedIn) {
+      fetchUserDetails();
+    }
+  }, [loggedIn, langData]);
+
   const getUserShortName = () => {
+    if (userDetails.shortName) {
+      return userDetails.shortName;
+    }
     const name: string = demoUser()
       ? "Demo User"
       : getFieldFromToken(JwtToken.SUBJECT_NAME);
     return name ? name[0].toUpperCase() : "";
+  };
+
+  const getUserFullName = () => {
+    // Show "Demo User" immediately for demo users, without waiting for state updates
+    if (demoUser()) {
+      return langData?.["demo_user"] || "Demo User";
+    }
+    if (userDetails.fullName) {
+      return userDetails.fullName;
+    }
+    return getFieldFromToken(JwtToken.SUBJECT_NAME) || sessionStorage.getItem("username") || "";
   };
 
   const handleImgClick = () => {
@@ -158,8 +254,8 @@ const SideHeader = (props: Props) => {
       </div>
       <div className="sh-menu">
         <div className="sh-username-img">
-          <div className="short-name">D</div>
-          <div className="sh-username">Demo User</div>
+          <div className="short-name">{getUserShortName() || "U"}</div>
+          <div className="sh-username">{getUserFullName()}</div>
         </div>
         <div className="sh-sub-menu">
           <SHSportsTab
@@ -442,7 +538,7 @@ const SHSportsTab = (props: {
   useEffect(() => {
     const fetchCompetitionsFromAPI = async () => {
       try {
-        const response = await USABET_API.get("/match/homeMatchesOpen");
+        const response = await USABET_API.get("/match/homematchesV2");
         if (response?.data?.status === true && Array.isArray(response.data.data)) {
           const matches = response.data.data;
           

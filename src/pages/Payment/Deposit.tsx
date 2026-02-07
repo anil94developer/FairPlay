@@ -74,7 +74,7 @@ const Deposit: React.FC<StoreProps> = (props) => {
   const [providerRefId, setProviderRefId] = useState<string>();
   const [providersList, setProvidersList] = useState([]);
   const [depositPaymentMethodsInfo, setDepositPaymentMethodsInfo] =
-    useState<any>([]);
+    useState<any>({});
   const [newUser, setNewUser] = useState<number>(0);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [paymentOptionFilter, setPaymentOptionFilter] =
@@ -221,57 +221,18 @@ const Deposit: React.FC<StoreProps> = (props) => {
   const getPaymentProviders = async () => {
     setLoading(true);
     try {
-      // Replaced API call with dummy data
+      // Payment methods structure: each key contains an array of payment gateway names
       const dummyDepositMethods = {
-        UPI: [
-          {
-            id: "upi_1",
-            name: "UPI Payment",
-            enabled: true,
-            minAmount: 100,
-            maxAmount: 50000,
-          },
-        ],
-        BANK_TRANSFER: [
-          {
-            id: "bank_1",
-            name: "Bank Transfer",
-            enabled: true,
-            minAmount: 500,
-            maxAmount: 100000,
-          },
-        ],
-        ZENPAY: [
-          {
-            id: "zenpay_1",
-            name: "ZenPay",
-            enabled: true,
-            minAmount: 100,
-            maxAmount: 50000,
-          },
-        ],
-        PGMAN: [
-          {
-            id: "pgman_1",
-            name: "PGMan",
-            enabled: true,
-            minAmount: 100,
-            maxAmount: 50000,
-          },
-        ],
-        XENONPAY: [
-          {
-            id: "xenonpay_1",
-            name: "XenonPay",
-            enabled: true,
-            minAmount: 100,
-            maxAmount: 50000,
-          },
-        ],
+        UPI: ["ZENPAY", "PGMAN"],
+        BANK_TRANSFER: ["ZENPAY", "PGMAN"],
+        ZENPAY: ["ZENPAY"],
+        PGMAN: ["PGMAN"],
+        XENONPAY: ["XENONPAY"],
       };
       setDepositPaymentMethodsInfo(dummyDepositMethods);
+      console.log("[Deposit] Payment methods loaded:", dummyDepositMethods);
     } catch (err) {
-      console.log(err);
+      console.error("[Deposit] Error loading payment providers:", err);
     }
     setLoading(false);
   };
@@ -996,8 +957,20 @@ const Deposit: React.FC<StoreProps> = (props) => {
   };
 
   useEffect(() => {
-    setProvidersList(depositPaymentMethodsInfo["UPI"]);
-  }, [depositPaymentMethodsInfo]);
+    // Set providersList based on current paymentOption
+    if (depositPaymentMethodsInfo && Object.keys(depositPaymentMethodsInfo).length > 0) {
+      if (paymentOption && depositPaymentMethodsInfo[paymentOption]) {
+        const providers = depositPaymentMethodsInfo[paymentOption];
+        setProvidersList(Array.isArray(providers) ? providers : []);
+        console.log("[Deposit] Providers list set for", paymentOption, ":", providers);
+      } else if (depositPaymentMethodsInfo["BANK_TRANSFER"]) {
+        // Fallback to BANK_TRANSFER if current paymentOption doesn't exist
+        const providers = depositPaymentMethodsInfo["BANK_TRANSFER"];
+        setProvidersList(Array.isArray(providers) ? providers : []);
+        console.log("[Deposit] Providers list set to BANK_TRANSFER (fallback):", providers);
+      }
+    }
+  }, [depositPaymentMethodsInfo, paymentOption]);
 
   useEffect(() => {
     getPaymentProviders();
@@ -1109,10 +1082,22 @@ const Deposit: React.FC<StoreProps> = (props) => {
               )}
             </Tabs>
           )}
-          {providersList?.length > 0 &&
-            providersList.map((paymentGateway, index) =>
-              renderPaymentForm(paymentGateway, index, tabValue)
-            )}
+          {providersList && providersList.length > 0 ? (
+            providersList.map((paymentGateway, index) => {
+              const form = renderPaymentForm(paymentGateway, index, tabValue);
+              return form ? (
+                <div key={`payment-gateway-${index}-${paymentGateway}`}>
+                  {form}
+                </div>
+              ) : null;
+            })
+          ) : (
+            !loading && (
+              <div className="no-payment-methods">
+                {langData?.["no_payment_methods_available"] || "No payment methods available"}
+              </div>
+            )
+          )}
         </div>
       </div>
     </div>

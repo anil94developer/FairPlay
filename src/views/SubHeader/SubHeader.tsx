@@ -38,6 +38,7 @@ import {
 import { capitalizeWord, demoUser, showThemes } from "../../util/stringUtil";
 import "./SubHeader.scss";
 import ExposureTable from "../../components/Exposure/Exposure";
+import USABET_API from "../../api-services/usabet-api";
 import {
   getEnvVariable,
   WhitelabelEnvDTO,
@@ -68,6 +69,7 @@ type StoreProps = {
   langSelected: string;
   setLangSelected: (lang: string) => void;
   langData: any;
+  fetchBalance: () => void;
 };
 
 const SubHeader: React.FC<StoreProps> = (props) => {
@@ -91,12 +93,17 @@ const SubHeader: React.FC<StoreProps> = (props) => {
     langSelected,
     setLangSelected,
     langData,
+    fetchBalance,
   } = props;
   const [anchorEl, setAnchorEl] = React.useState(null);
   const cFactor = CURRENCY_TYPE_FACTOR[getCurrencyTypeFromToken()];
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
   const [showWhatsapp, setShowWhatsapp] = useState<boolean>(true);
   const [showExpDetail, setShowExpDetail] = useState<boolean>(false);
+  const [userDetails, setUserDetails] = useState<{ username: string; fullName: string }>({
+    username: "",
+    fullName: "",
+  });
   const history = useHistory();
   const location = useLocation();
   const isSmallScreen = useMediaQuery("(max-width:400px)");
@@ -241,6 +248,91 @@ const SubHeader: React.FC<StoreProps> = (props) => {
     setSubHeaders([...subHeadersArray.filter((elem) => !elem.disable)]);
   }, [contentConfig, bonusEnabled]);
 
+  // Fetch balance when logged in and poll every 3 seconds
+  useEffect(() => {
+    if (!loggedIn || demoUser()) {
+      return;
+    }
+
+    // Fetch balance immediately
+    fetchBalance();
+
+    // Set up polling every 3 seconds (3000ms)
+    const balanceInterval = setInterval(() => {
+      fetchBalance();
+    }, 3000);
+
+    // Cleanup interval on unmount or when logged out
+    return () => {
+      clearInterval(balanceInterval);
+    };
+  }, [loggedIn, fetchBalance]);
+
+  // Fetch user details from API
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      if (!loggedIn || demoUser()) {
+        setUserDetails({
+          username: langData?.["demo_user"] || "Demo User",
+          fullName: langData?.["demo_user"] || "Demo User",
+        });
+        return;
+      }
+
+      try {
+        const username = sessionStorage.getItem("username");
+        if (!username) {
+          setUserDetails({
+            username: "",
+            fullName: "",
+          });
+          return;
+        }
+
+        // Try to fetch user profile from API
+        try {
+          const response = await USABET_API.get(`/user/profile`, {
+            params: { username },
+          });
+          
+          if (response?.data?.status === true && response?.data?.data) {
+            const userData = response.data.data;
+            const fullName = userData.fullName || userData.name || userData.firstName + " " + userData.lastName || username;
+            setUserDetails({
+              username: username,
+              fullName: fullName,
+            });
+            console.log("[SubHeader] User details fetched from API:", userData);
+          } else {
+            // Fallback to username from sessionStorage
+            setUserDetails({
+              username: username,
+              fullName: username,
+            });
+          }
+        } catch (apiError) {
+          console.warn("[SubHeader] Error fetching user profile from API, using fallback:", apiError);
+          // Fallback to username from sessionStorage
+          setUserDetails({
+            username: username,
+            fullName: username,
+          });
+        }
+      } catch (error) {
+        console.error("[SubHeader] Error fetching user details:", error);
+        const username = sessionStorage.getItem("username") || "";
+        setUserDetails({
+          username: username,
+          fullName: username,
+        });
+      }
+    };
+
+    if (loggedIn) {
+      fetchUserDetails();
+    }
+  }, [loggedIn, langData]);
+
   const isAllowed = (config) => {
     return config ? (allowedConfig & config) !== 0 : true;
   };
@@ -335,9 +427,15 @@ const SubHeader: React.FC<StoreProps> = (props) => {
   };
 
   const getUsername = () => {
-    return demoUser()
-      ? langData?.["demo_user"]
-      : sessionStorage.getItem("username");
+    // Show "Demo User" immediately for demo users
+    if (demoUser()) {
+      return langData?.["demo_user"] || "Demo User";
+    }
+    // Return full name if available, otherwise username
+    if (userDetails.fullName) {
+      return userDetails.fullName;
+    }
+    return userDetails.username || sessionStorage.getItem("username") || "";
   };
 
   const redirectToHome = () => {

@@ -410,10 +410,10 @@ export const getSapToken = async (token: string) => {
   }
 };
 
-const fetchBalanceSuccess = (balance: number) => {
+const fetchBalanceSuccess = (balanceSummary: any) => {
   return {
     type: FETCH_BALANCE_SUCCESS,
-    payload: balance,
+    payload: balanceSummary,
   };
 };
 
@@ -449,27 +449,104 @@ export const fetchBalance = () => {
       return;
     }
     try {
-      // Replaced API call with dummy data
-      const dummyBalance = 10000;
+      // Use /user/getBalanceCRef API endpoint
+      // Note: baseURL already includes /api/v1/ in production or /api in dev
+      // Full path: api/v1/user/getBalanceCRef
+      // Response structure:
+      // {
+      //   "data": {
+      //     "liability": 0,
+      //     "balance": 1500
+      //   },
+      //   "status": true
+      // }
+      const response = await USABET_API.post("/user/getBalanceCRef");
+      
+      console.log("[fetchBalance] getBalanceCRef API response:", response?.data);
 
-      if (
-        localStorage.getItem("campaignId") &&
-        localStorage.getItem("balance") &&
-        dummyBalance &&
-        localStorage.getItem("balance") != dummyBalance.toString()
-      ) {
-        depositEvent();
-        localStorage.removeItem("balance");
-        localStorage.removeItem("campaignId");
+      if (response?.data?.status === true && response?.data?.data) {
+        const balanceData = response.data.data;
+        const balance = balanceData.balance || 0;
+        const liability = balanceData.liability || 0;
+
+        // Map to balanceSummary structure
+        const balanceSummary = {
+          balance: balance,
+          balanceId: 0,
+          currenciesAllowed: 0,
+          currency: "",
+          exposure: liability, // Use liability as exposure
+          exposureLimit: 0,
+          maxStakeSB: 0,
+          minStakeSB: 0,
+          preferredCurrency: "",
+          username: sessionStorage.getItem("username") || "",
+          bonus: null,
+          bonusRedeemed: null,
+          nonCashableAmount: null,
+          cashableAmount: balance, // Use balance as cashable amount
+        };
+
+        if (
+          localStorage.getItem("campaignId") &&
+          localStorage.getItem("balance") &&
+          balance &&
+          localStorage.getItem("balance") != balance.toString()
+        ) {
+          depositEvent();
+          localStorage.removeItem("balance");
+          localStorage.removeItem("campaignId");
+        }
+        
+        dispatch(fetchBalanceSuccess(balanceSummary));
+      } else {
+        console.warn("[fetchBalance] Invalid API response, using fallback");
+        // Fallback to dummy data if API response is invalid
+        const dummyBalance = 10000;
+        dispatch(fetchBalanceSuccess({
+          balance: dummyBalance,
+          balanceId: 0,
+          currenciesAllowed: 0,
+          currency: "",
+          exposure: 0,
+          exposureLimit: 0,
+          maxStakeSB: 0,
+          minStakeSB: 0,
+          preferredCurrency: "",
+          username: sessionStorage.getItem("username") || "",
+          bonus: null,
+          bonusRedeemed: null,
+          nonCashableAmount: null,
+          cashableAmount: dummyBalance,
+        }));
       }
-      dispatch(fetchBalanceSuccess(dummyBalance));
     } catch (err: any) {
+      console.error("[fetchBalance] Error fetching balance:", err);
       // dispatch(fetchBalanceFailed());
       if (err.response && err.response.status === 401) {
         const token = sessionStorage.getItem("jwt_token");
         if (token) {
           dispatch(logout());
         }
+      } else {
+        // Fallback to dummy data on error
+        const dummyBalance = 10000;
+        dispatch(fetchBalanceSuccess({
+          balance: dummyBalance,
+          balanceId: 0,
+          currenciesAllowed: 0,
+          currency: "",
+          exposure: 0,
+          exposureLimit: 0,
+          maxStakeSB: 0,
+          minStakeSB: 0,
+          preferredCurrency: "",
+          username: sessionStorage.getItem("username") || "",
+          bonus: null,
+          bonusRedeemed: null,
+          nonCashableAmount: null,
+          cashableAmount: dummyBalance,
+        }));
       }
     }
   };

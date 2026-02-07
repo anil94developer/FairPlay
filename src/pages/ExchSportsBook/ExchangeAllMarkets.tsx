@@ -440,6 +440,31 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
           // Use sorted markets for processing
           marketsData = sortedMarkets;
 
+          // Extract full match data from first market (all markets share the same match info)
+          const firstMarket = marketsData[0];
+          const fullMatchData = {
+            sport_id: firstMarket?.sport_id,
+            match_id: firstMarket?.match_id,
+            match_name: firstMarket?.match_name,
+            match_date: firstMarket?.match_date,
+            inplay: firstMarket?.inplay,
+            is_active: firstMarket?.is_active,
+            is_manual: firstMarket?.is_manual,
+            enable_fancy: firstMarket?.enable_fancy,
+            matched: firstMarket?.matched,
+            totalMatched: firstMarket?.totalMatched,
+            market_min_stack: firstMarket?.market_min_stack,
+            market_max_stack: firstMarket?.market_max_stack,
+            market_advance_bet_stake: firstMarket?.market_advance_bet_stake,
+            market_advance_bet_min_stake: firstMarket?.market_advance_bet_min_stake,
+            market_live_odds_validation: firstMarket?.market_live_odds_validation,
+            is_lock: firstMarket?.is_lock,
+            bet_count: firstMarket?.bet_count,
+            match_tv_url: firstMarket?.match_tv_url,
+            has_tv_url: firstMarket?.has_tv_url,
+            user_setting_limit: firstMarket?.user_setting_limit,
+          };
+
           // Find and process Match Odds market first to update eventData
           const matchOddsMarket = marketsData.find((market: any) => 
             market.market_name === "Match Odds" || 
@@ -450,10 +475,11 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
           if (matchOddsMarket) {
             console.log("[ExchangeAllMarkets] Found Match Odds market:", matchOddsMarket);
             
-            // Transform runners from API format to matchOdds format
+            // Transform runners from API format to matchOdds format, preserving full runner data
             const transformedRunners = (matchOddsMarket.runners || []).map((runner: any) => {
               const availableToBack = runner.ex?.availableToBack || [];
               const availableToLay = runner.ex?.availableToLay || [];
+              const tradedVolume = runner.ex?.tradedVolume || [];
               
               // Helper function to parse price and size
               const parsePrice = (val: any): number | null => {
@@ -466,6 +492,10 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                 runnerId: String(runner.selectionId || runner.selection_id || ""),
                 runnerName: runner.selection_name || runner.selectionName || runner.name || "",
                 status: runner.status || "ACTIVE",
+                win_loss: runner.win_loss || 0,
+                // Preserve full runner data
+                selectionId: runner.selectionId,
+                selection_name: runner.selection_name || runner.selectionName || runner.name,
                 backPrices: availableToBack
                   .filter((price: any) => {
                     const priceVal = parsePrice(price.price);
@@ -486,13 +516,29 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                     size: parsePrice(price.size),
                   }))
                   .filter((p: any) => p.price !== null),
+                // Preserve full traded volume data
+                tradedVolume: tradedVolume.map((tv: any) => ({
+                  price: parsePrice(tv.price),
+                  size: parsePrice(tv.size),
+                })).filter((tv: any) => tv.price !== null && tv.size !== null),
+                // Preserve full ex data structure
+                ex: runner.ex,
               };
             });
 
-            // Update eventData with match odds data
+            // Update eventData with match odds data and full match metadata
             if (transformedRunners.length > 0) {
               const updatedEventData: EventDTO = {
                 ...(currentEventData || {}),
+                // Preserve full match data from API
+                sportId: firstMarket?.sport_id || currentEventData?.sportId || sportId,
+                eventId: firstMarket?.match_id || currentEventData?.eventId || eventId,
+                eventName: firstMarket?.match_name || currentEventData?.eventName || "",
+                openDate: firstMarket?.match_date ? (new Date(firstMarket.match_date).getTime() || firstMarket.match_date) : currentEventData?.openDate,
+                inplay: firstMarket?.inplay !== undefined ? firstMarket.inplay : currentEventData?.inplay,
+                inPlay: firstMarket?.inplay !== undefined ? firstMarket.inplay : currentEventData?.inPlay,
+                // Store full match data as additional property
+                fullMatchData: fullMatchData,
                 matchOdds: {
                   marketId: matchOddsMarket.market_id || matchOddsMarket.marketId || "",
                   marketName: matchOddsMarket.market_name || matchOddsMarket.name || "Match Odds",
@@ -502,10 +548,30 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                   disabled: matchOddsMarket.is_active === 0,
                   runners: transformedRunners,
                   marketTime: matchOddsMarket.match_date ? new Date(matchOddsMarket.match_date) : currentEventData?.openDate,
-                },
+                  // Preserve full market metadata
+                  is_active: matchOddsMarket.is_active,
+                  is_manual: matchOddsMarket.is_manual,
+                  enable_fancy: matchOddsMarket.enable_fancy,
+                  matched: matchOddsMarket.matched,
+                  totalMatched: matchOddsMarket.totalMatched,
+                  market_min_stack: matchOddsMarket.market_min_stack,
+                  market_max_stack: matchOddsMarket.market_max_stack,
+                  market_advance_bet_stake: matchOddsMarket.market_advance_bet_stake,
+                  market_advance_bet_min_stake: matchOddsMarket.market_advance_bet_min_stake,
+                  market_live_odds_validation: matchOddsMarket.market_live_odds_validation,
+                  is_lock: matchOddsMarket.is_lock,
+                  bet_count: matchOddsMarket.bet_count,
+                  match_tv_url: matchOddsMarket.match_tv_url,
+                  has_tv_url: matchOddsMarket.has_tv_url,
+                  inplay: matchOddsMarket.inplay,
+                  user_setting_limit: matchOddsMarket.user_setting_limit,
+                  // Preserve full market object for reference
+                  fullMarketData: matchOddsMarket,
+                } as any,
               };
               setEventData(updatedEventData);
-              console.log("[ExchangeAllMarkets] Updated eventData with match odds:", updatedEventData);
+              console.log("[ExchangeAllMarkets] Updated eventData with full match data:", updatedEventData);
+              console.log("[ExchangeAllMarkets] Full match data available:", fullMatchData);
             }
           }
 
@@ -1731,7 +1797,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
             {/* Display markets in specified order: Winner, match_odds, bookmaker, TO WIN THE TOSS, Tied Match */}
             
             {/* 1. Winner Market */}
-            {/* {currentEventData && winnerMarket?.marketName ? (
+            {currentEventData && winnerMarket?.marketName ? (
               <WinnerMarket
                 winnerMarket={winnerMarket}
                 addExchangeBet={addExchangeBet}
@@ -1742,7 +1808,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                 setStartTime={(date) => setStartTime(date)}
                 setAddNewBet={(val) => setAddNewBet(val)}
               />
-            ) : null} */}
+            ) : null}
 
             {/* 2. Match Odds */}
             {currentEventData &&

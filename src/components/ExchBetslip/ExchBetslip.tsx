@@ -12,6 +12,7 @@ import { connect } from "react-redux";
 import { useLocation } from "react-router-dom";
 
 import API from "../../api";
+import USABET_API from "../../api-services/usabet-api";
 import { PROVIDER_ID } from "../../constants/Branding";
 import {
   BinaryBetrequest,
@@ -272,13 +273,62 @@ const ExchBetslip: React.FC<StoreProps> = (props) => {
       setAddNewBet(true);
       let response: AxiosResponse<BsResponse>;
       try {
-        response = await API.post("/bs" + url, bets[0], {
-          headers: {
-            Authorization: jwt,
-          },
-          timeout: 1000 * 20,
-        });
+        const betData = bets[0];
+        
+        // Check if this is a FANCY bet - use different API endpoint
+        if (betData.marketType === "FANCY") {
+          // Use /bet/saveFancyBet API for fancy bets
+          // Request body structure:
+          // {
+          //   "is_back": 1,
+          //   "fancy_id": "35196653_4991637",
+          //   "run": 160,
+          //   "size": 100,
+          //   "stack": 100
+          // }
+          const fancyId = betData.eventId && betData.marketId 
+            ? `${betData.marketId}`
+            : betData.marketId || "";
+          
+          const saveFancyBetPayload = {
+            is_back: betData.betType === "BACK" ? 1 : 0,
+            fancy_id: fancyId,
+            run: Number(parseFloat(String(betData.sessionPrice || betData.displayOddValue || 0))),
+            size: Number(parseFloat(String(betData.amount || 0))), // Stake amount
+            stack: Number(parseFloat(String(betData.amount || 0))) // Stake amount
+          };
 
+          console.log("[betPlaceHandler] Placing fancy bet with payload:", JSON.stringify(saveFancyBetPayload, null, 2));
+          
+          response = await USABET_API.post("/bet/saveFancyBet", saveFancyBetPayload);
+          
+          console.log("[betPlaceHandler] saveFancyBet API response:", response?.data);
+        } else {
+          // Use /bet/saveBet API for other bet types (MO, BM, etc.)
+          // Request body structure:
+          // {
+          //   "is_back": 1,
+          //   "market_id": "1.253318288",
+          //   "odds": 1.17,
+          //   "selection_id": 235,
+          //   "stack": 100
+          // }
+          const saveBetPayload = {
+            is_back: betData.betType === "BACK" ? 1 : 0,
+            market_id: String(betData.marketId || ""),
+            odds: Number(parseFloat(String(betData.oddValue || 0))),
+            selection_id: Number(parseInt(String(betData.outcomeId || "0"), 10)),
+            stack: Number(parseFloat(String(betData.amount || 0)))
+          };
+
+          console.log("[betPlaceHandler] Placing bet with payload:", JSON.stringify(saveBetPayload, null, 2));
+          
+          response = await USABET_API.post("/bet/saveBet", saveBetPayload);
+          
+          console.log("[betPlaceHandler] saveBet API response:", response?.data);
+        }
+
+        // Handle binary bets separately if needed
         if (binaryPayload !== null) {
           response = await API.post("/binary/single-bet", binaryPayload, {
             headers: {
@@ -298,14 +348,50 @@ const ExchBetslip: React.FC<StoreProps> = (props) => {
         return false;
       }
 
-      if (response && response?.status === 200) {
+      // Check if API response is successful
+      const responseData = response?.data as any;
+      const isSuccess = response?.status === 200 || 
+                       responseData?.status === true || 
+                       responseData?.status === "true" ||
+                       (responseData?.msg && responseData?.msg?.toLowerCase().includes("success"));
+      
+      if (response && isSuccess) {
+        console.log("[betPlaceHandler] Bet placed successfully, calling openBets API...");
+        
+        // Hide loader immediately after success
+        setShowSpinner(false);
+        setBettingInprogress(false);
+        
         setBetStartTime(new Date());
+        
+        // Show processing message - use API message if available, otherwise default
+        const successMessage = responseData?.msg || 
+                              langData?.["bet_being_processed_txt"] || 
+                              "Your bet is being processed...";
+        setAlertMsg({
+          type: "success",
+          message: successMessage,
+        });
+        
+        // Call bet/openBets API after successful bet placement
+        if (selectedEvent?.id || bets[0]?.eventId) {
+          const eventIdToUse = selectedEvent?.id || bets[0]?.eventId;
+          console.log("[betPlaceHandler] Fetching open bets for eventId:", eventIdToUse);
+          fetchOpenBets(eventIdToUse, eventData?.sportId || bets[0]?.sportId);
+        }
+        
+        // Clear bets from betslip after successful placement
+        clearExchangeBets();
       } else {
+        // Hide loader on error
+        setShowSpinner(false);
+        setBettingInprogress(false);
+        
         setAlertMsg({
           type: "error",
-          message: response?.data?.message
-            ? response.data.message
-            : langData?.["bet_placed_txt"],
+          message: response?.data?.message || response?.data?.msg
+            ? response.data.message || response.data.msg
+            : langData?.["bet_placed_txt"] || "Failed to place bet",
         });
       }
     } catch (ex) {
@@ -546,6 +632,12 @@ const ExchBetslip: React.FC<StoreProps> = (props) => {
                           disabled={
                             bettingInprogress || data.marketType !== "MO"
                           }
+                          style={{ 
+                            textAlign: "center",
+                            "--padding-start": "0",
+                            "--padding-end": "0"
+                          }}
+                          className="odd-value-input"
                           onIonChange={(e) =>
                             data.marketType !== "FANCY"
                               ? exchangeBetOddsChange(

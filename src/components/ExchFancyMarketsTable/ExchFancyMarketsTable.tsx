@@ -352,6 +352,9 @@ const FMTable: React.FC<StoreProps> = (props) => {
                 (status === "SUSPENDED" && !fancy.GameStatus);
               const isDisabled = fancy.is_active === 0 || isSuspended;
               
+              // Extract series name from API response
+              const seriesName = fancy.series_name || fancy.seriesName || fancy.series || fancy.series_id || "";
+              
               return {
                 marketId: marketId,
                 marketName: marketName,
@@ -363,6 +366,7 @@ const FMTable: React.FC<StoreProps> = (props) => {
                 laySize: laySize,
                 backSize: backSize,
                 category: category,
+                seriesName: seriesName, // Add series name to the market data
                 commissionEnabled: fancy.is_commission_applied || fancy.commissionEnabled || false,
                 marketLimits: fancy.marketLimits || {
                   minStake: minStake,
@@ -426,7 +430,7 @@ const FMTable: React.FC<StoreProps> = (props) => {
     }
   }, [fancyData, safeFmData, tabVal]);
   // console.log("[FMTable] eventData===========:", eventData);
- 
+
   return (
     <>
       <div className="fm-table-ctn">
@@ -447,36 +451,33 @@ const FMTable: React.FC<StoreProps> = (props) => {
                   <TableCell className="tabs-table-cell" colSpan={12} style={{ padding: 0, overflow: 'hidden', width: '100%' }}>
                     <div className="tabs-fancy" style={{ width: '100%', overflowX: 'auto', overflowY: 'hidden', display: 'flex', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
 
-                      <span
-                        className={tabVal === 0 ? "sel-tab" : "ind-tab"}
-                        onClick={() => {
-                          setTabVal(0);
+                        <span
+                          className={tabVal === 0 ? "sel-tab" : "ind-tab"}
+                          onClick={() => {
+                            setTabVal(0);
                           // Use fancyData if available, otherwise use safeFmData
                           const allData = fancyData.length > 0 ? fancyData : safeFmData;
                           setFilteredFancyMarketsData(allData);
                           console.log("[FMTable] Showing all markets:", allData.length);
-                        }}
-                      >
+                          }}
+                        >
                         <div>{langData?.["all"] || "ALL"}</div>
-                      </span>
+                        </span>
 
                       {/* Use dynamic categories from API */}
-                      {(() => {
-                        console.log("[FMTable] Render check - fancyCategories:", fancyCategories);
-                        console.log("[FMTable] Render check - fancyCategories.length:", fancyCategories.length);
-                        
+                      {(() => { 
                         if (fancyCategories.length > 0) {
                           console.log("[FMTable] ✅ Rendering API categories");
                           return fancyCategories.map((fc, index) => {
                             // Tab index: 0 = "All", 1+ = category tabs
                             const tabIndex = index + 1;
                             return (
-                              <span
+                          <span
                                 key={`category-${fc.id}-${index}`}
-                                className={
+                            className={
                                   tabVal === tabIndex ? "sel-tab" : "ind-tab"
-                                }
-                                onClick={() => {
+                            }
+                            onClick={() => {
                                   setTabVal(tabIndex);
                                   // Filter data by category ID or name
                                   // Use fancyData if available, otherwise use safeFmData
@@ -493,7 +494,7 @@ const FMTable: React.FC<StoreProps> = (props) => {
                                 <div>
                                   {fc.name}
                                 </div>
-                              </span>
+                          </span>
                             );
                           });
                         } else {
@@ -568,21 +569,50 @@ const FMTable: React.FC<StoreProps> = (props) => {
                     console.log("[FMTable] fancyCategories:", fancyCategories);
                     console.log("[FMTable] dynamicCategoriesOrder:", dynamicCategoriesOrder);
                     
-                    // Build category groups from actual data categories
-                    const categoryGroups = uniqueCategories.map((catName) => {
+                    // Build category groups according to fancyCategories order
+                    // First, create a map of categories from data
+                    const categoryMap = new Map<string, any>();
+                    uniqueCategories.forEach((catName) => {
                       // Find matching category from fancyCategories
                       const matchedCategory = fancyCategories.find((fc) => 
                         fc.name === catName || fc.id === catName || String(fc.id) === catName
                       );
                       
-                      return {
+                      categoryMap.set(catName, {
                         fancyCategory: catName,
                         langKey: catName.toLowerCase().replace(/\s+/g, '_'),
                         label: matchedCategory?.name || catName,
-                      };
+                        order: matchedCategory ? fancyCategories.indexOf(matchedCategory) : 999, // Use index for ordering
+                      });
                     });
                     
-                    console.log("[FMTable] Built categoryGroups:", categoryGroups);
+                    // Build category groups in the order of fancyCategories tabs
+                    const categoryGroups = fancyCategories
+                      .map((fc, index) => {
+                        // Find matching category from data
+                        const catName = uniqueCategories.find((cat) => 
+                          cat === fc.name || cat === fc.id || cat === String(fc.id)
+                        );
+                        
+                        if (catName && categoryMap.has(catName)) {
+                          return categoryMap.get(catName);
+                        }
+                        return null;
+                      })
+                      .filter(Boolean) // Remove null entries
+                      .concat(
+                        // Add any remaining categories that don't match fancyCategories tabs
+                        uniqueCategories
+                          .filter((catName) => {
+                            return !fancyCategories.some((fc) => 
+                              catName === fc.name || catName === fc.id || catName === String(fc.id)
+                            );
+                          })
+                          .map((catName) => categoryMap.get(catName))
+                          .filter(Boolean)
+                      );
+                    
+                    console.log("[FMTable] Built categoryGroups (ordered by tabs):", categoryGroups);
                     
                     return (
                       <>
@@ -598,33 +628,54 @@ const FMTable: React.FC<StoreProps> = (props) => {
                            })
                           .map((group) => (
                             <React.Fragment key={group.fancyCategory}>
-                              <Accordion
-                                defaultExpanded={true}
-                                className="markets-accordian"
-                                style={{
-                                  position: "relative",
-                                }}
+                            <Accordion
+                              defaultExpanded={true}
+                              className="markets-accordian"
+                              style={{
+                                position: "relative",
+                              }}
+                            >
+                              <AccordionSummary
+                                expandIcon={
+                                  <ExpandLessSharpIcon className="expand-icon" />
+                                }
+                                aria-controls="panel1a-content"
                               >
-                                <AccordionSummary
-                                  expandIcon={
-                                    <ExpandLessSharpIcon className="expand-icon" />
-                                  }
-                                  aria-controls="panel1a-content"
-                                >
-                                  <FancyHeaderRow
-                                    groupName={langData?.[group.langKey] || group.label || group.fancyCategory}
-                                  />
-                                </AccordionSummary>
                                 <FancyHeaderRow
-                                  groupName={langData?.[group.langKey] || group.label || group.fancyCategory}
-                                  className="row-hidden"
+                                    groupName={langData?.[group.langKey] || group.label || group.fancyCategory}
                                 />
-                                {dataToDisplay
-                                  .filter((fm) => {
+                              </AccordionSummary>
+                              <FancyHeaderRow
+                                  groupName={langData?.[group.langKey] || group.label || group.fancyCategory}
+                                className="row-hidden"
+                              />
+                                {(() => {
+                                  // Filter markets by category
+                                  const categoryMarkets = dataToDisplay.filter((fm) => {
                                     const marketCategory = String(fm.category || "").trim();
                                     return marketCategory === group.fancyCategory;
-                                  })
-                                  .sort((a, b) => {
+                                  });
+                                  
+                                  // Separate markets with and without series
+                                  const marketsWithoutSeries: any[] = [];
+                                  const seriesGroups: { [seriesName: string]: any[] } = {};
+                                  
+                                  categoryMarkets.forEach((fm) => {
+                                    const seriesName = (fm as any).seriesName || "";
+                                    if (seriesName && seriesName.trim() !== "") {
+                                      // Has series - group by series
+                                      if (!seriesGroups[seriesName]) {
+                                        seriesGroups[seriesName] = [];
+                                      }
+                                      seriesGroups[seriesName].push(fm);
+                                    } else {
+                                      // No series - add to direct markets list
+                                      marketsWithoutSeries.push(fm);
+                                    }
+                                  });
+                                  
+                                  // Sort markets without series
+                                  const sortedMarketsWithoutSeries = marketsWithoutSeries.sort((a, b) => {
                                     if (a?.sort - b?.sort != 0) {
                                       return a?.sort - b?.sort;
                                     }
@@ -633,130 +684,250 @@ const FMTable: React.FC<StoreProps> = (props) => {
                                     if (aDesc > bDesc) return 1;
                                     else if (aDesc < bDesc) return -1;
                                     return 0;
-                                  })
-                                  .map(
-                                    (fMarket, index) => {
-                                      return !isFancyDisabled(fMarket.disable) ? (
-                                        <React.Fragment key={`${group.fancyCategory}-${fMarket.marketId}-${index}`}>
-                                          <FancyMarketRow
-                                            eventData={eventData}
-                                            fMarket={fMarket}
-                                            index={index}
-                                            cFactor={cFactor}
-                                            loggedIn={loggedIn}
-                                            openBets={openBets}
-                                            disabledStatus={disabledStatus}
-                                            addExchangeBet={addExchangeBet}
-                                            setShowBooksModal={() => {
-                                              setFancyBookOutcomeId(
-                                                fMarket.marketId
-                                              );
-                                              setFancyBookOutcomeName(
-                                                fMarket.marketName
-                                              );
-                                              setShowBooksModal(true);
-                                            }}
-                                            outcomeOpenBets={openBets.filter(
-                                              (b) => {
-                                                const isFancyMarket = b.marketType === "FANCY" ||
-                                                  (typeof b.marketType === "number" && b.marketType === 2);
-                                                return isFancyMarket && b.outcomeId === fMarket.marketId;
-                                              }
-                                            )}
-                                            exposureMap={exposureMap}
-                                            bets={bets}
-                                            selectedRow={selectedRow}
-                                            setSelectedRow={setSelectedRow}
-                                            // fetchBetLimits={(mId, mcategory) => fetchBetLimits(mId, mcategory)}
-                                            minStake={
-                                              fMarket.isMarketLimitSet
-                                                ? fMarket?.marketLimits?.minStake
-                                                  ? fMarket?.marketLimits?.minStake
-                                                  : marketLimits[fMarket?.marketId]
-                                                    ?.minStake
-                                                : fMarket.limits.minBetValue
+                                  });
+                                  
+                                  // Get sorted series names
+                                  const sortedSeriesNames = Object.keys(seriesGroups).sort();
+                                  
+                                  return (
+                                    <>
+                                      {/* First: Show markets without series directly */}
+                                      {sortedMarketsWithoutSeries.map((fMarket, index) => {
+                                        return !isFancyDisabled(fMarket.disable) ? (
+                                          <React.Fragment key={`${group.fancyCategory}-no-series-${fMarket.marketId}-${index}`}>
+                                      <FancyMarketRow
+                                        eventData={eventData}
+                                        fMarket={fMarket}
+                                        index={index}
+                                        cFactor={cFactor}
+                                        loggedIn={loggedIn}
+                                        openBets={openBets}
+                                        disabledStatus={disabledStatus}
+                                        addExchangeBet={addExchangeBet}
+                                        setShowBooksModal={() => {
+                                          setFancyBookOutcomeId(
+                                            fMarket.marketId
+                                          );
+                                          setFancyBookOutcomeName(
+                                            fMarket.marketName
+                                          );
+                                          setShowBooksModal(true);
+                                        }}
+                                        outcomeOpenBets={openBets.filter(
+                                                (b) => {
+                                                  const isFancyMarket = b.marketType === "FANCY" ||
+                                                    (typeof b.marketType === "number" && b.marketType === 2);
+                                                  return isFancyMarket && b.outcomeId === fMarket.marketId;
+                                                }
+                                        )}
+                                        exposureMap={exposureMap}
+                                        bets={bets}
+                                        selectedRow={selectedRow}
+                                        setSelectedRow={setSelectedRow}
+                                        minStake={
+                                          fMarket.isMarketLimitSet
+                                            ? fMarket?.marketLimits?.minStake
+                                              ? fMarket?.marketLimits?.minStake
+                                              : marketLimits[fMarket?.marketId]
+                                                  ?.minStake
+                                            : fMarket.limits.minBetValue
+                                        }
+                                        maxStake={
+                                          fMarket.isMarketLimitSet
+                                            ? fMarket?.marketLimits?.maxStake
+                                              ? fMarket?.marketLimits?.maxStake
+                                              : marketLimits[fMarket?.marketId]
+                                                  ?.maxStake
+                                            : fMarket.limits.maxBetValue
+                                        }
+                                        oddLimit={
+                                          fMarket?.marketLimits?.maxOdd?.toString()
+                                            ? fMarket?.marketLimits?.maxOdd?.toString()
+                                            : marketLimits[fMarket?.marketId]
+                                                ?.maxOdd
+                                        }
+                                        commissionEnabled={commissionEnabled}
+                                        fancySuspended={fancySuspended}
+                                        fancyDisabled={fancyDisabled}
+                                        setBetStartTime={(date) =>
+                                          setBetStartTime(date)
+                                        }
+                                        setAddNewBet={(val) =>
+                                          setAddNewBet(val)
+                                        }
+                                        oneClickBettingEnabled={
+                                          oneClickBettingEnabled
+                                        }
+                                        setAlertMsg={setAlertMsg}
+                                        langData={langData}
+                                        oneClickBettingLoading={
+                                          oneClickBettingLoading ||
+                                          bettingInprogress
+                                        }
+                                        hasScrolledToBetslip={
+                                          hasScrolledToBetslip
+                                        }
+                                        setHasScrolledToBetslip={
+                                          setHasScrolledToBetslip
+                                        }
+                                      />
+                                      {notifications.get(fMarket.marketId) ? (
+                                        <TableRow>
+                                          <TableCell colSpan={5} padding="none">
+                                            <div
+                                              className="marque-new"
+                                              style={{
+                                                animationDuration: `${Math.max(
+                                                  10,
+                                                  notifications.get(
+                                                    fMarket.marketId
+                                                  ).length / 5
+                                                )}s`,
+                                              }}
+                                            >
+                                              <div className="notifi-mssage">
+                                                {notifications.get(
+                                                  fMarket.marketId
+                                                )}
+                                              </div>
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                      ) : null}
+                                          </React.Fragment>
+                                  ) : null;
+                                      })}
+                                      
+                                      {/* Then: Show series groups at the bottom */}
+                                      {sortedSeriesNames.map((seriesName) => {
+                                        const seriesMarkets = seriesGroups[seriesName]
+                                          .sort((a, b) => {
+                                            if (a?.sort - b?.sort != 0) {
+                                              return a?.sort - b?.sort;
                                             }
-                                            maxStake={
-                                              fMarket.isMarketLimitSet
-                                                ? fMarket?.marketLimits?.maxStake
-                                                  ? fMarket?.marketLimits?.maxStake
-                                                  : marketLimits[fMarket?.marketId]
-                                                    ?.maxStake
-                                                : fMarket.limits.maxBetValue
-                                            }
-                                            oddLimit={
-                                              fMarket?.marketLimits?.maxOdd?.toString()
-                                                ? fMarket?.marketLimits?.maxOdd?.toString()
-                                                : marketLimits[fMarket?.marketId]
-                                                  ?.maxOdd
-                                            }
-                                            commissionEnabled={commissionEnabled}
-                                            fancySuspended={fancySuspended}
-                                            fancyDisabled={fancyDisabled}
-                                            setBetStartTime={(date) =>
-                                              setBetStartTime(date)
-                                            }
-                                            setAddNewBet={(val) =>
-                                              setAddNewBet(val)
-                                            }
-                                            oneClickBettingEnabled={
-                                              oneClickBettingEnabled
-                                            }
-                                            setAlertMsg={setAlertMsg}
-                                            langData={langData}
-                                            oneClickBettingLoading={
-                                              oneClickBettingLoading ||
-                                              bettingInprogress
-                                            }
-                                            hasScrolledToBetslip={
-                                              hasScrolledToBetslip
-                                            }
-                                            setHasScrolledToBetslip={
-                                              setHasScrolledToBetslip
-                                            }
-                                          />
-                                          {notifications.get(fMarket.marketId) ? (
-                                            <TableRow>
-                                              <TableCell colSpan={5} padding="none">
-                                                <div
-                                                  className="marque-new"
-                                                  style={{
-                                                    animationDuration: `${Math.max(
-                                                      10,
-                                                      notifications.get(
-                                                        fMarket.marketId
-                                                      ).length / 5
-                                                    )}s`,
-                                                  }}
-                                                >
-                                                  <div className="notifi-mssage">
-                                                    {notifications.get(
-                                                      fMarket.marketId
-                                                    )}
-                                                  </div>
-                                                </div>
-                                              </TableCell>
-                                            </TableRow>
-                                          ) : null}
-                                        </React.Fragment>
-                                      ) : null;
-                                    }
-                                  )}
-                              </Accordion>
+                                            const aDesc = a.marketName;
+                                            const bDesc = b.marketName;
+                                            if (aDesc > bDesc) return 1;
+                                            else if (aDesc < bDesc) return -1;
+                                            return 0;
+                                          });
+                                        
+                                        return (
+                                          <React.Fragment key={`${group.fancyCategory}-series-${seriesName}`}>
+                                            <Accordion
+                                              defaultExpanded={true}
+                                              className="markets-accordian series-accordion"
+                                              style={{
+                                                position: "relative",
+                                              }}
+                                            >
+                                              <AccordionSummary
+                                                expandIcon={
+                                                  <ExpandLessSharpIcon className="expand-icon" />
+                                                }
+                                                aria-controls="panel-series-content"
+                                              >
+                                                <FancyHeaderRow
+                                                  groupName={seriesName}
+                                                />
+                                              </AccordionSummary>
+                                              <FancyHeaderRow
+                                                groupName={seriesName}
+                                                className="row-hidden"
+                                              />
+                                              {seriesMarkets.map((fMarket, index) => {
+                                                return !isFancyDisabled(fMarket.disable) ? (
+                                                  <React.Fragment key={`${group.fancyCategory}-${seriesName}-${fMarket.marketId}-${index}`}>
+                                                    <FancyMarketRow
+                                                      eventData={eventData}
+                                                      fMarket={fMarket}
+                                                      index={index}
+                                                      cFactor={cFactor}
+                                                      loggedIn={loggedIn}
+                                                      openBets={openBets}
+                                                      disabledStatus={disabledStatus}
+                                                      addExchangeBet={addExchangeBet}
+                                                      setShowBooksModal={() => {
+                                                        setFancyBookOutcomeId(
+                                                          fMarket.marketId
+                                                        );
+                                                        setFancyBookOutcomeName(
+                                                          fMarket.marketName
+                                                        );
+                                                        setShowBooksModal(true);
+                                                      }}
+                                                      outcomeOpenBets={openBets.filter(
+                                                        (b) => {
+                                                          const isFancyMarket = b.marketType === "FANCY" ||
+                                                            (typeof b.marketType === "number" && b.marketType === 2);
+                                                          return isFancyMarket && b.outcomeId === fMarket.marketId;
+                                                        }
+                                                      )}
+                                                      exposureMap={exposureMap}
+                                                      bets={bets}
+                                                      selectedRow={selectedRow}
+                                                      setSelectedRow={setSelectedRow}
+                                                      minStake={
+                                                        fMarket.isMarketLimitSet
+                                                          ? fMarket?.marketLimits?.minStake
+                                                            ? fMarket?.marketLimits?.minStake
+                                                            : marketLimits[fMarket?.marketId]
+                                                              ?.minStake
+                                                          : fMarket.limits.minBetValue
+                                                      }
+                                                      maxStake={
+                                                        fMarket.isMarketLimitSet
+                                                          ? fMarket?.marketLimits?.maxStake
+                                                            ? fMarket?.marketLimits?.maxStake
+                                                            : marketLimits[fMarket?.marketId]
+                                                              ?.maxStake
+                                                          : fMarket.limits.maxBetValue
+                                                      }
+                                                      oddLimit={
+                                                        fMarket.isMarketLimitSet
+                                                          ? fMarket?.marketLimits?.maxOdd
+                                                            ? fMarket?.marketLimits?.maxOdd
+                                                            : marketLimits[fMarket?.marketId]
+                                                              ?.maxOdd
+                                                          : fMarket.limits.oddsLimit || 4
+                                                      }
+                                                      commissionEnabled={fMarket.commissionEnabled}
+                                                      fancySuspended={fancySuspended}
+                                                      fancyDisabled={fancyDisabled}
+                                                      setBetStartTime={setBetStartTime}
+                                                      setAddNewBet={setAddNewBet}
+                                                      oneClickBettingEnabled={oneClickBettingEnabled}
+                                                      setAlertMsg={setAlertMsg}
+                                                      langData={langData}
+                                                      oneClickBettingLoading={oneClickBettingLoading || bettingInprogress}
+                                                      hasScrolledToBetslip={hasScrolledToBetslip}
+                                                      setHasScrolledToBetslip={setHasScrolledToBetslip}
+                                                    />
+                                                  </React.Fragment>
+                                                ) : null;
+                                              })}
+                            </Accordion>
+                                          </React.Fragment>
+                                        );
+                                      })}
+                                    </>
+                                  );
+                                })()}
+                            </Accordion>
                             </React.Fragment>
-                          ))}
-                      </>
+                    ))}
+                  </>
                     );
                   } else {
                     return (
-                      <TableRow>
-                        <TableCell colSpan={3}>
-                          <div className="fm-table-msg-text">
+                  <TableRow>
+                    <TableCell colSpan={3}>
+                      <div className="fm-table-msg-text">
                             {langData?.["fancy_markets_not_found_txt"] || "No Fancy Markets for this event"}
                             
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                     );
                   }
                 })()}
@@ -776,7 +947,7 @@ const FMTable: React.FC<StoreProps> = (props) => {
             }
             className="light-bg-title game-rules-drawer web-view"
             title="Rules"
-          // size="md"
+            // size="md"
           >
             <div className="game-rules-header">
               <div className="game-rules-title">{langData?.["game_rules"]}</div>
@@ -809,7 +980,7 @@ const FMTable: React.FC<StoreProps> = (props) => {
             className="light-bg-title game-rules-drawer mob-view"
             // TODO: check if this also needs to be changed ??
             title="Rules"
-          // size="md"
+            // size="md"
           >
             <div className="game-rules-header">
               <div className="game-rules-title">{langData?.["game_rules"]}</div>
@@ -843,8 +1014,8 @@ const FMTable: React.FC<StoreProps> = (props) => {
               fancyBookOutcomeId={fancyBookOutcomeId}
               exposureMap={
                 exposureMap &&
-                  exposureMap &&
-                  exposureMap[`${fancyBookOutcomeId}:${fancyBookOutcomeName}`]
+                exposureMap &&
+                exposureMap[`${fancyBookOutcomeId}:${fancyBookOutcomeName}`]
                   ? exposureMap[`${fancyBookOutcomeId}:${fancyBookOutcomeName}`]
                   : {}
               }
@@ -905,10 +1076,10 @@ const FancyHeaderRow: React.FC<FancyHeaderRowProps> = (props) => {
           className={tF.className}
         >
           {tF.key === "odds-no" ||
-            tF.key === "odds-yes" ||
-            tF.key === "groupName" ? (
-            <div className={tF.key.toLowerCase() + "-cell"}>
-              {tF.Label?.toLowerCase()}
+          tF.key === "odds-yes" ||
+          tF.key === "groupName" ? (
+            <div className={tF.key === "groupName" ? "groupname-cell" : tF.key.toLowerCase() + "-cell"}>
+              {tF.key === "groupName" ? tF.Label : tF.Label?.toLowerCase()}
             </div>
           ) : null}
         </TableCell>
@@ -1015,7 +1186,7 @@ const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
               : fMarket.marketName}{" "}
             {fMarket.commissionEnabled
               ? // && commissionEnabled
-              "*"
+                "*"
               : null}
           </div>
         </TableCell>
@@ -1231,13 +1402,13 @@ const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
           </div>
         </TableCell>
         {disabledStatus.includes(fMarket.status.toLowerCase()) ||
-          isFancySuspended(fMarket.suspend) === true ||
-          isFancyDisabled(fMarket.disable) === true ? (
+        isFancySuspended(fMarket.suspend) === true ||
+        isFancyDisabled(fMarket.disable) === true ? (
           <TableCell key={"row-" + index + "cell-5"}>
             <div className="disabled-odds-cell">
               {fMarket.status.toLowerCase().includes("suspended") ||
-                isFancySuspended(fMarket.suspend) === true ||
-                isFancyDisabled(fMarket.disable) === true
+              isFancySuspended(fMarket.suspend) === true ||
+              isFancyDisabled(fMarket.disable) === true
                 ? "SUSPENDED"
                 : fMarket.status.replace("_", " ")}
             </div>
@@ -1245,10 +1416,10 @@ const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
         ) : null}
       </TableRow>
       {!oneClickBettingEnabled &&
-        bets?.length > 0 &&
-        bets?.[0]?.marketName === fMarket?.marketName &&
-        bets?.[0]?.marketId === fMarket?.marketId &&
-        isMobile ? (
+      bets?.length > 0 &&
+      bets?.[0]?.marketName === fMarket?.marketName &&
+      bets?.[0]?.marketId === fMarket?.marketId &&
+      isMobile ? (
         <TableRow
           className="inline-betslip"
           ref={(el) => {
@@ -1285,7 +1456,7 @@ const mapStateToProps = (state: RootState, ownProps?: Partial<StoreProps>) => {
   
   // Use eventData from props if provided, otherwise get from Redux state
   const reduxEventData = getAllMarketsByEvent(
-    state.exchangeSports.events,
+      state.exchangeSports.events,
     eventType?.id || "",
     competition?.id || "",
     event?.id || ""

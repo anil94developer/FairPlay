@@ -23,6 +23,7 @@
           .MuiAccordion-root .MuiAccordionSummary-root {
             padding: 0;
             background: transparent;
+            min-height: 44px;
 
             .header-row {
               visibility: visible !important;
@@ -36,6 +37,7 @@
               border-radius: 20px;
               height: 20px;
               width: 20px;
+              z-index: 1;
 
               .MuiSvgIcon-root {
                 width: 16px;
@@ -46,6 +48,7 @@
             &.Mui-expanded {
               background: transparent;
               padding: 0;
+              min-height: 44px;
             }
           }
 
@@ -73,6 +76,14 @@
               width: 100%;
               padding: 8px 12px;
               box-sizing: border-box;
+              
+              @media screen and (max-width: 600px) {
+                padding: 6px 8px;
+              }
+              
+              @media screen and (max-width: 375px) {
+                padding: 4px 6px;
+              }
               min-height: 40px;
               
               > * {
@@ -105,6 +116,18 @@
                 margin-right: 6px;
                 flex-shrink: 0;
                 white-space: nowrap;
+                
+                @media screen and (max-width: 600px) {
+                  padding: 4px 12px;
+                  font-size: 9px;
+                  margin-right: 4px;
+                }
+                
+                @media screen and (max-width: 375px) {
+                  padding: 3px 10px;
+                  font-size: 8px;
+                  margin-right: 3px;
+                }
               }
 
               .ind-tab:hover {
@@ -126,6 +149,18 @@
                 margin-right: 6px;
                 flex-shrink: 0;
                 white-space: nowrap;
+                
+                @media screen and (max-width: 600px) {
+                  padding: 4px 12px;
+                  font-size: 9px;
+                  margin-right: 4px;
+                }
+                
+                @media screen and (max-width: 375px) {
+                  padding: 3px 10px;
+                  font-size: 8px;
+                  margin-right: 3px;
+                }
               }
             }
           }
@@ -136,6 +171,7 @@
         .MuiAccordion-root .MuiAccordionSummary-root {
           padding: 0;
           background: transparent;
+          min-height: 40px;
 
           .header-row {
             visibility: visible !important;
@@ -149,6 +185,7 @@
             border-radius: 20px;
             height: 20px;
             width: 20px;
+            z-index: 1;
 
             .MuiSvgIcon-root {
               width: 16px;
@@ -160,6 +197,7 @@
           &.Mui-expanded {
             background: transparent;
             padding: 0;
+            min-height: 40px;
           }
         }
 
@@ -229,6 +267,18 @@
               flex-shrink: 0;
               white-space: nowrap;
               margin-right: 6px;
+              
+              @media screen and (max-width: 600px) {
+                padding: 6px 12px;
+                font-size: 9px;
+                margin-right: 4px;
+              }
+              
+              @media screen and (max-width: 375px) {
+                padding: 5px 10px;
+                font-size: 8px;
+                margin-right: 3px;
+              }
             }
 
             .ind-tab:hover {
@@ -250,6 +300,18 @@
               flex-shrink: 0;
               white-space: nowrap;
               margin-right: 6px;
+              
+              @media screen and (max-width: 600px) {
+                padding: 3px 8px;
+                font-size: 9px;
+                margin-right: 4px;
+              }
+              
+              @media screen and (max-width: 375px) {
+                padding: 3px 6px;
+                font-size: 8px;
+                margin-right: 3px;
+              }
             }
           }
         }
@@ -263,6 +325,58 @@
         
         .tabs-table-cell {
           overflow: hidden !important;
+        }
+        
+        // Ensure proper spacing between accordions
+        .MuiAccordion-root {
+          box-shadow: none;
+          border: none;
+          margin: 0;
+          
+          &::before {
+            display: none;
+          }
+          
+          &.Mui-expanded {
+            margin: 0;
+          }
+        }
+
+        // Series accordion responsive styles
+        .series-accordion {
+          margin-left: 20px;
+          margin-top: 8px;
+          margin-bottom: 8px;
+          
+          @media screen and (max-width: 920px) {
+            margin-left: 10px !important;
+            margin-top: 6px;
+            margin-bottom: 6px;
+            
+            .MuiAccordionSummary-root {
+              padding: 4px 8px !important;
+              min-height: 36px !important;
+            }
+            
+            .MuiAccordionDetails-root {
+              padding: 4px 8px !important;
+            }
+          }
+          
+          @media screen and (max-width: 600px) {
+            margin-left: 5px !important;
+            margin-top: 4px;
+            margin-bottom: 4px;
+            
+            .MuiAccordionSummary-root {
+              padding: 4px 6px !important;
+              min-height: 32px !important;
+            }
+            
+            .MuiAccordionDetails-root {
+              padding: 4px 6px !important;
+            }
+          }
         }
 
         @media screen and (max-width: 920px) {
@@ -285,6 +399,33 @@
 
         .MuiTableBody-root {
           background-color: transparent;
+          
+          // Responsive accordion spacing
+          .markets-accordian {
+            margin-bottom: 12px;
+            
+            &:last-child {
+              margin-bottom: 0;
+            }
+            
+            @media screen and (max-width: 920px) {
+              margin-bottom: 10px;
+              
+              .MuiAccordionSummary-root {
+                min-height: 40px !important;
+                padding: 0 8px !important;
+              }
+            }
+            
+            @media screen and (max-width: 600px) {
+              margin-bottom: 8px;
+              
+              .MuiAccordionSummary-root {
+                min-height: 36px !important;
+                padding: 0 6px !important;
+              }
+            }
+          }
         }
 
         .MuiTableRow-root {
@@ -324,6 +465,17 @@
             background: var(--market-table-bg);
             color: var(--ion-text-color-contrast);
             min-height: 36px;
+            vertical-align: middle;
+            
+            @media screen and (max-width: 600px) {
+              min-height: 32px;
+              padding: 4px 6px !important;
+            }
+            
+            @media screen and (max-width: 375px) {
+              min-height: 30px;
+              padding: 3px 4px !important;
+            }
           }
 
           .market-name-cell {
@@ -341,8 +493,16 @@
             vertical-align: middle;
 
             @media screen and (min-width: 920px) {
-              padding-left: 13px;
+              padding-left: 20px;
               min-height: 36px;
+            }
+            
+            @media screen and (max-width: 920px) {
+              padding-left: 18px;
+            }
+            
+            @media screen and (max-width: 600px) {
+              padding-left: 12px;
             }
 
             .mob-bet-limits {
@@ -397,9 +557,19 @@
               font-weight: 600;
               text-transform: uppercase;
               padding-left: 20px;
+              font-size: 14px;
+              line-height: 18px;
 
               @media screen and (max-width: 920px) {
                 padding-left: 18px;
+                font-size: 13px;
+                line-height: 16px;
+              }
+              
+              @media screen and (max-width: 600px) {
+                padding-left: 12px;
+                font-size: 12px;
+                line-height: 15px;
               }
             }
           }
@@ -598,8 +768,11 @@
             width: 100%;
             border-radius: 40px;
             border: 1px solid var(--table-head-cell-border) !important;
+            margin-bottom: 4px;
+            
             &.row-hidden {
               appearance: none;
+              margin-bottom: 0;
               .MuiTableCell-root {
                 padding: 0;
                 height: 0;
@@ -611,6 +784,8 @@
             }
 
             .MuiTableCell-root {
+              padding: 8px 13px;
+              
               div {
                 @media screen and (max-width: 920px) {
                   font-size: 12px;
@@ -620,6 +795,15 @@
 
               &:first-child {
                 border-left: 1px solid var(--border-color);
+                padding-left: 20px;
+                
+                @media screen and (max-width: 920px) {
+                  padding-left: 18px;
+                }
+                
+                @media screen and (max-width: 600px) {
+                  padding-left: 12px;
+                }
               }
             }
           }

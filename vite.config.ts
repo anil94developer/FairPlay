@@ -28,14 +28,14 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://1sports.in",
+        target: "https://usabet9.com",
         changeOrigin: true,
-        // /api/user/userLogin -> https://1sports.in/api/v1/user/userLogin
+        // /api/user/userLogin -> https://usabet9.com/api/v1//user/userLogin
         rewrite: (path) => path.replace(/^\/api/, "/api/v1"),
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq) => {
             // Some backends validate Origin and return "Invalid token" for localhost origins.
-            proxyReq.setHeader("origin", "https://1sports.in");
+            proxyReq.setHeader("origin", "https://usabet9.com");
           });
         },
       },

@@ -1009,58 +1009,30 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
 
                             <span className="bet-limits-section web-view">
                               {langData?.["min"]}:{" "}
-                              {ThousandFormatter(
-                                eventData?.matchOdds?.marketLimits
-                                  ? eventData?.matchOdds?.marketLimits
-                                      ?.minStake / cFactor
-                                  : 100
-                              )}{" "}
+                               {  eventData?.matchOdds?.inplay == false 
+                                  ? matchOddsData?.market_advance_bet_min_stake || eventData?.matchOdds?.market_advance_bet_min_stake
+                                  : matchOddsData?.market_min_stack || eventData?.matchOdds?.market_min_stack 
+                            }{" "}
                               {langData?.["max"]}:{" "}
-                              {eventData?.matchOdds?.marketLimits?.maxStake %
-                                1000 ===
-                              0
-                                ? ThousandFormatter(
-                                    eventData?.matchOdds?.marketLimits
-                                      ? eventData?.matchOdds?.marketLimits
-                                          ?.maxStake / cFactor
-                                      : 5000
-                                  )
-                                : eventData?.matchOdds?.marketLimits
-                                ? eventData?.matchOdds?.marketLimits?.maxStake /
-                                  cFactor
-                                : 5000}
-                              {/* {ThousandFormatter(
-                                eventData?.matchOdds?.marketLimits
-                                  ? eventData?.matchOdds?.marketLimits.?.maxStake /
-                                  cFactor
-                                  : 5000
-                              )} */}
+                              {  eventData?.matchOdds?.inplay == false 
+                                  ? matchOddsData?.market_advance_bet_stake ||
+                                   eventData?.matchOdds?.market_advance_bet_stake
+                                  : matchOddsData?.market_max_stack || eventData?.matchOdds?.market_max_stack 
+                            } 
                             </span>
                             <span className="bet-limits-section mob-view">
-                              <div>
-                                {langData?.["min"]}:{" "}
-                                {ThousandFormatter(
-                                  eventData?.matchOdds?.marketLimits
-                                    ? eventData?.matchOdds?.marketLimits
-                                        ?.minStake / cFactor
-                                    : 100
-                                )}{" "}
-                              </div>
-                              <div>
-                                {langData?.["max"]}:{" "}
-                                {eventData?.matchOdds?.marketLimits?.maxStake %
-                                  1000 ===
-                                0
-                                  ? ThousandFormatter(
-                                      eventData?.matchOdds?.marketLimits
-                                        ? eventData?.matchOdds?.marketLimits
-                                            ?.maxStake / cFactor
-                                        : 5000
-                                    )
-                                  : eventData?.matchOdds?.marketLimits
-                                  ? eventData?.matchOdds?.marketLimits
-                                      ?.maxStake / cFactor
-                                  : 5000}
+                               <div>
+                               {langData?.["min"]}:{" "}
+                               {  eventData?.matchOdds?.inplay == false 
+                                  ? matchOddsData?.market_advance_bet_min_stake || eventData?.matchOdds?.market_advance_bet_min_stake
+                                  : matchOddsData?.market_min_stack || eventData?.matchOdds?.market_min_stack 
+                            }{" "}
+                              {langData?.["max"]}:{" "}
+                              {  eventData?.matchOdds?.inplay == false 
+                                  ? matchOddsData?.market_advance_bet_stake ||
+                                   eventData?.matchOdds?.market_advance_bet_stake
+                                  : matchOddsData?.market_max_stack || eventData?.matchOdds?.market_max_stack 
+                            } 
                               </div>
                             </span>
                           </div>
@@ -2033,15 +2005,16 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
                     runner.backPrices[2] ? runner.backPrices[2]?.price : 0,
                   ]}
                   key={idx}
-                  disable={isOddDisable(
-                    eventData,
-                    matchOddsData.status.toLowerCase(),
-                    matchOddsData.suspend,
-                    matchOddsData.disable,
-                    "back",
-                    odds.price,
-                    matchOddsData.marketTime
-                  )}
+                  disable={eventData?.matchOdds?.market_min_stack > eventData?.matchOdds?.market_max_stack}
+                  // disable={isOddDisable(
+                  //   eventData,
+                  //   matchOddsData.status.toLowerCase(),
+                  //   matchOddsData.suspend,
+                  //   matchOddsData.disable,
+                  //   "back",
+                  //   odds.price,
+                  //   matchOddsData.marketTime
+                  // )}
                   // disable={
                   //   disabledStatus.includes(matchOddsData.status.toLowerCase()) ||
                   //   moment(eventData?.openDate).diff(moment(), 'minutes') >
@@ -2120,15 +2093,17 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
               showSubValueinKformat={true}
               oddType="back-odd"
               valueType="matchOdds"
-              disable={isOddDisable(
-                eventData,
-                matchOddsData.status.toLowerCase(),
-                matchOddsData.suspend,
-                matchOddsData.disable,
-                "back",
-                runner.backPrices[0]?.price,
-                matchOddsData.marketTime
-              )}
+              disable={eventData?.matchOdds?.market_min_stack > eventData?.matchOdds?.market_max_stack}
+
+              // disable={isOddDisable(
+              //   eventData,
+              //   matchOddsData.status.toLowerCase(),
+              //   matchOddsData.suspend,
+              //   matchOddsData.disable,
+              //   "back",
+              //   runner.backPrices[0]?.price,
+              //   matchOddsData.marketTime
+              // )}
               onClick={() => {
                 if (oneClickBettingLoading) {
                   setAlertMsg({
@@ -2207,14 +2182,16 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
                     runner.layPrices[2] ? runner.layPrices[2]?.price : 0,
                   ]}
                   key={idx}
-                  disable={isOddDisable(
-                    eventData,
-                    matchOddsData.status.toLowerCase(),
-                    matchOddsData.suspend,
-                    matchOddsData.disable,
-                    "lay",
-                    odds.price
-                  )}
+                  disable={eventData?.matchOdds?.market_min_stack > eventData?.matchOdds?.market_max_stack}
+
+                  // disable={isOddDisable(
+                  //   eventData,
+                  //   matchOddsData.status.toLowerCase(),
+                  //   matchOddsData.suspend,
+                  //   matchOddsData.disable,
+                  //   "lay",
+                  //   odds.price
+                  // )}
                   onClick={() => {
                     if (oneClickBettingLoading) {
                       setAlertMsg({

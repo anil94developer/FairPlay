@@ -376,11 +376,43 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
       
       setLoadingMatchDetails(true);
       try {
-        console.log("[ExchangeAllMarkets] Fetching match details for eventId:", eventId);
-        const response = await USABET_API.post(`/match/matchDetails`, {
+        // Get market_id from current context or last page
+        let marketIdToUse: string | undefined = undefined;
+        
+        // First, try to get market_id from current event data
+        if (currentEventData?.marketId) {
+          marketIdToUse = currentEventData.marketId;
+        } else if (currentEventData?.matchOdds?.marketId) {
+          marketIdToUse = currentEventData.matchOdds.marketId;
+        } else if (selectedEvent?.marketId) {
+          marketIdToUse = selectedEvent.marketId;
+        }
+        
+        // If not available, get from sessionStorage (last page's market_id)
+        if (!marketIdToUse) {
+          const lastMarketId = sessionStorage.getItem("last_market_id");
+          if (lastMarketId) {
+            marketIdToUse = lastMarketId;
+            console.log("[ExchangeAllMarkets] Using market_id from last page:", marketIdToUse);
+          }
+        }
+        
+        // Build request payload
+        const requestPayload: any = {
           match_id: eventId,
           combine: true,
-        });
+        };
+        
+        // Add market_id to request if available
+        if (marketIdToUse) {
+          requestPayload.market_id = marketIdToUse;
+          console.log("[ExchangeAllMarkets] Including market_id in request:", marketIdToUse);
+        } else {
+          console.log("[ExchangeAllMarkets] No market_id available, calling API without market_id");
+        }
+        
+        console.log("[ExchangeAllMarkets] Fetching match details for eventId:", eventId);
+        const response = await USABET_API.post(`/match/matchDetails`, requestPayload);
         
         console.log("[ExchangeAllMarkets] Match details API response:", response?.data);
 
@@ -475,6 +507,13 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
           if (matchOddsMarket) {
             console.log("[ExchangeAllMarkets] Found Match Odds market:", matchOddsMarket);
             
+            // Store market_id in sessionStorage for next navigation
+            const matchOddsMarketId = matchOddsMarket.market_id || matchOddsMarket.marketId;
+            if (matchOddsMarketId) {
+              sessionStorage.setItem("last_market_id", matchOddsMarketId);
+              console.log("[ExchangeAllMarkets] Stored market_id in sessionStorage:", matchOddsMarketId);
+            }
+            
             // Transform runners from API format to matchOdds format, preserving full runner data
             const transformedRunners = (matchOddsMarket.runners || []).map((runner: any) => {
               const availableToBack = runner.ex?.availableToBack || [];
@@ -496,6 +535,8 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                 // Preserve full runner data
                 selectionId: runner.selectionId,
                 selection_name: runner.selection_name || runner.selectionName || runner.name,
+                // Preserve metadata object for horseracing (sportId "7")
+                metadata: runner.metadata || {},
                 backPrices: availableToBack
                   .filter((price: any) => {
                     const priceVal = parsePrice(price.price);
@@ -523,6 +564,8 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                 })).filter((tv: any) => tv.price !== null && tv.size !== null),
                 // Preserve full ex data structure
                 ex: runner.ex,
+                // Preserve all other runner properties
+                ...runner,
               };
             });
 
@@ -539,6 +582,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                 inPlay: firstMarket?.inplay !== undefined ? firstMarket.inplay : currentEventData?.inPlay,
                 // Store full match data as additional property
                 fullMatchData: fullMatchData,
+                marketId: matchOddsMarket.market_id || matchOddsMarket.marketId || currentEventData?.marketId, // Store marketId in eventData
                 matchOdds: {
                   marketId: matchOddsMarket.market_id || matchOddsMarket.marketId || "",
                   marketName: matchOddsMarket.market_name || matchOddsMarket.name || "Match Odds",
@@ -601,6 +645,8 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                 runnerId: String(runner.selectionId || runner.selection_id || ""),
                 runnerName: runner.selection_name || runner.selectionName || runner.name || "",
                 status: runner.status || "ACTIVE",
+                // Preserve metadata object for horseracing (sportId "7")
+                metadata: runner.metadata || {},
                 backPrices: availableToBack
                   .filter((price: any) => {
                     const priceVal = parsePrice(price.price);
@@ -621,6 +667,8 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                     size: parsePrice(price.size),
                   }))
                   .filter((p: any) => p.price !== null),
+                // Preserve all other runner properties
+                ...runner,
               };
             });
 
@@ -1283,7 +1331,23 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
   }, [openBets?.length]);
 
   useEffect(() => {
-    if (bets?.length > 0) setBetsTabVal(0);
+    if (bets?.length > 0) {
+      setBetsTabVal(0);
+      setOpenBetslip(true);
+      // Scroll to betslip section on mobile after a short delay to ensure it's rendered
+      if (isMobile) {
+        setTimeout(() => {
+          const betslipSection = document.getElementById("betslip-section");
+          if (betslipSection) {
+            betslipSection.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+              inline: "nearest",
+            });
+          }
+        }, 100);
+      }
+    }
   }, [bets]);
 
   useEffect(() => {
@@ -1825,6 +1889,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                   secondaryMatchOdds={[]}
                   setBetStartTime={(date) => setStartTime(date)}
                   setAddNewBet={(val) => setAddNewBet(val)}
+                  setBetsTabVal={(val) => setBetsTabVal(val)}
                   showMatchOdds={true}
                   showSecondaryMatchOdds={false}
                 />
@@ -1914,6 +1979,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                   })()}
                   setBetStartTime={(date) => setStartTime(date)}
                   setAddNewBet={(val) => setAddNewBet(val)}
+                  setBetsTabVal={(val) => setBetsTabVal(val)}
                   showMatchOdds={false}
                   showSecondaryMatchOdds={true}
                 />
@@ -2236,6 +2302,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
       {/* WEB - Right sdie section(Stream & Betslip ) */}
       {bets.length > 0 ? (
         <div
+          id="betslip-section"
           className={
             isIOS
               ? "betslip-section ios-betslip mob-betslip-section"

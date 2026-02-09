@@ -928,47 +928,62 @@ const EventsTable: React.FC<StoreProps> = (props) => {
     }
   };
 
+
+
   // Fetch matches from API based on selected sport
   const fetchMatchesFromAPI = async () => {
-    if (!selectedEventType.id) {
-      return;
-    }
+    //alert("fetchMatchesFromAPI");
+    // if (!selectedEventType.id) {
+    //   return;
+    // }
 
     setLoadingMatches(true);
     try {
-      const response = await USABET_API.get("/match/homeMatchesV2");
+       
+      // Check if this is horseracing page (sport_id "7" or slug "horseracing")
+      const urlSlug = getSportSlugFromUrl();
+      const urlSportId = getSportIdFromUrl();
 
-      // Handle different API response structures:
-      // Structure 1: { data: [...], status: true } - response.data.data is array, response.data.status is true
-      // Structure 2: { data: { data: [...], status: true } } - nested
-      // Structure 3: response.data is directly the array
+      console.log("[ExchEventsTable] URL slug:", urlSlug);
+      console.log("[ExchEventsTable] URL sport ID:", urlSportId);
+      console.log("[ExchEventsTable] Selected event type:", selectedEventType);
+      const isHorseRacing = 
+        urlSlug === "horseracing" || 
+        urlSportId === "7" || 
+        selectedEventType.id === "7" ||
+        selectedEventType.slug === "horseracing";
+
       let allMatches: any[] = [];
-      
-      console.log(`[ExchEventsTable] API Response structure:`, {
-        hasData: !!response?.data,
-        dataIsArray: Array.isArray(response?.data),
-        hasDataData: !!response?.data?.data,
-        dataDataIsArray: Array.isArray(response?.data?.data),
-        dataStatus: response?.data?.status,
-        responseStatus: response?.status,
-        sampleData: response?.data?.[0] || response?.data?.data?.[0],
-      });
-      
-      if (response?.data?.status === true && Array.isArray(response.data.data)) {
-        // Structure: { data: { data: [...], status: true } }
-        allMatches = response.data.data;
-      } else if (Array.isArray(response?.data?.data) && response?.data?.status === true) {
-        // Same as above, different check order
-        allMatches = response.data.data;
-      } else if (Array.isArray(response?.data)) {
-        // Direct structure: response.data is the array
-        allMatches = response.data;
-      }
+ 
+        // Use regular API for other sports
+        const response = await USABET_API.get("/match/homeMatchesV2");
 
-      console.log(`[ExchEventsTable] Extracted matches:`, {
-        count: allMatches.length,
-        firstMatch: allMatches[0],
-      });
+        // Handle different API response structures:
+        // Structure 1: { data: [...], status: true } - response.data.data is array, response.data.status is true
+        // Structure 2: { data: { data: [...], status: true } } - nested
+        // Structure 3: response.data is directly the array
+        console.log(`[ExchEventsTable] API Response structure:`, {
+          hasData: !!response?.data,
+          dataIsArray: Array.isArray(response?.data),
+          hasDataData: !!response?.data?.data,
+          dataDataIsArray: Array.isArray(response?.data?.data),
+          dataStatus: response?.data?.status,
+          responseStatus: response?.status,
+          sampleData: response?.data?.[0] || response?.data?.data?.[0],
+        });
+        
+        if (response?.data?.status === true && Array.isArray(response.data.data)) {
+          // Structure: { data: { data: [...], status: true } }
+          allMatches = response.data.data;
+        } else if (Array.isArray(response?.data?.data) && response?.data?.status === true) {
+          // Same as above, different check order
+          allMatches = response.data.data;
+        } else if (Array.isArray(response?.data)) {
+          // Direct structure: response.data is the array
+          allMatches = response.data;
+        }
+      
+  
 
       if (allMatches.length > 0) {
         // Get sport info from URL (e.g., "cricket" from /exchange_sports/cricket)
@@ -1000,8 +1015,14 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         };
 
         // Filter by sport from URL (e.g., cricket, football, etc.)
+        // Skip filtering for horseracing since API already returns filtered data
         let filteredMatches = allMatches;
-        if (urlSlug && urlSportId) {
+        if (isHorseRacing) {
+          // For horseracing, use all matches directly (already filtered by API)
+          filteredMatches = allMatches;
+           
+          console.log(`[ExchEventsTable] fetchMatchesFromAPI - Filtered by URL sport:`, filteredMatches);
+        } else if (urlSlug && urlSportId) {
           // Log sample matches before filtering to see what sport IDs are in the API
           if (process.env.NODE_ENV === 'development' && allMatches.length > 0) {
             const sampleSportIds = [...new Set(allMatches.slice(0, 20).map((m: any) => ({
@@ -1297,8 +1318,11 @@ const EventsTable: React.FC<StoreProps> = (props) => {
           const openDate = match.openDate || match.open_date || matchDate || new Date().toISOString();
 
           // Get sport info directly from API response (no filtering)
-          const apiSportId = match.sport_id || match.sportId || "";
-          const apiSportName = match.sport_name || match.sportName || "";
+          // For horseracing, ensure sportId is "7"
+          const apiSportId = isHorseRacing 
+            ? "7" 
+            : (match.sport_id || match.sportId || selectedEventType.id || "");
+          const apiSportName = match.sport_name || match.sportName || selectedEventType.name || "";
 
           // Transform runners from API format to matchOdds format
           // API format: runners[].selection_name, runners[].ex.availableToBack[], runners[].ex.availableToLay[]
@@ -1387,18 +1411,37 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         // Set events in local state
         if (transformedEvents.length > 0) {
           console.log(`[ExchEventsTable] fetchMatchesFromAPI - Setting ${transformedEvents.length} events to state`);
+          console.log(`[ExchEventsTable] Sample transformed events:`, transformedEvents.slice(0, 2));
           setEvents(transformedEvents);
           
-          // Also update Redux store for compatibility
-          const currentSportId = selectedEventType.id;
-          const sportIdToUse = SPToBFIdMap[currentSportId]
-            ? SPToBFIdMap[currentSportId]
-            : currentSportId;
+          // Also update Redux store for compatibility - CRITICAL for rendering
+          // For horseracing, ensure we use sport ID "7" (not mapped)
+          const currentSportId = isHorseRacing ? "7" : (selectedEventType.id || "");
+          // Don't map sport ID for horseracing - use "7" directly
+          const sportIdToUse = isHorseRacing 
+            ? "7" 
+            : (SPToBFIdMap[currentSportId] ? SPToBFIdMap[currentSportId] : currentSportId);
           
-          if (!pathParams["competition"]) {
+          console.log(`[ExchEventsTable] Updating Redux store with events:`, {
+            isHorseRacing: isHorseRacing,
+            currentSportId: currentSportId,
+            sportIdToUse: sportIdToUse,
+            selectedEventTypeId: selectedEventType.id,
+            eventCount: transformedEvents.length,
+            hasCompetition: !!pathParams["competition"],
+            competitionId: selectedCompetition.id,
+            sampleEventSportId: transformedEvents[0]?.sportId,
+          });
+          
+          // Always update Redux store - this is critical for rendering
+          // For horseracing, always use fetchEventsBySport with sport ID "7"
+          if (isHorseRacing || !pathParams["competition"]) {
             fetchEventsBySport(sportIdToUse, transformedEvents);
           } else if (selectedCompetition.id) {
             fetchEventsByCompetition(sportIdToUse, selectedCompetition.id, transformedEvents);
+          } else {
+            // Fallback: update Redux store
+            fetchEventsBySport(sportIdToUse, transformedEvents);
           }
         } else {
           console.log(`[ExchEventsTable] No matches found, clearing events`);
@@ -1418,11 +1461,8 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         }
       } else {
         console.warn(`[ExchEventsTable] No matches found in API response`, {
-          responseData: response?.data,
-          responseStatus: response?.status,
-          dataIsArray: Array.isArray(response?.data),
-          dataDataIsArray: Array.isArray(response?.data?.data),
-          dataStatus: response?.data?.status,
+          allMatchesCount: allMatches.length,
+          isHorseRacing: isHorseRacing,
         });
         // Clear events in local state
         setEvents([]);
@@ -1589,6 +1629,12 @@ const EventsTable: React.FC<StoreProps> = (props) => {
   };
 
   const handleEventChange = (event: EventDTO) => {
+    // Store market_id in sessionStorage if available for next navigation
+    if (event.marketId) {
+      sessionStorage.setItem("last_market_id", event.marketId);
+      console.log("[ExchEventsTable] Stored market_id in sessionStorage:", event.marketId);
+    }
+    
     setCompetition({
       id: event.competitionId,
       name: event.competitionName,
@@ -1880,21 +1926,21 @@ const EventsTable: React.FC<StoreProps> = (props) => {
               .slice(0, 10); // Limit to max 10 items
             
             return earlyInplayEvents.length > 0 ? (
-              <Tabs variant="scrollable" className="favourite-events">
+            <Tabs variant="scrollable" className="favourite-events">
                 {earlyInplayEvents.map((event, index) => (
-                  <button
+                <button
                     key={`early-inplay-${event.eventId}-${index}`}
-                    className="favourite-event-item"
-                    onClick={() => handleEventChange(event)}
-                  >
-                    <span className="event-name">
-                      {event?.customEventName
-                        ? event.customEventName
-                        : event.eventName}
-                    </span>
-                  </button>
-                ))}
-              </Tabs>
+                  className="favourite-event-item"
+                  onClick={() => handleEventChange(event)}
+                >
+                  <span className="event-name">
+                    {event?.customEventName
+                      ? event.customEventName
+                      : event.eventName}
+                  </span>
+                </button>
+              ))}
+            </Tabs>
             ) : null;
           })()}
           <TableContainer component={Paper}>
@@ -2365,12 +2411,33 @@ const mapStateToProps = (state: RootState) => {
   const eventType = state.exchangeSports.selectedEventType;
   const competition = state.exchangeSports.selectedCompetition;
 
-  return {
-    events: getExchangeEvents(
+  // Get sport ID for filtering - handle horseracing (sport_id "7")
+  // For horseracing, use "7" directly (not mapped)
+  const sportIdForFilter = eventType.id === "7" || eventType.slug === "horseracing"
+    ? "7"
+    : (SPToBFIdMap[eventType.id] ? SPToBFIdMap[eventType.id] : eventType.id);
+
+  const eventsFromRedux = getExchangeEvents(
       state.exchangeSports.events,
-      SPToBFIdMap[eventType.id] ? SPToBFIdMap[eventType.id] : eventType.id,
+    sportIdForFilter,
       competition.id
-    ),
+  ) || [];
+  
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[mapStateToProps] Getting events from Redux:`, {
+      eventTypeId: eventType.id,
+      eventTypeSlug: eventType.slug,
+      sportIdForFilter: sportIdForFilter,
+      competitionId: competition.id,
+      eventsCount: eventsFromRedux.length,
+      hasEventsInRedux: !!state.exchangeSports.events[sportIdForFilter],
+      allSportIdsInRedux: Object.keys(state.exchangeSports.events || {}),
+    });
+  }
+
+  return {
+    events: eventsFromRedux,
     selectedEventType: eventType,
     selectedCompetition: competition,
     fetchingEvents: state.exchangeSports.fetchingEvents,

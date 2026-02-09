@@ -333,94 +333,120 @@ export const fetchEventsBySport = (sportId: string, events: EventDTO[]) => {
         sportId = sportId.split("_").join(":");
 
         dispatch(setLoading(true));
-        // Use dummy data from eventData instead of API call
-        let result = { data: eventData };
+        
+        // Use the events parameter passed in (from API) instead of dummy data
+        // This is critical for horseracing and other sports that fetch from API
+        let eventsToProcess = events && events.length > 0 ? events : [];
+        
+        console.log(`[fetchEventsBySport] Processing events:`, {
+          sportId: sportId,
+          eventCount: eventsToProcess.length,
+          hasEventsParam: events && events.length > 0,
+        });
 
         let newList = [];
-
         let eventsList = [];
-        if (result && result.data.length > 0) {
-          updateTopicUrlsInStore(dispatch, result.data[0]);
-          for (let eventData of result.data) {
+        
+        if (eventsToProcess.length > 0) {
+          // Use the first event to update topic URLs if available
+          if (eventsToProcess[0]) {
+            updateTopicUrlsInStore(dispatch, eventsToProcess[0] as any);
+          }
+          
+          for (let eventData of eventsToProcess) {
             try {
-              if (eventData?.eventId) {
-                newList.push(eventData?.eventId);
-                const eData = {
-                  enabled: eventData?.enabled,
-                  status: eventData?.status,
-                  openDate: eventData?.openDate,
-                  customOpenDate: eventData?.customOpenDate,
-                  sportId: eventData?.sportId.includes(":")
-                    ? SPToBFIdMap[eventData?.sportId]
-                    : eventData?.sportId,
-                  competitionId: eventData?.competitionId,
-                  competitionName: eventData?.competitionName
-                    ? eventData?.competitionName
-                    : "Other",
-                  eventId: eventData?.eventId,
-                  eventName: eventData?.eventName,
-                  customEventName: eventData?.customEventName,
-                  marketId: eventData?.marketId,
-                  providerName: eventData?.providerName,
-                  enableFancy: eventData?.markets
-                    ? eventData?.markets?.enableFancy
-                    : false,
-                  enableMatchOdds: eventData?.markets
-                    ? eventData?.markets?.enableMatchOdds
-                    : false,
-                  enableBookmaker: eventData?.markets
-                    ? eventData?.markets?.enableBookmaker
-                    : false,
-                  bookMakerProvider: eventData?.markets
-                    ? eventData?.markets?.bookMakerProvider
-                    : "",
-                  fancyProvider: eventData?.markets
-                    ? eventData?.markets?.fancyProvider
-                    : "",
-                  enablePremium: eventData?.markets
-                    ? eventData?.markets?.enablePremium
-                    : false,
-                  enableToss: eventData?.markets
-                    ? eventData?.markets?.enableToss
-                    : false,
-                  catId: eventData?.catId,
-                  virtualEvent: eventData?.virtualEvent,
-                };
+              // Support multiple event ID field names
+              const eventId = eventData?.eventId || eventData?.match_id || eventData?.matchId || "";
+              if (!eventId) {
+                console.warn("[fetchEventsBySport] Skipping event without ID:", eventData);
+                continue;
+              }
+              
+              newList.push(eventId);
+              
+              // Use the sportId parameter passed to the function (already normalized)
+              // This ensures events are stored with the correct sport ID for retrieval
+              // For horseracing, this will be "7"
+              const eventSportId = String(eventData?.sportId || eventData?.sport_id || sportId || "");
+              // Use the sportId parameter if available, otherwise normalize the event's sportId
+              const normalizedSportId = sportId && sportId !== "" 
+                ? sportId  // Use the parameter (already normalized, e.g., "7" for horseracing)
+                : (eventSportId.includes(":")
+                    ? (SPToBFIdMap[eventSportId] || eventSportId)
+                    : eventSportId);
+              
+              // Get competition ID and name
+              const competitionId = eventData?.competitionId || eventData?.competition_id || eventData?.series_id || eventData?.seriesId || "";
+              const competitionName = eventData?.competitionName || eventData?.competition_name || eventData?.series_name || eventData?.seriesName || "Other";
+              
+              const eData = {
+                enabled: eventData?.enabled !== false && eventData?.is_active !== 0,
+                status: eventData?.status || "UPCOMING",
+                openDate: eventData?.openDate || eventData?.open_date || eventData?.match_date || eventData?.matchDate || new Date().toISOString(),
+                customOpenDate: eventData?.customOpenDate,
+                sportId: normalizedSportId,
+                competitionId: competitionId,
+                competitionName: competitionName,
+                eventId: eventId,
+                eventName: eventData?.eventName || eventData?.event_name || eventData?.match_name || eventData?.matchName || "",
+                customEventName: eventData?.customEventName,
+                homeTeam: eventData?.homeTeam || eventData?.home_team || "",
+                awayTeam: eventData?.awayTeam || eventData?.away_team || "",
+                marketId: eventData?.marketId || eventData?.market_id || "",
+                providerName: eventData?.providerName || eventData?.provider_name || "BetFair",
+                enableFancy: eventData?.enableFancy || (eventData?.markets ? eventData?.markets?.enableFancy : false) || (eventData?.enable_fancy === 1),
+                enableMatchOdds: eventData?.enableMatchOdds !== false,
+                enableBookmaker: eventData?.enableBookmaker || (eventData?.markets ? eventData?.markets?.enableBookmaker : false),
+                bookMakerProvider: eventData?.bookMakerProvider || (eventData?.markets ? eventData?.markets?.bookMakerProvider : ""),
+                fancyProvider: eventData?.fancyProvider || (eventData?.markets ? eventData?.markets?.fancyProvider : ""),
+                enablePremium: eventData?.enablePremium || (eventData?.markets ? eventData?.markets?.enablePremium : false),
+                enableToss: eventData?.enableToss || (eventData?.markets ? eventData?.markets?.enableToss : false),
+                catId: eventData?.catId,
+                virtualEvent: eventData?.virtualEvent || eventData?.virtual_event || false,
+                inplay: eventData?.inplay || eventData?.inPlay || eventData?.in_play || false,
+                forcedInplay: eventData?.forcedInplay || eventData?.forcedInPlay || false,
+              };
 
-                eventsList.push({
-                  ...eData,
-                  sportId: eData.sportId,
-                  competitionId: eData.competitionId,
-                  matchOddsData:
-                    eventData?.markets && eventData?.markets?.matchOdds
-                      ? eventData?.markets?.matchOdds?.find(
-                          (mo) =>
-                            mo.marketName === "Match Odds" ||
-                            mo?.marketName?.toLowerCase() === "moneyline" ||
-                            eventData?.providerName?.toLowerCase() ===
-                              "sportradar"
-                        )
-                      : null,
-                  raceMarkets:
-                    eventData.markets && eventData.markets.matchOdds
-                      ? eventData.markets.matchOdds
-                      : [],
-                });
+              // Get matchOdds from eventData - could be in matchOdds property or markets.matchOdds
+              const matchOddsData = eventData?.matchOdds 
+                ? eventData.matchOdds 
+                : (eventData?.markets && eventData?.markets?.matchOdds
+                    ? (Array.isArray(eventData.markets.matchOdds)
+                        ? eventData.markets.matchOdds.find(
+                            (mo: any) =>
+                              mo.marketName === "Match Odds" ||
+                              mo?.marketName?.toLowerCase() === "moneyline" ||
+                              eventData?.providerName?.toLowerCase() === "sportradar"
+                          )
+                        : eventData.markets.matchOdds)
+                    : null);
 
-                if (eData.sportId === "1") {
-                  if (eventData?.markets?.matchOdds?.length > 0) {
-                    for (let mo of eventData.markets.matchOdds) {
-                      if (
-                        mo.marketName !== "Match Odds" &&
-                        mo.marketName.toLowerCase() !== "moneyline"
-                      ) {
-                        const secMOPayload = {
-                          eventId: eData.eventId,
-                          marketId: mo.marketId,
-                          matchOddsData: mo,
-                        };
-                        dispatch(updateSecondaryMatchOdds(secMOPayload));
-                      }
+              eventsList.push({
+                ...eData,
+                ...eventData, // Include all original event data for compatibility
+                sportId: normalizedSportId,
+                competitionId: competitionId,
+                matchOddsData: matchOddsData,
+                matchOdds: matchOddsData, // Also set as matchOdds for compatibility
+                raceMarkets:
+                  eventData.raceMarkets || (eventData.markets && eventData.markets.matchOdds
+                    ? (Array.isArray(eventData.markets.matchOdds) ? eventData.markets.matchOdds : [eventData.markets.matchOdds])
+                    : []) || [],
+              });
+
+              if (eData.sportId === "1") {
+                if (eventData?.markets?.matchOdds?.length > 0) {
+                  for (let mo of eventData.markets.matchOdds) {
+                    if (
+                      mo.marketName !== "Match Odds" &&
+                      mo.marketName.toLowerCase() !== "moneyline"
+                    ) {
+                      const secMOPayload = {
+                        eventId: eData.eventId,
+                        marketId: mo.marketId,
+                        matchOddsData: mo,
+                      };
+                      dispatch(updateSecondaryMatchOdds(secMOPayload));
                     }
                   }
                 }
@@ -429,8 +455,19 @@ export const fetchEventsBySport = (sportId: string, events: EventDTO[]) => {
               console.log(err);
             }
           }
+          }
 
           // Dispatch a single action with all events
+          console.log(`[fetchEventsBySport] Dispatching ${eventsList.length} events to Redux:`, {
+            sportId: sportId,
+            eventCount: eventsList.length,
+            sampleEvent: eventsList[0] ? {
+              eventId: eventsList[0].eventId,
+              sportId: eventsList[0].sportId,
+              eventName: eventsList[0].eventName,
+            } : null,
+          });
+          
           dispatch(fetchEventByCompetitionSuccess({ events: eventsList }));
 
           if (events && events.length > 0) {
@@ -462,7 +499,7 @@ export const fetchEventsBySport = (sportId: string, events: EventDTO[]) => {
         }
         dispatch(setLoading(false));
       }
-    } catch (err) {
+     catch (err) {
       console.log(err);
       dispatch(setLoading(false));
     }

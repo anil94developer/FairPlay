@@ -5,7 +5,7 @@ import { useHistory } from "react-router";
 import { useDispatch } from "react-redux";
 import { getEnvVariable } from "../../constants/whitelabelEnv";
 import { domain } from "../../constants/Branding";
-import Logo from "../../assets/images/theme/title.png";
+import AppLogo from "../../components/AppLogo/AppLogo";
 import {
   isSiteUnderMaintenance,
   setMaintenanceTimer,
@@ -18,7 +18,7 @@ const LoginPage: React.FC = () => {
   return (
     <div className="login-ctn">
       <div className="title-row" onClick={() => history.push("/home")}>
-        <img src={Logo} alt="website" className="logo" />
+        <AppLogo alt="website" className="logo" />
       </div>
 
       <div className="login-card">

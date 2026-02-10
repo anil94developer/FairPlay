@@ -41,6 +41,7 @@ import {
 import LANG_API from "./api-services/language-api";
 import { getEnvVariable } from "./constants/whitelabelEnv";
 import Maintenance from "./pages/Maintenance/Maintenance";
+import { LogoProvider } from "./contexts/LogoContext";
 
 const SignUp = lazy(() => import("./pages/SignUp/SignUp"));
 const LoginPage = lazy(() => import("./pages/Login/LoginPage"));
@@ -226,9 +227,10 @@ const App: React.FC<StateProps> = (props) => {
     <>
       <HelmetProvider context={helmetContext}>
         {!consoleOpen ? (
-          <Suspense fallback={<LoadingPage />}>
-            <BrowserRouter>
-              <Switch>
+          <LogoProvider>
+            <Suspense fallback={<LoadingPage />}>
+              <BrowserRouter>
+                <Switch>
                 <Route path="/access-redirect" component={AccessRedirect} />
                 <Route path="/terms-and-conditions" component={AcceptTerms} />
                 <Route path="/reset-password" component={ResetPassword} />
@@ -238,8 +240,9 @@ const App: React.FC<StateProps> = (props) => {
                 <Route path="/maintenance" component={Maintenance} />
                 <Route path="/" component={MainPage} />
               </Switch>
-            </BrowserRouter>
-          </Suspense>
+              </BrowserRouter>
+            </Suspense>
+          </LogoProvider>
         ) : null}
       </HelmetProvider>
 

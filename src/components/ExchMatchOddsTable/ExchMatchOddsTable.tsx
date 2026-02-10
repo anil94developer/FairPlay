@@ -103,6 +103,8 @@ type StoreProps = {
   setCashoutInProgress: Function;
   cashoutInProgress: CashoutProgressDTO;
   betStatusResponse: any;
+  /** Team position P/L from bet/getTeamPosition; match to runner by selectionId === selection_id */
+  teamPositionPL?: { selectionId?: string | number; outcomeId?: string; runnerId?: string; profit: number }[] | null;
 };
 
 const multiPinsMap = {
@@ -135,6 +137,7 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
     setCashoutInProgress,
     cashoutInProgress,
     betStatusResponse,
+    teamPositionPL,
   } = props;
   const { oneClickBettingEnabled, oneClickBettingStake } = useSelector(
     (state: RootState) => state.exchBetslip
@@ -1070,8 +1073,19 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                               (runner, idx) =>
                                 runner?.status.toLowerCase() !== "loser"
                             )
-                            .map((runner, index) => (
+                            .map((runner, index) => {
+                              const teamPositionProfit = teamPositionPL?.length
+                                ? (teamPositionPL.find(
+                                    (p) =>
+                                      String(p.selectionId) === String(runner.selectionId) ||
+                                      p.runnerId === runner.runnerId ||
+                                      p.outcomeId === runner.runnerId
+                                  )?.profit ??
+                                    teamPositionPL[index]?.profit)
+                                : undefined;
+                              return (
                               <MatchOddsRow
+                                key={runner.runnerId}
                                 minStake={
                                   matchOddsData?.marketLimits
                                     ? matchOddsData?.marketLimits?.minStake /
@@ -1109,8 +1123,9 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                 oneClickBettingLoading={
                                   oneClickBettingLoading || bettingInprogress
                                 }
+                                teamPositionProfit={teamPositionProfit}
                               />
-                            ))}
+                            );})}
                         </>
                       ) : (
                         <>
@@ -1780,6 +1795,8 @@ type MatchOddsRowProps = {
   oneClickBettingEnabled: boolean;
   oneClickBettingStake: number;
   oneClickBettingLoading: boolean;
+  /** Team position P/L from bet/getTeamPosition (e.g. +36.00 or -100) */
+  teamPositionProfit?: number;
 };
 
 const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
@@ -1791,6 +1808,7 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
     runner,
     getOpenBetsPL,
     getTotalPL,
+    teamPositionProfit,
     disabledStatus,
     addExchangeBet,
     minStake,
@@ -1925,6 +1943,15 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
                   </ul>
                 </div>
               </div>
+              {teamPositionProfit !== undefined && teamPositionProfit !== null && (
+                <div className="profit-loss-box team-position-pl">
+                  <span className={teamPositionProfit >= 0 ? "profit" : "loss"}>
+                    {teamPositionProfit >= 0
+                      ? "+" + Number(teamPositionProfit).toFixed(2)
+                      : Number(teamPositionProfit).toFixed(2)}
+                  </span>
+                </div>
+              )}
               {getOpenBetsPL(
                 matchOddsData.marketId,
                 matchOddsData.marketName,
@@ -1945,6 +1972,15 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
           ) : (
             <div className="team">
               {runner.runnerName}
+              {teamPositionProfit !== undefined && teamPositionProfit !== null && (
+                <div className="profit-loss-box team-position-pl">
+                  <span className={teamPositionProfit >= 0 ? "profit" : "loss"}>
+                    {teamPositionProfit >= 0
+                      ? "+" + Number(teamPositionProfit).toFixed(2)
+                      : Number(teamPositionProfit).toFixed(2)}
+                  </span>
+                </div>
+              )}
               {getOpenBetsPL(
                 matchOddsData.marketId,
                 matchOddsData.marketName,

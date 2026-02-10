@@ -4,7 +4,6 @@ import { connect, useSelector } from "react-redux";
 import { RootState } from "../../models/RootState";
 import {
   getAllMarketsByEvent,
-  getFancyMarketsByEvent,
   addExchangeBet,
   getCurrencyTypeFromToken,
   isFancyMarketSuspended,
@@ -73,6 +72,8 @@ type StoreProps = {
   langData: any;
   bettingInprogress: boolean;
   fancyCategoryMap?: any; // Optional: category mapping from API { "0": "NORMAL", "1": "Session Markets", ... }
+  /** Keys "match_id_fancy_id" -> liability; if key exists for this fancy, show Active Book button */
+  fancyLiabilityMap?: Record<string, number> | null;
 };
 
 type OddsInfoMsg = {
@@ -100,6 +101,7 @@ const FMTable: React.FC<StoreProps> = (props) => {
     langData,
     bettingInprogress,
     fancyCategoryMap = {},
+    fancyLiabilityMap = null,
   } = props;
 
 
@@ -125,16 +127,8 @@ const FMTable: React.FC<StoreProps> = (props) => {
   const [notifications, setNotifications] = useState<Map<String, string>>(
     new Map()
   );
-  // Fallback to hardcoded categories if no dynamic categories are found
-  const defaultFancyCategoriesOrder = [
-    { fancyCategory: "All", langKey: "all_capital", label: "All" },
-    { fancyCategory: "sessions", langKey: "sessions", label: "Sessions" },
-    { fancyCategory: "wpmarket", langKey: "wp_market", label: "WP Market" },
-    { fancyCategory: "extramarket", langKey: "extra_market", label: "Extra Market" },
-    { fancyCategory: "oddeven", langKey: "odd_even", label: "Odd Even" },
-  ];
 
-  // Create dynamic category order from actual data
+  // Create dynamic category order from actual data (API only, no static fallback)
   const [dynamicCategoriesOrder, setDynamicCategoriesOrder] = useState<any[]>([]);
   const [tabVal, setTabVal] = useState(0);
   const [selectedRow, setSelectedRow] = useState<string>("");
@@ -145,6 +139,38 @@ const FMTable: React.FC<StoreProps> = (props) => {
   });
   const [marketLimits, setMarketLimits] = useState<any>({});
   const marketLimitsRef = useRef<any>({});
+  // Helper to check fancy liability map using multiple possible id formats
+  // const hasFancyLiability = (marketId: string | number) => {
+  //   console.log('marketId=============================', marketId);
+  //   try {
+  //     if (!fancyLiabilityMap) return false;
+  //     const eventIds = [eventData?.eventId, eventData?.id].filter(Boolean).map(String);
+  //     const mIds = [marketId].filter(Boolean).map(String);
+  //     for (const eId of eventIds) {
+  //       for (const mId of mIds) {
+  //         const key = `${eId}_${mId}`;
+  //         if (Object.prototype.hasOwnProperty.call(fancyLiabilityMap, key)) return true;
+  //       }
+  //     }
+  //     return false;
+  //   } catch (err) {
+  //     console.warn('[FMTable] hasFancyLiability error', err);
+  //     return false;
+  //   }
+  // };
+  const hasFancyLiability = (marketId: string | number) => {
+  try {
+    if (!fancyLiabilityMap || !marketId) return false;
+
+    const key = String(marketId);
+
+    return Object.prototype.hasOwnProperty.call(fancyLiabilityMap, key);
+  } catch (err) {
+    console.warn('[FMTable] hasFancyLiability error', err);
+    return false;
+  }
+};
+
   const [filteredFancyMarketsData, setFilteredFancyMarketsData] = useState<
     FancyMarketDTO[]
   >([]);
@@ -236,6 +262,25 @@ const FMTable: React.FC<StoreProps> = (props) => {
   }, [marketNotifications]);
 
   useEffect(() => {
+    // If parent provided fmData (from ExchangeAllMarkets polling), prefer that and skip internal fetch
+    if (Array.isArray(fmData) && fmData.length > 0) {
+      console.log("[FMTable] Parent fmData detected - using parent data and skipping internal fetch");
+      try {
+        setFancyData(fmData);
+        if (tabVal === 0) setFilteredFancyMarketsData(fmData);
+        // Sync categories if parent provided a mapping
+        if (fancyCategoryMap && Object.keys(fancyCategoryMap).length > 0) {
+          const categoriesArray = Object.entries(fancyCategoryMap).map(([id, name]) => ({ id, name: String(name) }));
+          setFancyCategories(categoriesArray);
+          const dynamicOrder = categoriesArray.map((fc) => ({ fancyCategory: fc.name, langKey: fc.name.toLowerCase().replace(/\s+/g, '_'), label: fc.name }));
+          setDynamicCategoriesOrder(dynamicOrder);
+        }
+      } catch (err) {
+        console.warn('[FMTable] Error syncing parent fmData:', err);
+      }
+      return;
+    }
+
     const fetchFancy = async () => {
       // Use eventData from props - check both eventId and id properties
       let eventIdToUse = eventData?.eventId || eventData?.id;
@@ -411,15 +456,14 @@ const FMTable: React.FC<StoreProps> = (props) => {
     };
     
     fetchFancy();
-  }, [eventData?.eventId, eventData?.competitionId, tabVal]);
+  }, [eventData?.eventId, eventData?.competitionId, fmData, fancyCategoryMap, tabVal]);
   
   // Initialize filteredFancyMarketsData when fancyData or safeFmData changes and "All" is selected
+  // Prefer parent fmData (refreshed every 3s) so UI updates when getFancies is polled
   useEffect(() => {
     if (tabVal === 0) {
-      // "All" is selected - initialize with all available data
-      const allData = fancyData.length > 0 ? fancyData : safeFmData;
+      const allData = safeFmData.length > 0 ? safeFmData : fancyData;
       if (allData.length > 0) {
-        // Only update if the data has changed or filteredFancyMarketsData is empty
         if (filteredFancyMarketsData.length === 0 || 
             filteredFancyMarketsData.length !== allData.length ||
             JSON.stringify(filteredFancyMarketsData) !== JSON.stringify(allData)) {
@@ -429,6 +473,27 @@ const FMTable: React.FC<StoreProps> = (props) => {
       }
     }
   }, [fancyData, safeFmData, tabVal]);
+
+  // If parent supplies fmData, derive categories and ensure filtered list reflects fmData
+  useEffect(() => {
+    if (Array.isArray(fmData) && fmData.length > 0) {
+      try {
+        console.log('[FMTable] Deriving categories from parent fmData - items:', fmData.length);
+        const uniqueCats = Array.from(new Set(fmData.map((m) => String(m.category || '0').trim()))).filter(Boolean);
+        const categoriesArray = uniqueCats.map((id) => ({ id, name: id }));
+        setFancyCategories(categoriesArray);
+        const dynamicOrder = categoriesArray.map((fc) => ({ fancyCategory: fc.name, langKey: fc.name.toLowerCase().replace(/\s+/g, '_'), label: fc.name }));
+        setDynamicCategoriesOrder(dynamicOrder);
+
+        // If 'All' tab selected, show parent data immediately
+        if (tabVal === 0) {
+          setFilteredFancyMarketsData(fmData);
+        }
+      } catch (err) {
+        console.warn('[FMTable] Error deriving categories from fmData:', err);
+      }
+    }
+  }, [fmData, tabVal]);
   // console.log("[FMTable] eventData===========:", eventData);
 
   return (
@@ -455,8 +520,8 @@ const FMTable: React.FC<StoreProps> = (props) => {
                           className={tabVal === 0 ? "sel-tab" : "ind-tab"}
                           onClick={() => {
                             setTabVal(0);
-                          // Use fancyData if available, otherwise use safeFmData
-                          const allData = fancyData.length > 0 ? fancyData : safeFmData;
+                          // Prefer parent safeFmData (refreshed every 3s) so UI shows latest
+                          const allData = safeFmData.length > 0 ? safeFmData : fancyData;
                           setFilteredFancyMarketsData(allData);
                           console.log("[FMTable] Showing all markets:", allData.length);
                           }}
@@ -464,70 +529,28 @@ const FMTable: React.FC<StoreProps> = (props) => {
                         <div>{langData?.["all"] || "ALL"}</div>
                         </span>
 
-                      {/* Use dynamic categories from API */}
-                      {(() => { 
-                        if (fancyCategories.length > 0) {
-                          console.log("[FMTable] ✅ Rendering API categories");
-                          return fancyCategories.map((fc, index) => {
-                            // Tab index: 0 = "All", 1+ = category tabs
-                            const tabIndex = index + 1;
-                            return (
+                      {/* Only dynamic categories from API (no static fallback) */}
+                      {fancyCategories.length > 0 &&
+                        fancyCategories.map((fc, index) => {
+                          const tabIndex = index + 1;
+                          return (
                           <span
-                                key={`category-${fc.id}-${index}`}
-                            className={
-                                  tabVal === tabIndex ? "sel-tab" : "ind-tab"
-                            }
+                              key={`category-${fc.id}-${index}`}
+                              className={tabVal === tabIndex ? "sel-tab" : "ind-tab"}
                             onClick={() => {
-                                  setTabVal(tabIndex);
-                                  // Filter data by category ID or name
-                                  // Use fancyData if available, otherwise use safeFmData
-                                  const dataSource = fancyData.length > 0 ? fancyData : safeFmData;
-                                  const filtered = dataSource.filter((fm) => {
-                                    // Check if market's category matches this category ID or name
-                                    const marketCategory = String(fm.category || "").trim();
-                                    return marketCategory === fc.id || marketCategory === fc.name;
-                                  });
-                                  setFilteredFancyMarketsData(filtered);
-                                  console.log(`[FMTable] Filtered by category ${fc.name} (${fc.id}):`, filtered.length, "markets");
-                                }}
-                              >
-                                <div>
-                                  {fc.name}
-                                </div>
+                                setTabVal(tabIndex);
+                                const dataSource = safeFmData.length > 0 ? safeFmData : fancyData;
+                                const filtered = dataSource.filter((fm) => {
+                                  const marketCategory = String(fm.category || "").trim();
+                                  return marketCategory === fc.id || marketCategory === fc.name;
+                                });
+                                setFilteredFancyMarketsData(filtered);
+                              }}
+                            >
+                              <div>{fc.name}</div>
                           </span>
-                            );
-                          });
-                        } else {
-                          console.log("[FMTable] ⚠️ No API categories, using default fallback");
-                          // Fallback to default categories if API categories not loaded
-                          return defaultFancyCategoriesOrder
-                            .filter((d) => d.fancyCategory !== "All")
-                            .map((fc, index) => {
-                              const tabIndex = index + 1;
-                              return (
-                                <span
-                                  key={fc.fancyCategory}
-                                  className={
-                                    tabVal === tabIndex ? "sel-tab" : "ind-tab"
-                                  }
-                                  onClick={() => {
-                                    setTabVal(tabIndex);
-                                    // Use fancyData if available, otherwise use safeFmData
-                                    const dataSource = fancyData.length > 0 ? fancyData : safeFmData;
-                                    const filtered = dataSource.filter((fm) => {
-                                      return fm.category === fc.fancyCategory;
-                                    });
-                                    setFilteredFancyMarketsData(filtered);
-                                  }}
-                                >
-                                  <div>
-                                    {langData?.[fc.langKey] || fc.label || fc.fancyCategory}
-                                  </div>
-                                </span>
-                              );
-                            });
-                        }
-                      })()}
+                          );
+                      })}
                             
 
                     </div>
@@ -542,14 +565,14 @@ const FMTable: React.FC<StoreProps> = (props) => {
                   let dataToDisplay: FancyMarketDTO[] = [];
                   
                   if (tabVal === 0) {
-                    // "All" is selected - use all available data
-                    dataToDisplay = fancyData.length > 0 ? fancyData : safeFmData;
+                    // "All" is selected - prefer parent fmData (refreshed every 3s) so digits/UI update
+                    dataToDisplay = safeFmData.length > 0 ? safeFmData : fancyData;
                     console.log("[FMTable] 'All' selected - showing all data:", dataToDisplay.length);
                   } else {
-                    // Category is selected - use filtered data
+                    // Category is selected - use filtered data (also prefer parent data source)
                     dataToDisplay = (filteredFancyMarketsData && filteredFancyMarketsData.length > 0)
                       ? filteredFancyMarketsData
-                      : (fancyData.length > 0 ? fancyData : safeFmData);
+                      : (safeFmData.length > 0 ? safeFmData : fancyData);
                     console.log("[FMTable] Category selected - showing filtered data:", dataToDisplay.length);
                   }
 
@@ -586,33 +609,30 @@ const FMTable: React.FC<StoreProps> = (props) => {
                       });
                     });
                     
-                    // Build category groups in the order of fancyCategories tabs
-                    const categoryGroups = fancyCategories
-                      .map((fc, index) => {
-                        // Find matching category from data
-                        const catName = uniqueCategories.find((cat) => 
-                          cat === fc.name || cat === fc.id || cat === String(fc.id)
-                        );
-                        
-                        if (catName && categoryMap.has(catName)) {
-                          return categoryMap.get(catName);
-                        }
-                        return null;
-                      })
-                      .filter(Boolean) // Remove null entries
-                      .concat(
-                        // Add any remaining categories that don't match fancyCategories tabs
-                        uniqueCategories
-                          .filter((catName) => {
-                            return !fancyCategories.some((fc) => 
-                              catName === fc.name || catName === fc.id || catName === String(fc.id)
-                            );
-                          })
-                          .map((catName) => categoryMap.get(catName))
-                          .filter(Boolean)
-                      );
-                    
-                    console.log("[FMTable] Built categoryGroups (ordered by tabs):", categoryGroups);
+                    // Build category groups from data only (dynamic). Use API category order when available, else data order.
+                    const categoryGroups =
+                      fancyCategories.length > 0
+                        ? fancyCategories
+                            .map((fc) => {
+                              const catName = uniqueCategories.find(
+                                (cat) => cat === fc.name || cat === fc.id || cat === String(fc.id)
+                              );
+                              return catName && categoryMap.has(catName) ? categoryMap.get(catName) : null;
+                            })
+                            .filter(Boolean)
+                            .concat(
+                              uniqueCategories
+                                .filter(
+                                  (catName) =>
+                                    !fancyCategories.some(
+                                      (fc) =>
+                                        catName === fc.name || catName === fc.id || catName === String(fc.id)
+                                    )
+                                )
+                                .map((catName) => categoryMap.get(catName))
+                                .filter(Boolean)
+                            )
+                        : uniqueCategories.map((catName) => categoryMap.get(catName)).filter(Boolean);
                     
                     return (
                       <>
@@ -724,6 +744,7 @@ const FMTable: React.FC<StoreProps> = (props) => {
                                         bets={bets}
                                         selectedRow={selectedRow}
                                         setSelectedRow={setSelectedRow}
+                                        showActiveBook={hasFancyLiability(fMarket.marketId)}
                                         minStake={
                                           fMarket.isMarketLimitSet
                                             ? fMarket?.marketLimits?.minStake
@@ -867,6 +888,7 @@ const FMTable: React.FC<StoreProps> = (props) => {
                                                       bets={bets}
                                                       selectedRow={selectedRow}
                                                       setSelectedRow={setSelectedRow}
+                                                      showActiveBook={hasFancyLiability(fMarket.marketId)}
                                                       minStake={
                                                         fMarket.isMarketLimitSet
                                                           ? fMarket?.marketLimits?.minStake
@@ -1118,6 +1140,8 @@ type FancyMarketRowProps = {
   langData: any;
   hasScrolledToBetslip: boolean;
   setHasScrolledToBetslip: (value: boolean) => void;
+  /** When true, show "Active Book" and enable book button (fancy present in getFancyLiability response) */
+  showActiveBook?: boolean;
 };
 
 const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
@@ -1130,6 +1154,7 @@ const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
     disabledStatus,
     addExchangeBet,
     setShowBooksModal,
+    showActiveBook = false,
     setBetStartTime,
     bets,
     setAddNewBet,
@@ -1197,20 +1222,12 @@ const FancyMarketRow: React.FC<FancyMarketRowProps> = (props) => {
           <Button
             className="fancy-book-btn"
             onClick={() => {
-              if (
-                exposureMap &&
-                exposureMap[`${fMarket.marketId}:${fMarket.marketName}`]
-              )
+              if (showActiveBook || (exposureMap && exposureMap[`${fMarket.marketId}:${fMarket.marketName}`]))
                 setShowBooksModal();
             }}
-            disabled={
-              !(
-                exposureMap &&
-                exposureMap[`${fMarket.marketId}:${fMarket.marketName}`]
-              )
-            }
+            disabled={!showActiveBook && !(exposureMap && exposureMap[`${fMarket.marketId}:${fMarket.marketName}`])}
           >
-            {langData?.["book"]}
+            {showActiveBook ? (langData?.["active_book"] || "Book") : (langData?.["book"] || "Book")}
           </Button>
         </TableCell>
         <TableCell className="odds-cell" key={"row-" + index + "cell-2"}>
@@ -1466,12 +1483,9 @@ const mapStateToProps = (state: RootState, ownProps?: Partial<StoreProps>) => {
   console.log("[FMTable mapStateToProps] reduxEventData:", reduxEventData);
   
   return {
-    // Prefer eventData from props (passed from parent), fallback to Redux state
     eventData: ownProps?.eventData || reduxEventData,
-    fmData: ownProps?.fmData || getFancyMarketsByEvent(
-      state.exchangeSports.secondaryMarketsMap,
-      event?.id || ""
-    ),
+    // Only dynamic data from parent (getFancies API); no Redux/static fallback
+    fmData: ownProps?.fmData ?? [],
     fancySuspended: isFancyMarketSuspended(
       state.exchangeSports.secondaryMarketsMap,
       event?.id || ""

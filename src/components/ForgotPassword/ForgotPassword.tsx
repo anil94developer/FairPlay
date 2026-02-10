@@ -26,7 +26,7 @@ import { StyledAlertBox } from "../Alert/AlertBox";
 import { RootState } from "../../models/RootState";
 import { getEnvVariable } from "../../constants/whitelabelEnv";
 import { domain } from "../../constants/Branding";
-import Logo from "../../assets/images/theme/title.png";
+import AppLogo from "../../components/AppLogo/AppLogo";
 
 type ForgotPwdForm = {
   closeHandler: () => void;
@@ -40,7 +40,7 @@ const ForgotPwdForm: React.FC<ForgotPwdForm> = (props) => {
   return (
     <div className="fgt-pwd">
       <div className="title-row">
-        <img src={Logo} alt="website" className="logo" />
+        <AppLogo alt="website" className="logo" />
       </div>
       <div className="form-ctn">
         <UsernameVerfication langData={langData} />

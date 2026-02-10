@@ -18,7 +18,7 @@ import WhatsupImg from "../../assets/images/footer/whatsup-flot.png";
 import sidebarMobIcon from "../../assets/images/icons/mobSidebarIcon.svg";
 import CustomButton from "../../common/CustomButton/CustomButton";
 import SideHeader from "../../components/SideHeader/SideHeader";
-import Logo from "../../assets/images/theme/title.png";
+import AppLogo from "../../components/AppLogo/AppLogo";
 import { CONFIG_PERMISSIONS } from "../../constants/ConfigPermission";
 import { CURRENCY_TYPE_FACTOR } from "../../constants/CurrencyTypeFactor";
 import { SPORTS_MAP } from "../../constants/ExchangeEventTypes";
@@ -477,11 +477,7 @@ const SubHeader: React.FC<StoreProps> = (props) => {
               className="sh-website-title"
               onClick={() => redirectToHome()}
             >
-              <img
-                src={Logo}
-                alt=""
-                className="sh-website-title-img"
-              />
+              <AppLogo alt="" className="sh-website-title-img" />
             </button>
           ) : null}
         </div>

@@ -21,7 +21,7 @@ import "react-phone-input-2/lib/style.css";
 import { NavLink, useHistory, useLocation } from "react-router-dom";
 import { loadCaptchaEnginge } from "react-simple-captcha";
 import WhatsupImg from "../../assets/images/footer/whatsup-flot.png";
-import Logo from "../../assets/images/theme/title.png";
+import AppLogo from "../../components/AppLogo/AppLogo";
 
 import * as Yup from "yup";
 import SocialMediaNew from "../../components/SocialMediaNew/SocialMediaNew";
@@ -425,7 +425,7 @@ const SignUp: React.FC<StoreProps> = (props) => {
 
         <IonCol sizeLg="12" sizeXs="12" className="card-col">
           <div className="title-row" onClick={() => history.push("/home")}>
-            <img src={Logo} alt="website" className="logo" />
+            <AppLogo alt="website" className="logo" />
           </div>
           <div className="card-bg">
             <div className="card-section">

@@ -37,7 +37,7 @@ import MidnightAqua from "../../assets/images/home/tiles/midnight_aqua.svg";
 import DarkFluralIcon from "../../assets/images/home/tiles/darkflural_icon.svg";
 import RoyalSunshine from "../../assets/images/home/tiles/royal_sunshine.svg";
 import { MenuItem } from "@material-ui/core";
-import Logo from "../../assets/images/theme/title.png";
+import AppLogo from "../AppLogo/AppLogo";
 import { languages } from "../../description/languages";
 import BonusInformation from "./BonusInformation";
 import { EventDTO } from "../../models/common/EventDTO";
@@ -248,7 +248,7 @@ const SideHeader = (props: Props) => {
     <div className="side-header">
       <div className="sh-title">
         <button className="sh-website-title" onClick={() => handleImgClick()}>
-          <img src={Logo} alt="website" className="sh-website-title-img" />
+          <AppLogo className="sh-website-title-img" />
         </button>
         <button className="sh-button-icon" onClick={() => closeHandler()}>
           <CloseIcon className="sh-close-icon" />

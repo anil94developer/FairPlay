@@ -312,6 +312,10 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
   const [loadingMatchDetails, setLoadingMatchDetails] = useState<boolean>(false);
   const [loadingFancy, setLoadingFancy] = useState<boolean>(false);
   const [eventData, setEventData] = useState<EventDTO>();
+  /** Team position P/L from bet/getTeamPosition: match to runner by selectionId === selection_id */
+  const [teamPositionPL, setTeamPositionPL] = useState<{ selectionId?: string | number; outcomeId?: string; runnerId?: string; profit: number }[] | null>(null);
+  /** Fancy liability from bet/getFancyLiability: keys "match_id_fancy_id" -> user_pl; used to show Active Book for fancies in list */
+  const [fancyLiabilityMap, setFancyLiabilityMap] = useState<Record<string, number> | null>(null);
   const isMobile = window.innerWidth > 1120 ? false : true;
 
   // Use props.eventData directly (comes from Redux) or local eventData state
@@ -923,9 +927,69 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
       }
     };
 
-    // Combined function to fetch both APIs
+    const fetchTeamPosition = async () => {
+      if (!eventId) return;
+      try {
+        const response = await USABET_API.post("/bet/getTeamPosition", {
+          match_id: eventId,
+        });
+        const data = response?.data;
+        // API returns { "market_id": [ { selection_id, user_pl, ... }, ... ] } (or wrapped in { status, data })
+        let positionsArray: any[] = [];
+        const byMarket =
+          data?.status === true && data?.data && typeof data.data === "object" && !Array.isArray(data.data)
+            ? (data.data as Record<string, any[]>)
+            : data && typeof data === "object" && !Array.isArray(data)
+            ? (data as Record<string, any[]>)
+            : null;
+        if (byMarket) {
+          const marketIdToUse = currentEventData?.matchOdds?.marketId || currentEventData?.marketId;
+          const firstArray = Object.values(byMarket).find((v) => Array.isArray(v)) as any[] | undefined;
+          positionsArray = (marketIdToUse && Array.isArray(byMarket[marketIdToUse]) ? byMarket[marketIdToUse] : firstArray) || [];
+        }
+        if (positionsArray && positionsArray.length > 0) {
+          setTeamPositionPL(
+            positionsArray.map((item: any) => ({
+              selectionId: item.selection_id ?? item.selectionId,
+              outcomeId: item.outcome_id ?? item.outcomeId,
+              runnerId: item.runner_id ?? item.runnerId,
+              profit: Number(item.user_pl) ?? Number(item.profit) ?? 0,
+            }))
+          );
+        } else {
+          setTeamPositionPL(null);
+        }
+      } catch (err) {
+        console.warn("[ExchangeAllMarkets] getTeamPosition failed:", err);
+        setTeamPositionPL(null);
+      }
+    };
+
+    const fetchFancyLiability = async () => {
+      if (!eventId || sportId === "4339" || sportId === "7") return;
+      try {
+        const response = await USABET_API.post("/bet/getFancyLiability", {
+          match_id: eventId,
+        });
+        const data = response?.data;
+        if (data?.status === true && data?.data && typeof data.data === "object" && !Array.isArray(data.data)) {
+          setFancyLiabilityMap(data.data as Record<string, number>);
+        } else if (data?.data && typeof data.data === "object" && !Array.isArray(data.data)) {
+          setFancyLiabilityMap(data.data as Record<string, number>);
+        } else {
+          setFancyLiabilityMap(null);
+        }
+      } catch (err) {
+        console.warn("[ExchangeAllMarkets] getFancyLiability failed:", err);
+        setFancyLiabilityMap(null);
+      }
+    };
+
+    // Combined function to fetch match details, team position, fancy liability, and fancy list (getFancies) every 3s
     const fetchAllData = async () => {
       await fetchMatchDetails();
+      await fetchTeamPosition();
+      await fetchFancyLiability();
       await fetchFancyData();
     };
 
@@ -933,7 +997,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
       // Initial fetch
       fetchAllData();
       
-      // Set up 3-second interval for both APIs
+      // Set up 3-second interval for all APIs
       intervalId = setInterval(() => {
         fetchAllData();
       }, 3000);
@@ -946,244 +1010,6 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
       }
     };
   }, [eventId, location.search, sportId, updateSecondaryMatchOdds]);
-
-  // Fetch fancy data from API
-  // useEffect(() => {
-  //   const fetchFancyData = async () => {
-  //     if (!eventId) return;
-      
-  //     setLoadingFancy(true);
-  //     try {
-  //       const response = await USABET_API.post(`/fancy/getFancies`, {
-  //         match_id: eventId,
-  //         combine: true,
-  //       });
-
-  //       let fancyMarkets: any[] = [];
-  //       let categoryMap: any = {};
-        
-  //       // Handle API response structure: { data: [...], fancy_category: {...}, status: true }
-  //       if (response?.data) {
-  //         // Extract fancy_category mapping if available
-  //         if (response.data.fancy_category && typeof response.data.fancy_category === 'object') {
-  //           categoryMap = response.data.fancy_category;
-  //           setFancyCategoryMap(categoryMap);
-  //         }
-          
-  //         // Extract data array - handle multiple possible response structures
-  //         if (Array.isArray(response.data.data)) {
-  //           fancyMarkets = response.data.data;
-  //           console.log("[ExchangeAllMarkets] Found data in response.data.data");
-  //         } else if (response.data.status === true && Array.isArray(response.data.data)) {
-  //           fancyMarkets = response.data.data;
-  //           console.log("[ExchangeAllMarkets] Found data in response.data.data (with status check)");
-  //         } else if (Array.isArray(response.data)) {
-  //           fancyMarkets = response.data;
-  //           console.log("[ExchangeAllMarkets] Found data directly in response.data");
-  //         } else if (typeof response.data === 'object') {
-  //           // If response.data is an object, try to find an array property
-  //           const dataKeys = Object.keys(response.data);
-  //           console.log("[ExchangeAllMarkets] Searching for array in response.data keys:", dataKeys);
-  //           for (const key of dataKeys) {
-  //             if (Array.isArray(response.data[key]) && key !== 'fancy_category') {
-  //               fancyMarkets = response.data[key];
-  //               console.log("[ExchangeAllMarkets] Found array in key:", key, "with", fancyMarkets.length, "items");
-  //               break;
-  //             }
-  //           }
-  //         }
-          
-  //         // If still no data, check response directly
-  //         if (fancyMarkets.length === 0 && Array.isArray(response?.data)) {
-  //           fancyMarkets = response.data;
-  //           console.log("[ExchangeAllMarkets] Found data directly in response (root level)");
-  //         }
-  //       }
-        
-  //       console.log("[ExchangeAllMarkets] Raw API response:", response?.data);
-  //       console.log("[ExchangeAllMarkets] Response data type:", typeof response?.data);
-  //       console.log("[ExchangeAllMarkets] Response.data.data:", response?.data?.data);
-  //       console.log("[ExchangeAllMarkets] Response.data.data is array:", Array.isArray(response?.data?.data));
-  //       console.log("[ExchangeAllMarkets] Extracted fancyMarkets:", fancyMarkets);
-  //       console.log("[ExchangeAllMarkets] Extracted fancyMarkets length:", fancyMarkets.length);
-  //       console.log("[ExchangeAllMarkets] Category map:", categoryMap);
-        
-  //       if (fancyMarkets.length > 0) {
-  //         setFancyData(fancyMarkets);
-  //         console.log("[ExchangeAllMarkets] Starting transformation of", fancyMarkets.length, "markets");
-          
-  //         // Transform API data to FancyMarketDTO format for FMTable component
-  //         const transformed = fancyMarkets.map((fancy: any, index: number) => {
-  //           if (index === 0) {
-  //             console.log("[ExchangeAllMarkets] Sample fancy market before transformation:", fancy);
-  //           }
-            
-  //           // Extract market ID - API uses fancy_id
-  //           const marketId = fancy.fancy_id || fancy.market_id || fancy.marketId || fancy.id || "";
-  //           // Extract market name - API uses name or fancy_name
-  //           const marketName = fancy.name || fancy.fancy_name || fancy.market_name || fancy.marketName || "";
-  //           // Extract status - prioritize GameStatus, then check is_active, MarkStatus, and is_lock
-  //           let status = "OPEN";
-  //           if (fancy.GameStatus && fancy.GameStatus !== "") {
-  //             // Use GameStatus if available (e.g., "BALL_RUNNING")
-  //             status = fancy.GameStatus.toUpperCase();
-  //           } else if (fancy.is_active === 0) {
-  //             status = "SUSPENDED";
-  //           } else if (fancy.MarkStatus === "1" || fancy.MarkStatus === 1) {
-  //             status = "SUSPENDED";
-  //           } else if (fancy.is_lock === true || fancy.isLock === true) {
-  //             status = "SUSPENDED";
-  //           } else if (fancy.status) {
-  //             status = fancy.status.toUpperCase();
-  //           }
-            
-  //           // Use category directly from API response
-  //           // The API provides category as a number (0, 1, 2, etc.) which maps to fancy_category object
-  //           // We'll use the category ID directly and let the UI component handle the mapping
-  //           const categoryId = fancy.category !== undefined ? String(fancy.category) : "0";
-  //           // Get category name from categoryMap if available, otherwise use categoryId
-  //           const categoryName = categoryMap[categoryId] 
-  //             ? String(categoryMap[categoryId])
-  //             : categoryId;
-            
-  //           // Use the category name from API as-is, or categoryId if name not found
-  //           // This will be used directly in the UI without static mapping
-  //           const category = categoryName || categoryId;
-            
-  //           // Extract prices from API response
-  //           // API provides: LayPrice1, LaySize1, BackPrice1, BackSize1
-  //           // Also check for alternative field names: noValue, noRate, yesValue, yesRate
-  //           let layPrice = null;
-  //           let laySize = null;
-  //           let backPrice = null;
-  //           let backSize = null;
-            
-  //           // Helper function to parse price/size values
-  //           const parsePrice = (val: any): number | null => {
-  //             if (val === null || val === undefined || val === "" || val === "--") return null;
-  //             const num = typeof val === "number" ? val : parseFloat(String(val));
-  //             return isNaN(num) ? null : num;
-  //           };
-            
-  //           // Try LayPrice1/BackPrice1 first (new API format)
-  //           layPrice = parsePrice(fancy.LayPrice1 || fancy.LayPrice || fancy.layPrice1 || fancy.layPrice);
-  //           laySize = parsePrice(fancy.LaySize1 || fancy.LaySize || fancy.laySize1 || fancy.laySize);
-  //           backPrice = parsePrice(fancy.BackPrice1 || fancy.BackPrice || fancy.backPrice1 || fancy.backPrice);
-  //           backSize = parsePrice(fancy.BackSize1 || fancy.BackSize || fancy.backSize1 || fancy.backSize);
-            
-  //           // Fallback to noValue/yesValue format if above fields are not available
-  //           if (layPrice === null) {
-  //             layPrice = parsePrice(fancy.noValue || fancy.no_value);
-  //           }
-  //           if (laySize === null) {
-  //             laySize = parsePrice(fancy.noRate || fancy.no_rate);
-  //           }
-  //           if (backPrice === null) {
-  //             backPrice = parsePrice(fancy.yesValue || fancy.yes_value);
-  //           }
-  //           if (backSize === null) {
-  //             backSize = parsePrice(fancy.yesRate || fancy.yes_rate);
-  //           }
-            
-  //           // If still no prices, try extracting from runners array (if available)
-  //           const runners = fancy.runners || fancy.outcomes || fancy.selections || [];
-  //           if ((layPrice === null || backPrice === null) && runners.length > 0) {
-  //             const noRunner = runners.find((r: any) => 
-  //               (r.name || r.runnerName || r.outcome_name || "").toLowerCase().includes("no")
-  //             ) || runners[0];
-  //             const yesRunner = runners.find((r: any) => 
-  //               (r.name || r.runnerName || r.outcome_name || "").toLowerCase().includes("yes")
-  //             ) || runners[1] || runners[0];
-              
-  //             if (layPrice === null) {
-  //               layPrice = parsePrice(noRunner?.price || noRunner?.layPrice || noRunner?.value);
-  //             }
-  //             if (laySize === null) {
-  //               laySize = parsePrice(noRunner?.size || noRunner?.laySize || noRunner?.rate);
-  //             }
-  //             if (backPrice === null) {
-  //               backPrice = parsePrice(yesRunner?.price || yesRunner?.backPrice || yesRunner?.value);
-  //             }
-  //             if (backSize === null) {
-  //               backSize = parsePrice(yesRunner?.size || yesRunner?.backSize || yesRunner?.rate);
-  //             }
-  //           }
-            
-  //           // Extract limits from API response - use Min/Max or session_min_stack and session_max_stack
-  //           const minStake = fancy.Min || fancy.session_min_stack || fancy.session_before_inplay_min_stack || 100;
-  //           const maxStake = fancy.Max || fancy.session_max_stack || fancy.session_before_inplay_max_stack || 100000;
-            
-  //           // Determine suspend/disable status - check MarkStatus, is_lock, is_active, and GameStatus
-  //           const markStatus = fancy.MarkStatus === "1" || fancy.MarkStatus === 1;
-  //           // GameStatus like "BALL_RUNNING" indicates market is active but in play
-  //           const isSuspended = markStatus || fancy.is_lock === true || fancy.isLock === true || 
-  //             (status === "SUSPENDED" && !fancy.GameStatus);
-  //           const isDisabled = fancy.is_active === 0 || isSuspended;
-            
-  //           return {
-  //             marketId: marketId,
-  //             marketName: marketName,
-  //             customMarketName: fancy.customMarketName || marketName,
-  //             status: status,
-  //             sort: fancy.chronology !== undefined ? Number(fancy.chronology) : (fancy.sort ? Number(fancy.sort) : 0),
-  //             layPrice: layPrice,
-  //             backPrice: backPrice,
-  //             laySize: laySize,
-  //             backSize: backSize,
-  //             category: category,
-  //             commissionEnabled: fancy.is_commission_applied || fancy.commissionEnabled || false,
-  //             marketLimits: fancy.marketLimits || {
-  //               minStake: minStake,
-  //               maxStake: maxStake,
-  //               maxOdd: fancy.maxOdd || 4,
-  //               delay: fancy.delay || 0,
-  //             },
-  //             suspend: isSuspended,
-  //             disable: isDisabled,
-  //             limits: {
-  //               minBetValue: minStake,
-  //               maxBetValue: maxStake,
-  //             },
-  //             isMarketLimitSet: !!fancy.marketLimits,
-  //           };
-  //         });
-          
-  //         console.log("[ExchangeAllMarkets] Transformation complete. Transformed markets:", transformed.length);
-  //         console.log("[ExchangeAllMarkets] Sample transformed market:", transformed[0]);
-  //         console.log("[ExchangeAllMarkets] All transformed markets:", transformed);
-          
-  //         if (transformed.length > 0) {
-  //           setTransformedFancyData(transformed);
-  //           console.log("[ExchangeAllMarkets] ✅ Set transformedFancyData with", transformed.length, "markets");
-  //         } else {
-  //           console.warn("[ExchangeAllMarkets] ⚠️ Transformation resulted in 0 markets!");
-  //           setTransformedFancyData([]);
-  //         }
-  //       } else {
-  //         console.warn("[ExchangeAllMarkets] ⚠️ No fancy markets found in response");
-  //         console.log("[ExchangeAllMarkets] Response structure:", {
-  //           hasData: !!response?.data,
-  //           dataType: typeof response?.data,
-  //           dataKeys: response?.data ? Object.keys(response.data) : [],
-  //           dataData: response?.data?.data,
-  //           isDataArray: Array.isArray(response?.data?.data),
-  //         });
-  //         setTransformedFancyData([]);
-  //         setFancyData([]);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching fancy data:", error);
-  //       setTransformedFancyData([]);
-  //       setFancyData([]);
-  //     } finally {
-  //       setLoadingFancy(false);
-  //     }
-  //   };
-
-  //   if (eventId) {
-  //     fetchFancyData();
-  //   }
-  // }, [eventId]);
 
   // Always show Fancy tab, default to it if no data yet
   useEffect(() => {
@@ -2074,6 +1900,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                   setBetsTabVal={(val) => setBetsTabVal(val)}
                   showMatchOdds={true}
                   showSecondaryMatchOdds={false}
+                  teamPositionPL={teamPositionPL}
                 />
               </IonRow>
             ) : null}
@@ -2111,6 +1938,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                   eventData={currentEventData}
                   fetchEvent={fetchEvent}
                   marketNotifications={marketNotifications}
+                  teamPositionPL={teamPositionPL}
                   secondaryMatchOdds={(() => {
                     // Sort secondary markets according to specified order: TO WIN THE TOSS, Tied Match
                     if (!secondaryMatchOdds || secondaryMatchOdds.length === 0) return [];
@@ -2206,14 +2034,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                     index={0}
                     className="fancy-tab-ctn"
                   >
-                    {loadingFancy ? (
-                      <div className="no-fancy-msg">
-                        {langData?.["loading"] || "Loading..."}
-                      </div>
-                    ) : (
                       <>
-                     
-                        {/* Always display fancy data from API using FMTable component - shows all categories */}
                         <FMTable
                           eventData={(() => {
                             // Map selectedEvent (with id) to EventDTO (with eventId)
@@ -2237,6 +2058,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                             } as EventDTO : null);
                           })()}
                           fmData={transformedFancyData || []}
+                          fancyLiabilityMap={fancyLiabilityMap}
                           openBets={openBets}
                           commissionEnabled={commissionEnabled}
                           addExchangeBet={addExchangeBet}
@@ -2257,7 +2079,6 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                           fancyCategoryMap={fancyCategoryMap}
                         />
                       </>
-                    )}
                   </TabPanel>
 
                   <IonRow className="row-100">
@@ -2268,12 +2089,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                       className="fancy-tab-ctn premium-iframe-container"
                     >
                       {currentEventData && !["99990", "2378961"].includes(currentEventData?.sportId) ? (
-                        <>
-                          {premiumIframeLoading ? (
-                            <div className="no-fancy-msg">
-                              {langData?.["loading"] || "Loading..."}
-                            </div>
-                          ) : premiumIframeUrl ? (
+                        premiumIframeUrl ? (
                             <iframe
                               src={premiumIframeUrl}
                               className="premium-iframe"
@@ -2284,8 +2100,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                             <div className="no-fancy-msg">
                               {langData?.["premium_markets_not_found_txt"]}
                             </div>
-                          )}
-                        </>
+                        )
                       ) : null}
                     </TabPanel>
                   </IonRow>
@@ -2326,8 +2141,8 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
               <div className="sticky-col">
                 {loggedIn &&
                 ((currentEventData &&
-                  (eventData.status === "IN_PLAY" ||
-                    eventData.status === "SUSPENDED")) ||
+                  (currentEventData.status === "IN_PLAY" ||
+                    currentEventData.status === "SUSPENDED")) ||
                   provider === "SportRadar") &&
                 !["99990"].includes(sportId) ? (
                   <div className="stream-accordion">

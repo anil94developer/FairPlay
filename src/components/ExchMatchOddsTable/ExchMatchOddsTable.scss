@@ -164,6 +164,10 @@
               border-radius: 4px;
               padding: 0px 6px;
               background-color: #fff;
+              &.team-position-pl {
+                margin-left: 8px;
+                display: inline-block;
+              }
             }
 
             .profit {

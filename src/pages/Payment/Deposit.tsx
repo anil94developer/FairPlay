@@ -961,13 +961,21 @@ const Deposit: React.FC<StoreProps> = (props) => {
     if (depositPaymentMethodsInfo && Object.keys(depositPaymentMethodsInfo).length > 0) {
       if (paymentOption && depositPaymentMethodsInfo[paymentOption]) {
         const providers = depositPaymentMethodsInfo[paymentOption];
-        setProvidersList(Array.isArray(providers) ? providers : []);
-        console.log("[Deposit] Providers list set for", paymentOption, ":", providers);
+        // Ensure providers is an array of strings, filter out any non-string values
+        const validProviders = Array.isArray(providers) 
+          ? providers.filter(p => typeof p === 'string' && p.length > 0)
+          : [];
+        setProvidersList(validProviders);
+        console.log("[Deposit] Providers list set for", paymentOption, ":", validProviders);
       } else if (depositPaymentMethodsInfo["BANK_TRANSFER"]) {
         // Fallback to BANK_TRANSFER if current paymentOption doesn't exist
         const providers = depositPaymentMethodsInfo["BANK_TRANSFER"];
-        setProvidersList(Array.isArray(providers) ? providers : []);
-        console.log("[Deposit] Providers list set to BANK_TRANSFER (fallback):", providers);
+        // Ensure providers is an array of strings, filter out any non-string values
+        const validProviders = Array.isArray(providers) 
+          ? providers.filter(p => typeof p === 'string' && p.length > 0)
+          : [];
+        setProvidersList(validProviders);
+        console.log("[Deposit] Providers list set to BANK_TRANSFER (fallback):", validProviders);
       }
     }
   }, [depositPaymentMethodsInfo, paymentOption]);
@@ -1032,7 +1040,12 @@ const Deposit: React.FC<StoreProps> = (props) => {
                 return;
               }
               setPaymentOption(newValue);
-              setProvidersList(depositPaymentMethodsInfo[newValue]);
+              // Ensure providersList is an array of strings
+              const providers = depositPaymentMethodsInfo[newValue];
+              const validProviders = Array.isArray(providers) 
+                ? providers.filter(p => typeof p === 'string' && p.length > 0)
+                : [];
+              setProvidersList(validProviders);
               setTabValue(0);
               setMobileNumber("");
               setPaymentDetails([]);
@@ -1071,22 +1084,34 @@ const Deposit: React.FC<StoreProps> = (props) => {
               onChange={(_, newValue) => setTabValue(newValue)}
             >
               {providersList.map(
-                (paymentGateway, index) =>
-                  AvailablePaymentGateways[paymentGateway] && (
+                (paymentGateway, index) => {
+                  // Ensure paymentGateway is a string
+                  const gatewayName = typeof paymentGateway === 'string' ? paymentGateway : String(paymentGateway || '');
+                  if (!gatewayName || !AvailablePaymentGateways[gatewayName]) {
+                    return null;
+                  }
+                  return (
                     <Tab
+                      key={`tab-${gatewayName}-${index}`}
                       value={index}
                       label={`${langData?.["option"]} ${++indexCount}`}
                       className="payment-btn"
                     />
-                  )
+                  );
+                }
               )}
             </Tabs>
           )}
           {providersList && providersList.length > 0 ? (
             providersList.map((paymentGateway, index) => {
-              const form = renderPaymentForm(paymentGateway, index, tabValue);
+              // Ensure paymentGateway is a string
+              const gatewayName = typeof paymentGateway === 'string' ? paymentGateway : String(paymentGateway || '');
+              if (!gatewayName) {
+                return null;
+              }
+              const form = renderPaymentForm(gatewayName, index, tabValue);
               return form ? (
-                <div key={`payment-gateway-${index}-${paymentGateway}`}>
+                <div key={`payment-gateway-${index}-${gatewayName}`}>
                   {form}
                 </div>
               ) : null;

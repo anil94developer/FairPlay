@@ -130,7 +130,7 @@ export const getStaticSportsData = (): SportApiData[] => {
  */
 export const fetchSportsFromAPI = async (): Promise<SportApiData[]> => {
   try {
-    const response = await USABET_API.get("/sport/sports");
+    const response = await USABET_API.post("/sport/sports");
     if (response?.data?.status === true && Array.isArray(response.data.data)) {
       return response.data.data;
     }

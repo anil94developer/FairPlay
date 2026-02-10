@@ -115,6 +115,7 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
   const [apiMobBanners, setApiMobBanners] = useState([]);
   const [favouriteEvents, setFavouriteEvents] = useState<EventDTO[]>([]);
   const [inplayEvents, setInplayEvents] = useState<InplayEventsObj[]>([]);
+  const [upcomingEventsFromAPI, setUpcomingEventsFromAPI] = useState<InplayEventsObj[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [sportsTabs, setSportsTabs] = useState<SportTabData[]>(sideHeaderTabs);
   const windowSize = useWindowSize();
@@ -168,10 +169,227 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
     setNotifications(notificationsData);
   };
 
-  const fetchUpcomingEvents = () => {
-    const startDate = moment().toISOString();
-    const endDate = moment().add(3, "d").toISOString();
-    fetchEventsInDateRange(startDate, endDate);
+  const fetchUpcomingEvents = async () => {
+    setLoading(true);
+    try {
+      // Fetch upcoming matches for all sports from API
+      const response = await USABET_API.get("/match/homeMatchesV2");
+      
+      // Handle different API response structures
+      let allMatches: any[] = [];
+      
+      if (response?.data?.status === true && Array.isArray(response.data.data)) {
+        allMatches = response.data.data;
+      } else if (Array.isArray(response?.data?.data) && response?.data?.status === true) {
+        allMatches = response.data.data;
+      } else if (Array.isArray(response?.data)) {
+        allMatches = response.data;
+      } else if (response?.data && typeof response.data === 'object') {
+        const dataKeys = Object.keys(response.data);
+        for (const key of dataKeys) {
+          if (Array.isArray(response.data[key])) {
+            allMatches = response.data[key];
+            break;
+          }
+        }
+      }
+
+      // Filter for upcoming events only (not in-play, not finished)
+      const upcomingMatches = allMatches.filter((event: any) => {
+        // Exclude in-play events
+        if (event.inplay === true || event.inPlay === true || event.in_play === true) {
+          return false;
+        }
+        
+        const status = String(event.status || "").toUpperCase();
+        if (status === "IN_PLAY" || status === "INPLAY" || status === "IN-PLAY") {
+          return false;
+        }
+        
+        // Exclude finished/closed events
+        if (status === "FINISHED" || status === "CLOSED" || status === "SETTLED") {
+          return false;
+        }
+        
+        // Include upcoming events
+        if (status === "UPCOMING" || status === "OPEN") {
+          return true;
+        }
+        
+        // Check if event date is in the future
+        const matchDate = event.match_date || event.matchDate || event.openDate || event.open_date;
+        if (matchDate) {
+          const eventDate = moment(matchDate);
+          const now = moment();
+          // Include events that start in the future (at least 1 minute from now)
+          return eventDate.diff(now, "minutes") > 1;
+        }
+        
+        return false;
+      });
+
+      // Group upcoming matches by sport
+      const groupedBySport = new Map<string, InplayEventsObj>();
+      
+      // Sport ID mapping from API response
+      const sportIdMap: { [key: string]: { name: string; slug: string } } = {
+        "4": { name: "Cricket", slug: "cricket" },
+        "1": { name: "Soccer", slug: "football" },
+        "2": { name: "Tennis", slug: "tennis" },
+        "7": { name: "Horse Racing", slug: "horseracing" },
+        "4339": { name: "Greyhound Racing", slug: "greyhound" },
+      };
+
+      upcomingMatches.forEach((event: any) => {
+        const sportId = event.sportId || event.sport_id || "";
+        const sportInfo = sportIdMap[sportId];
+        
+        // Only process sports from the API response (exclude Casino, QTech, etc.)
+        if (!sportInfo || sportId === "-100" || sportId === "QT") {
+          return;
+        }
+
+        if (!groupedBySport.has(sportId)) {
+          groupedBySport.set(sportId, {
+            sportId: sportId,
+            sportName: sportInfo.name,
+            sportSlug: sportInfo.slug,
+            events: [],
+          });
+        }
+
+        const sport = groupedBySport.get(sportId)!;
+        
+        // Get event name
+        let eventName = event.match_name || event.matchName || event.eventName || event.event_name || "";
+        let homeTeam = event.homeTeam || event.home_team || "";
+        let awayTeam = event.awayTeam || event.away_team || "";
+        
+        if (!homeTeam || !awayTeam) {
+          const matchNameParts = eventName.split(/\s+v(?:s)?\s+/i);
+          if (matchNameParts.length === 2) {
+            homeTeam = matchNameParts[0]?.trim() || "";
+            awayTeam = matchNameParts[1]?.trim() || "";
+          }
+        }
+        
+        if (!eventName && homeTeam && awayTeam) {
+          eventName = `${homeTeam} V ${awayTeam}`;
+        } else if (!eventName) {
+          eventName = event.eventId || event.event_id || "Event";
+        }
+
+        const matchDate = event.match_date || event.matchDate;
+        const openDate = event.openDate || event.open_date || matchDate || new Date().toISOString();
+
+        // Transform runners
+        const transformedRunners = (event.runners || []).map((runner: any) => {
+          const availableToBack = runner.ex?.availableToBack || [];
+          const availableToLay = runner.ex?.availableToLay || [];
+          
+          const parsePrice = (val: any): number | null => {
+            if (val === "--" || val === null || val === undefined || val === "") return null;
+            const num = typeof val === "number" ? val : parseFloat(String(val));
+            return isNaN(num) ? null : num;
+          };
+          
+          return {
+            runnerId: String(runner.selectionId || runner.selection_id || ""),
+            runnerName: runner.selection_name || runner.selectionName || runner.name || "",
+            status: runner.status || "ACTIVE",
+            backPrices: availableToBack
+              .filter((price: any) => {
+                const priceVal = parsePrice(price.price);
+                return priceVal !== null && priceVal > 0;
+              })
+              .map((price: any) => ({
+                price: parsePrice(price.price),
+                size: parsePrice(price.size),
+              }))
+              .filter((p: any) => p.price !== null),
+            layPrices: availableToLay
+              .filter((price: any) => {
+                const priceVal = parsePrice(price.price);
+                return priceVal !== null && priceVal > 0;
+              })
+              .map((price: any) => ({
+                price: parsePrice(price.price),
+                size: parsePrice(price.size),
+              }))
+              .filter((p: any) => p.price !== null),
+          };
+        });
+
+        const matchOdds = transformedRunners.length > 0 ? {
+          marketId: event.market_id || event.marketId || "",
+          marketName: event.market_name || event.marketName || "Match Odds",
+          status: event.status || "UPCOMING",
+          runners: transformedRunners,
+        } : undefined;
+
+        const eventDTO: EventDTO = {
+          eventId: event.eventId || event.event_id || event.match_id || "",
+          eventName: eventName,
+          eventSlug: eventName
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, ""),
+          sportId: sportId,
+          sportName: sportInfo.name,
+          competitionId: event.competitionId || event.competition_id || event.series_id || "",
+          competitionName: event.competitionName || event.competition_name || event.series_name || "",
+          openDate: openDate,
+          status: "UPCOMING",
+          providerName: event.providerName || event.provider_name || "BetFair",
+          homeTeam: homeTeam,
+          awayTeam: awayTeam,
+          matchOdds: matchOdds as any,
+        };
+
+        sport.events.push(eventDTO);
+      });
+
+      // Convert map to array and sort by sport priority
+      const upcomingEventsArray = Array.from(groupedBySport.values());
+      
+      // Sort events within each sport by date
+      upcomingEventsArray.forEach((sport) => {
+        sport.events.sort((a, b) => {
+          const aDate = moment(a.openDate);
+          const bDate = moment(b.openDate);
+          return aDate.diff(bDate, "seconds");
+        });
+      });
+
+      // Sort sports by priority (Cricket, Soccer, Tennis, Horse Racing, Greyhound)
+      const sportPriority: { [key: string]: number } = {
+        "4": 1,    // Cricket
+        "1": 2,    // Soccer
+        "2": 3,    // Tennis
+        "7": 4,    // Horse Racing
+        "4339": 5, // Greyhound
+      };
+      
+      upcomingEventsArray.sort((a, b) => {
+        const priorityA = sportPriority[a.sportId] || 999;
+        const priorityB = sportPriority[b.sportId] || 999;
+        return priorityA - priorityB;
+      });
+
+      console.log("[ExchInplayEventsView] Upcoming events fetched:", {
+        totalMatches: upcomingMatches.length,
+        sportsCount: upcomingEventsArray.length,
+        eventsBySport: upcomingEventsArray.map(s => ({ sport: s.sportName, count: s.events.length }))
+      });
+
+      // Update state with upcoming events from API
+      setUpcomingEventsFromAPI(upcomingEventsArray);
+      
+    } catch (error) {
+      console.error("[ExchInplayEventsView] Error fetching upcoming events:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -182,6 +400,11 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
   useEffect(() => {
     updateEvents(statusNew);
   }, [statusNew]);
+
+  // Fetch upcoming events on component mount for /exchange_sports page
+  useEffect(() => {
+    fetchUpcomingEvents();
+  }, []);
 
   useEffect(() => {
     setFavouriteEvents(favourites);
@@ -570,7 +793,9 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
           }))
           .filter((sport) => sport.events.length > 0);
       case Status.UPCOMING:
-        return upcomingEvents
+        // Use upcoming events from API if available, otherwise use Redux state
+        const eventsToUse = upcomingEventsFromAPI.length > 0 ? upcomingEventsFromAPI : upcomingEvents;
+        return eventsToUse
           .map((sport) => ({
             ...sport,
             events: sport.events.filter((event) =>

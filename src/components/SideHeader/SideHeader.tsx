@@ -135,96 +135,98 @@ const SideHeader = (props: Props) => {
   }, []);
 
   // Fetch user details from API
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      if (!loggedIn || demoUser()) {
-        setUserDetails({
-          username: langData?.["demo_user"] || "Demo User",
-          fullName: langData?.["demo_user"] || "Demo User",
-          shortName: "D",
-        });
-        return;
-      }
+  // useEffect(() => {
+  //   const fetchUserDetails = async () => {
+  //     if (!loggedIn || demoUser()) {
+  //       setUserDetails({
+  //         username: "Demo User",
+  //         fullName: "Demo User",
+  //         shortName: "D",
+  //       });
+  //       return;
+  //     }
 
-      try {
-        const username = sessionStorage.getItem("username");
-        if (!username) {
-          // Fallback to JWT token data
-          const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
-          setUserDetails({
-            username: username || name || "",
-            fullName: name || username || "",
-            shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
-          });
-          return;
-        }
+  //     try {
+  //       const username = sessionStorage.getItem("username");
+  //       if (!username) {
+  //         // Fallback to JWT token data
+  //         const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
+  //         setUserDetails({
+  //           username: username || name || "",
+  //           fullName: name || username || "",
+  //           shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
+  //         });
+  //         return;
+  //       }
 
-        // Try to fetch user profile from API
-        try {
-          const response = await USABET_API.get(`/user/profile`, {
-            params: { username },
-          });
+  //       // Try to fetch user profile from API
+  //       try {
+  //         const response = await USABET_API.post(`/user/profile`, {
+  //           params: { username },
+  //         });
           
-          if (response?.data?.status === true && response?.data?.data) {
-            const userData = response.data.data;
-            const fullName = userData.fullName || userData.name || userData.firstName + " " + userData.lastName || username;
-            setUserDetails({
-              username: username,
-              fullName: fullName,
-              shortName: fullName ? fullName[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
-            });
-            console.log("[SideHeader] User details fetched from API:", userData);
-          } else {
-            // Fallback to JWT token data
-            const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
-            setUserDetails({
-              username: username || "",
-              fullName: name || username || "",
-              shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
-            });
-          }
-        } catch (apiError) {
-          console.warn("[SideHeader] Error fetching user profile from API, using fallback:", apiError);
-          // Fallback to JWT token data
-          const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
-          setUserDetails({
-            username: username || "",
-            fullName: name || username || "",
-            shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
-          });
-        }
-      } catch (error) {
-        console.error("[SideHeader] Error fetching user details:", error);
-        // Fallback to JWT token data
-        const username = sessionStorage.getItem("username") || "";
-        const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
-        setUserDetails({
-          username: username || "",
-          fullName: name || username || "",
-          shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
-        });
-      }
-    };
+  //         if (response?.data?.status === true && response?.data?.data) {
+  //           const userData = response.data.data;
+  //           const fullName = userData.fullName || userData.name || userData.firstName + " " + userData.lastName || username;
+  //           setUserDetails({
+  //             username: username,
+  //             fullName: fullName,
+  //             shortName: fullName ? fullName[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
+  //           });
+  //           console.log("[SideHeader] User details fetched from API:", userData);
+  //         } else {
+  //           // Fallback to JWT token data
+  //           const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
+  //           setUserDetails({
+  //             username: username || "",
+  //             fullName: name || username || "",
+  //             shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
+  //           });
+  //         }
+  //       } catch (apiError) {
+  //         console.warn("[SideHeader] Error fetching user profile from API, using fallback:", apiError);
+  //         // Fallback to JWT token data
+  //         const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
+  //         setUserDetails({
+  //           username: username || "",
+  //           fullName: name || username || "",
+  //           shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error("[SideHeader] Error fetching user details:", error);
+  //       // Fallback to JWT token data
+  //       const username = sessionStorage.getItem("username") || "";
+  //       const name = getFieldFromToken(JwtToken.SUBJECT_NAME) || username || "";
+  //       setUserDetails({
+  //         username: username || "",
+  //         fullName: name || username || "",
+  //         shortName: name ? name[0].toUpperCase() : (username ? username[0].toUpperCase() : ""),
+  //       });
+  //     }
+  //   };
 
-    if (loggedIn) {
-      fetchUserDetails();
-    }
-  }, [loggedIn, langData]);
+  //   if (loggedIn) {
+  //     fetchUserDetails();
+  //   }
+  // }, [loggedIn, langData]);
 
   const getUserShortName = () => {
+    // Show "D" immediately for demo users
+    if (demoUser()) {
+      return "D";
+    }
     if (userDetails.shortName) {
       return userDetails.shortName;
     }
-    const name: string = demoUser()
-      ? "Demo User"
-      : getFieldFromToken(JwtToken.SUBJECT_NAME);
+    const name: string = getFieldFromToken(JwtToken.SUBJECT_NAME);
     return name ? name[0].toUpperCase() : "";
   };
 
   const getUserFullName = () => {
     // Show "Demo User" immediately for demo users, without waiting for state updates
     if (demoUser()) {
-      return langData?.["demo_user"] || "Demo User";
+      return "Demo User";
     }
     if (userDetails.fullName) {
       return userDetails.fullName;
@@ -621,11 +623,25 @@ const SHSportsTab = (props: {
   }, []);
 
   const handleClick = (indv) => {
+    // Toggle dropdown
     setShowDropDown((prev) => ({
       ...prev,
       [indv.id]: !prev[indv.id],
     }));
-    history.push(indv.route);
+    
+    // Close sidebar
+    closeHandler && closeHandler();
+    
+    // Include sport_id as query parameter in URL
+    const url = `${indv.route}${indv.route.includes('?') ? '&' : '?'}sport_id=${encodeURIComponent(indv.id)}`;
+    
+    console.log('[SHSportsTab] Navigating to:', {
+      route: indv.route,
+      sportId: indv.id,
+      finalUrl: url
+    });
+    
+    history.push(url);
   };
 
   const handleCompetitionClick = (indv, compt) => {
@@ -656,9 +672,17 @@ const SHSportsTab = (props: {
     
     closeHandler && closeHandler();
     
-    // Navigate to competition page with series_id as query parameter
+    // Navigate to competition page with series_id and sport_id as query parameters
     const sportSlug = sportSlugFromRoute || indv.text;
-    const url = `/exchange_sports/${sportSlug}/${competitionSlug}?series_id=${compt.competitionId}`;
+    const url = `/exchange_sports/${sportSlug}/${competitionSlug}?series_id=${compt.competitionId}&sport_id=${encodeURIComponent(indv.id)}`;
+    
+    console.log('[SHSportsTab] Navigating to competition:', {
+      sportId: indv.id,
+      sportSlug,
+      seriesId: compt.competitionId,
+      finalUrl: url
+    });
+    
     history.push(url);
     
     if (process.env.NODE_ENV === 'development') {

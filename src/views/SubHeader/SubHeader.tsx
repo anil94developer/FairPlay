@@ -269,69 +269,69 @@ const SubHeader: React.FC<StoreProps> = (props) => {
   }, [loggedIn, fetchBalance]);
 
   // Fetch user details from API
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      if (!loggedIn || demoUser()) {
-        setUserDetails({
-          username: langData?.["demo_user"] || "Demo User",
-          fullName: langData?.["demo_user"] || "Demo User",
-        });
-        return;
-      }
+  // useEffect(() => {
+  //   const fetchUserDetails = async () => {
+  //     if (!loggedIn || demoUser()) {
+  //       setUserDetails({
+  //         username: langData?.["demo_user"] || "Demo User",
+  //         fullName: langData?.["demo_user"] || "Demo User",
+  //       });
+  //       return;
+  //     }
 
-      try {
-        const username = sessionStorage.getItem("username");
-        if (!username) {
-          setUserDetails({
-            username: "",
-            fullName: "",
-          });
-          return;
-        }
+  //     try {
+  //       const username = sessionStorage.getItem("username");
+  //       if (!username) {
+  //         setUserDetails({
+  //           username: "",
+  //           fullName: "",
+  //         });
+  //         return;
+  //       }
 
-        // Try to fetch user profile from API
-        try {
-          const response = await USABET_API.get(`/user/profile`, {
-            params: { username },
-          });
+  //       // Try to fetch user profile from API
+  //       try {
+  //         const response = await USABET_API.post(`/user/profile`, {
+  //           params: { username },
+  //         });
           
-          if (response?.data?.status === true && response?.data?.data) {
-            const userData = response.data.data;
-            const fullName = userData.fullName || userData.name || userData.firstName + " " + userData.lastName || username;
-            setUserDetails({
-              username: username,
-              fullName: fullName,
-            });
-            console.log("[SubHeader] User details fetched from API:", userData);
-          } else {
-            // Fallback to username from sessionStorage
-            setUserDetails({
-              username: username,
-              fullName: username,
-            });
-          }
-        } catch (apiError) {
-          console.warn("[SubHeader] Error fetching user profile from API, using fallback:", apiError);
-          // Fallback to username from sessionStorage
-          setUserDetails({
-            username: username,
-            fullName: username,
-          });
-        }
-      } catch (error) {
-        console.error("[SubHeader] Error fetching user details:", error);
-        const username = sessionStorage.getItem("username") || "";
-        setUserDetails({
-          username: username,
-          fullName: username,
-        });
-      }
-    };
+  //         if (response?.data?.status === true && response?.data?.data) {
+  //           const userData = response.data.data;
+  //           const fullName = userData.fullName || userData.name || userData.firstName + " " + userData.lastName || username;
+  //           setUserDetails({
+  //             username: username,
+  //             fullName: fullName,
+  //           });
+  //           console.log("[SubHeader] User details fetched from API:", userData);
+  //         } else {
+  //           // Fallback to username from sessionStorage
+  //           setUserDetails({
+  //             username: username,
+  //             fullName: username,
+  //           });
+  //         }
+  //       } catch (apiError) {
+  //         console.warn("[SubHeader] Error fetching user profile from API, using fallback:", apiError);
+  //         // Fallback to username from sessionStorage
+  //         setUserDetails({
+  //           username: username,
+  //           fullName: username,
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error("[SubHeader] Error fetching user details:", error);
+  //       const username = sessionStorage.getItem("username") || "";
+  //       setUserDetails({
+  //         username: username,
+  //         fullName: username,
+  //       });
+  //     }
+  //   };
 
-    if (loggedIn) {
-      fetchUserDetails();
-    }
-  }, [loggedIn, langData]);
+  //   if (loggedIn) {
+  //     fetchUserDetails();
+  //   }
+  // }, [loggedIn, langData]);
 
   const isAllowed = (config) => {
     return config ? (allowedConfig & config) !== 0 : true;

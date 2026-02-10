@@ -368,6 +368,8 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
 
   // Set eventData from selectedEvent or fetch from API
   useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    
     const fetchMatchDetails = async () => {
       if (!eventId) {
         console.log("[ExchangeAllMarkets] No eventId, skipping match details fetch");
@@ -376,19 +378,29 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
       
       setLoadingMatchDetails(true);
       try {
-        // Get market_id from current context or last page
+        // Get market_id from URL query params first (highest priority)
         let marketIdToUse: string | undefined = undefined;
         
-        // First, try to get market_id from current event data
-        if (currentEventData?.marketId) {
-          marketIdToUse = currentEventData.marketId;
-        } else if (currentEventData?.matchOdds?.marketId) {
-          marketIdToUse = currentEventData.matchOdds.marketId;
-        } else if (selectedEvent?.marketId) {
-          marketIdToUse = selectedEvent.marketId;
+        // First priority: Get market_id from URL query parameter
+        const urlParams = new URLSearchParams(location.search);
+        const marketIdFromUrl = urlParams.get("market_id");
+        if (marketIdFromUrl) {
+          marketIdToUse = marketIdFromUrl;
+          console.log("[ExchangeAllMarkets] Using market_id from URL query param:", marketIdToUse);
         }
         
-        // If not available, get from sessionStorage (last page's market_id)
+        // Second priority: Get market_id from current event data
+        if (!marketIdToUse) {
+          if (currentEventData?.marketId) {
+            marketIdToUse = currentEventData.marketId;
+          } else if (currentEventData?.matchOdds?.marketId) {
+            marketIdToUse = currentEventData.matchOdds.marketId;
+          } else if (selectedEvent?.marketId) {
+            marketIdToUse = selectedEvent.marketId;
+          }
+        }
+        
+        // Third priority: Get from sessionStorage (last page's market_id)
         if (!marketIdToUse) {
           const lastMarketId = sessionStorage.getItem("last_market_id");
           if (lastMarketId) {
@@ -760,10 +772,180 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
       }
     };
 
+    // Fetch fancy data from API - only if sportId is NOT "4339" (greyhound) or "7" (horseracing)
+    const fetchFancyData = async () => {
+      if (!eventId) return;
+      
+      // Skip getFancies API call for greyhound (4339) and horseracing (7)
+      if (sportId === "4339" || sportId === "7") {
+        console.log("[ExchangeAllMarkets] Skipping getFancies API call for sportId:", sportId);
+        return;
+      }
+      
+      setLoadingFancy(true);
+      try {
+        const response = await USABET_API.post(`/fancy/getFancies`, {
+          match_id: eventId,
+          combine: true,
+        });
+
+        let fancyMarkets: any[] = [];
+        let categoryMap: any = {};
+        
+        // Handle API response structure
+        if (response?.data) {
+          if (response.data.fancy_category && typeof response.data.fancy_category === 'object') {
+            categoryMap = response.data.fancy_category;
+            setFancyCategoryMap(categoryMap);
+          }
+          
+          if (Array.isArray(response.data.data)) {
+            fancyMarkets = response.data.data;
+          } else if (response.data.status === true && Array.isArray(response.data.data)) {
+            fancyMarkets = response.data.data;
+          } else if (Array.isArray(response.data)) {
+            fancyMarkets = response.data;
+          } else if (typeof response.data === 'object') {
+            const dataKeys = Object.keys(response.data);
+            for (const key of dataKeys) {
+              if (Array.isArray(response.data[key]) && key !== 'fancy_category') {
+                fancyMarkets = response.data[key];
+                break;
+              }
+            }
+          }
+          
+          if (fancyMarkets.length === 0 && Array.isArray(response?.data)) {
+            fancyMarkets = response.data;
+          }
+        }
+        
+        if (fancyMarkets.length > 0) {
+          setFancyData(fancyMarkets);
+          // Transform API data to FancyMarketDTO format
+          const transformed = fancyMarkets.map((fancy: any) => {
+            const marketId = fancy.fancy_id || fancy.market_id || fancy.marketId || fancy.id || "";
+            const marketName = fancy.name || fancy.fancy_name || fancy.market_name || fancy.marketName || "";
+            let status = "OPEN";
+            if (fancy.GameStatus && fancy.GameStatus !== "") {
+              status = fancy.GameStatus.toUpperCase();
+            } else if (fancy.is_active === 0) {
+              status = "SUSPENDED";
+            } else if (fancy.MarkStatus === "1" || fancy.MarkStatus === 1) {
+              status = "SUSPENDED";
+            } else if (fancy.is_lock === true || fancy.isLock === true) {
+              status = "SUSPENDED";
+            } else if (fancy.status) {
+              status = fancy.status.toUpperCase();
+            }
+            
+            const categoryId = fancy.category !== undefined ? String(fancy.category) : "0";
+            const categoryName = categoryMap[categoryId] 
+              ? String(categoryMap[categoryId])
+              : categoryId;
+            const category = categoryName || categoryId;
+            
+            const parsePrice = (val: any): number | null => {
+              if (val === null || val === undefined || val === "" || val === "--") return null;
+              const num = typeof val === "number" ? val : parseFloat(String(val));
+              return isNaN(num) ? null : num;
+            };
+            
+            let layPrice = parsePrice(fancy.LayPrice1 || fancy.LayPrice || fancy.layPrice1 || fancy.layPrice);
+            let laySize = parsePrice(fancy.LaySize1 || fancy.LaySize || fancy.laySize1 || fancy.laySize);
+            let backPrice = parsePrice(fancy.BackPrice1 || fancy.BackPrice || fancy.backPrice1 || fancy.backPrice);
+            let backSize = parsePrice(fancy.BackSize1 || fancy.BackSize || fancy.backSize1 || fancy.backSize);
+            
+            if (layPrice === null) {
+              layPrice = parsePrice(fancy.noValue || fancy.no_value);
+            }
+            if (laySize === null) {
+              laySize = parsePrice(fancy.noRate || fancy.no_rate);
+            }
+            if (backPrice === null) {
+              backPrice = parsePrice(fancy.yesValue || fancy.yes_value);
+            }
+            if (backSize === null) {
+              backSize = parsePrice(fancy.yesRate || fancy.yes_rate);
+            }
+            
+            const minStake = fancy.Min || fancy.session_min_stack || fancy.session_before_inplay_min_stack || 100;
+            const maxStake = fancy.Max || fancy.session_max_stack || fancy.session_before_inplay_max_stack || 100000;
+            
+            const markStatus = fancy.MarkStatus === "1" || fancy.MarkStatus === 1;
+            const isSuspended = markStatus || fancy.is_lock === true || fancy.isLock === true || 
+              (status === "SUSPENDED" && !fancy.GameStatus);
+            const isDisabled = fancy.is_active === 0 || isSuspended;
+            
+            return {
+              marketId: marketId,
+              marketName: marketName,
+              customMarketName: fancy.customMarketName || marketName,
+              status: status,
+              sort: fancy.chronology !== undefined ? Number(fancy.chronology) : (fancy.sort ? Number(fancy.sort) : 0),
+              layPrice: layPrice,
+              backPrice: backPrice,
+              laySize: laySize,
+              backSize: backSize,
+              category: category,
+              commissionEnabled: fancy.is_commission_applied || fancy.commissionEnabled || false,
+              marketLimits: fancy.marketLimits || {
+                minStake: minStake,
+                maxStake: maxStake,
+                maxOdd: fancy.maxOdd || 4,
+                delay: fancy.delay || 0,
+              },
+              suspend: isSuspended,
+              disable: isDisabled,
+              limits: {
+                minBetValue: minStake,
+                maxBetValue: maxStake,
+              },
+              isMarketLimitSet: !!fancy.marketLimits,
+            };
+          });
+          
+          if (transformed.length > 0) {
+            setTransformedFancyData(transformed);
+          } else {
+            setTransformedFancyData([]);
+          }
+        } else {
+          setTransformedFancyData([]);
+          setFancyData([]);
+        }
+      } catch (error) {
+        console.error("Error fetching fancy data:", error);
+        setTransformedFancyData([]);
+        setFancyData([]);
+      } finally {
+        setLoadingFancy(false);
+      }
+    };
+
+    // Combined function to fetch both APIs
+    const fetchAllData = async () => {
+      await fetchMatchDetails();
+      await fetchFancyData();
+    };
+
     if (eventId) {
-      fetchMatchDetails();
+      // Initial fetch
+      fetchAllData();
+      
+      // Set up 3-second interval for both APIs
+      intervalId = setInterval(() => {
+        fetchAllData();
+      }, 3000);
     }
-  }, [eventId, updateSecondaryMatchOdds]);
+
+    // Cleanup interval on unmount or when dependencies change
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [eventId, location.search, sportId, updateSecondaryMatchOdds]);
 
   // Fetch fancy data from API
   // useEffect(() => {

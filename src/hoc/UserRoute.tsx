@@ -34,9 +34,27 @@ const mapStateToProps = (state: RootState) => {
       role: null,
     };
   }
-  let claim = state.auth?.jwtToken?.split(".")?.[1] || "";
-  let permission = JSON.parse(window.atob(claim)).perm;
-  let role = JSON.parse(window.atob(claim)).role;
+  
+  let permission = 0;
+  let role = null;
+  
+  try {
+    let claim = state.auth?.jwtToken?.split(".")?.[1] || "";
+    if (claim) {
+      const decodedClaim = window.atob(claim);
+      if (decodedClaim) {
+        const parsedClaim = JSON.parse(decodedClaim);
+        permission = parsedClaim?.perm || 0;
+        role = parsedClaim?.role || null;
+      }
+    }
+  } catch (error) {
+    console.error("[UserRoute] Error parsing JWT token:", error);
+    // Return default values if parsing fails
+    permission = 0;
+    role = null;
+  }
+  
   return {
     loggedIn: state.auth.loggedIn,
     permissions: permission,

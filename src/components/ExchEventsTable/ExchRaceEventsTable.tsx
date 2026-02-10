@@ -498,7 +498,7 @@ const ExchRaceTable: React.FC<StoreProps> = (props) => {
                                           venueData.venue || "unknown"
                                         )}/${(venueData.venue || "unknown").toLowerCase().replace(/\s+/g, "-")}/${btoa(
                                           `BetFair:7::${market.matchId || ""}:${moment(market.marketTime).unix()}`
-                                        )}`}
+                                        )}${market.marketId ? `?market_id=${encodeURIComponent(market.marketId)}` : ''}`}
                                         id={market.marketId}
                                       >
                                         <div
@@ -545,7 +545,7 @@ const ExchRaceTable: React.FC<StoreProps> = (props) => {
                                           venueData.venue || "unknown"
                                         )}/${(venueData.venue || "unknown").toLowerCase().replace(/\s+/g, "-")}/${btoa(
                                           `BetFair:7::${market.matchId || ""}:${moment(market.marketTime).unix()}`
-                                        )}`}
+                                        )}${market.marketId ? `?market_id=${encodeURIComponent(market.marketId)}` : ''}`}
                                         id={market.marketId}
                                       >
                                         <div

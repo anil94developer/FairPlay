@@ -14,6 +14,7 @@ export interface PlaceBetRequest {
   betType: "BACK" | "LAY";
   amount: number;
   oddValue: number;
+  oddSize?: number;
   sessionPrice?: number;
   oddLimt?: string;
   minStake?: number;
@@ -22,6 +23,7 @@ export interface PlaceBetRequest {
   displayOddValue?: number;
   delay?: number;
   betId?: string;
+  [key: string]: any;
 }
 
 export interface CashoutProgressDTO {

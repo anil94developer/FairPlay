@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { connect } from "react-redux";
 import "./bonus.scss";
 import {
   Button,
@@ -8,9 +9,43 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@material-ui/core";
+import USABET_API from "../../api-services/usabet-api";
+import { CURRENCY_TYPE_FACTOR } from "../../constants/CurrencyTypeFactor";
+import { getCurrencyTypeFromToken } from "../../store";
+import { RootState } from "../../models/RootState";
+import Spinner from "../Spinner/Spinner";
 
-const BonusInformation = () => {
+const BonusInformation = (props: { langData?: any }) => {
+  const { langData } = props;
   const [open, setOpen] = useState(false);
+  const [earnedBonus, setEarnedBonus] = useState<number>(0);
+  const [lockedBonus, setLockedBonus] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const cFactor = CURRENCY_TYPE_FACTOR[getCurrencyTypeFromToken()];
+
+  const fetchBonusAmounts = async () => {
+    setLoading(true);
+    try {
+      const response = await USABET_API.post("/user/getBonusAmounts", {});
+      const resData = response?.data;
+      if (resData?.status === true && resData?.data) {
+        setEarnedBonus((resData.data.earnedBonus ?? 0) / cFactor);
+        setLockedBonus((resData.data.lockedBonus ?? 0) / cFactor);
+      } else {
+        setEarnedBonus(0);
+        setLockedBonus(0);
+      }
+    } catch {
+      setEarnedBonus(0);
+      setLockedBonus(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBonusAmounts();
+  }, []);
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -48,42 +83,56 @@ const BonusInformation = () => {
           <span className="title">Bonus Information</span>
         </div>
         <div className="stats-grid">
-          <div className="stat-box">
-            <span className="label">Bonus Balance</span>
-            <span className="value ternary">0</span>
-          </div>
-          <div className="stat-box">
-            <span className="label">Net Exposure</span>
-            <span className="value danger">0.00</span>
-          </div>
-          <div className="stat-box full-width">
-            <button
-              className="bonus-btn"
-              type="button"
-              onClick={handleClickOpen}
-            >
-              <span className="btn-content">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  stroke="white"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+          {loading ? (
+            <div className="stat-box full-width" style={{ padding: "8px" }}>
+              <Spinner />
+            </div>
+          ) : (
+            <>
+              <div className="stat-box">
+                <span className="label">
+                  {langData?.["bonus_balance"] || "BONUS BALANCE"}
+                </span>
+                <span className="value ternary">
+                  {earnedBonus.toFixed(2)}
+                </span>
+              </div>
+              <div className="stat-box">
+                <span className="label">
+                  {langData?.["net_exposure"] || "NET EXPOSURE"}
+                </span>
+                <span className="value danger">0.00</span>
+              </div>
+              <div className="stat-box full-width">
+                <button
+                  className="bonus-btn"
+                  type="button"
+                  onClick={handleClickOpen}
                 >
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                  <path d="M3 8m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z"></path>
-                  <path d="M12 8l0 13"></path>
-                  <path d="M19 12v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-7"></path>
-                  <path d="M7.5 8a2.5 2.5 0 0 1 0 -5a4.8 8 0 0 1 4.5 5a4.8 8 0 0 1 4.5 -5a2.5 2.5 0 0 1 0 5"></path>
-                </svg>
-                LOCKED BONUS: 0
-              </span>
-            </button>
-          </div>
+                  <span className="btn-content">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      strokeWidth="2"
+                      stroke="white"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                      <path d="M3 8m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z"></path>
+                      <path d="M12 8l0 13"></path>
+                      <path d="M19 12v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-7"></path>
+                      <path d="M7.5 8a2.5 2.5 0 0 1 0 -5a4.8 8 0 0 1 4.5 5a4.8 8 0 0 1 4.5 -5a2.5 2.5 0 0 1 0 5"></path>
+                    </svg>
+                    {langData?.["locked_bonus"] || "LOCKED BONUS"}: {lockedBonus.toFixed(2)}
+                  </span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
       <Dialog
@@ -97,7 +146,9 @@ const BonusInformation = () => {
         <DialogContent>
           <div className="bonus-content">
             <DialogContentText id="alert-dialog-description">
-              No Locked Bonus Found
+              {lockedBonus > 0
+                ? `${langData?.["locked_bonus"] || "Locked Bonus"}: ${lockedBonus.toFixed(2)}`
+                : langData?.["no_locked_bonus_found_txt"] || "No Locked Bonus Found"}
             </DialogContentText>
           </div>
         </DialogContent>
@@ -133,4 +184,8 @@ const BonusInformation = () => {
   );
 };
 
-export default BonusInformation;
+const mapStateToProps = (state: RootState) => ({
+  langData: state.common.langData,
+});
+
+export default connect(mapStateToProps, null)(BonusInformation);

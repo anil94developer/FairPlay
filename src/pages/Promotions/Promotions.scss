@@ -19,6 +19,75 @@
   background: black !important;
 }
 
+.locked-bonus-section {
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--ion-background-color, #1a1a1a);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  .locked-bonus-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    color: var(--ion-text-color, #fff);
+  }
+
+  .locked-bonus-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .locked-bonus-card {
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+
+    .locked-bonus-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .locked-bonus-label {
+      color: rgba(255, 255, 255, 0.6);
+      margin-right: 8px;
+    }
+
+    .locked-bonus-value {
+      color: var(--ion-text-color, #fff);
+      font-weight: 500;
+      text-align: right;
+
+      &.status-in_progress {
+        color: #4ade80;
+      }
+      &.status-completed {
+        color: #60a5fa;
+      }
+      &.status-expired {
+        color: #f87171;
+      }
+    }
+  }
+
+  .locked-bonus-empty {
+    padding: 24px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+  }
+}
+
 @media (max-width: 768px) {
   .promotions-page {
     padding: 10px;
@@ -30,5 +99,14 @@
   .promotion-card-ctn {
     grid-template-columns: repeat(1, 1fr);
     grid-template-rows: repeat(1, 1fr);
+  }
+
+  .locked-bonus-section {
+    margin-top: 16px;
+    padding: 12px;
+
+    .locked-bonus-list {
+      grid-template-columns: 1fr;
+    }
   }
 }

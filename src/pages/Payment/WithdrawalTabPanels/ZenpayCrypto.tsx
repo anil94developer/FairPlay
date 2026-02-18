@@ -2,6 +2,7 @@ import { IonSpinner } from "@ionic/react";
 import Tabs from "@material-ui/core/Tabs";
 import Button from "@material-ui/core/Button";
 import Add from "@material-ui/icons/Add";
+import Edit from "@material-ui/icons/Edit";
 import React, { useEffect, useState } from "react";
 import deleteImg from "../../../assets/images/common/icons/accountDelete.svg";
 import bank from "../../../assets/images/common/icons/bank.svg";
@@ -19,6 +20,17 @@ import {
 import { setAlertMsg } from "../../../store/common/commonActions";
 import { AlertDTO } from "../../../models/Alert";
 import { connect } from "react-redux";
+
+const STATIC_CURRENCY_OPTIONS = [
+  { crypto_currency: "INR", blockchain: "INR" },
+  { crypto_currency: "USDT", blockchain: "TRC20" },
+  { crypto_currency: "USDT", blockchain: "ERC20" },
+  { crypto_currency: "USDT", blockchain: "BEP20" },
+  { crypto_currency: "BTC", blockchain: "Bitcoin" },
+  { crypto_currency: "ETH", blockchain: "Ethereum" },
+  { crypto_currency: "USDC", blockchain: "ERC20" },
+  { crypto_currency: "TRX", blockchain: "TRON" },
+];
 
 interface ZenPayProps {
   paymentMethodsInfo: PaymentMethodsInfo;
@@ -41,7 +53,14 @@ interface ZenPayProps {
   addAccount: any;
   setAddAccount: any;
   submitDetails: any;
+  submitWalletCryptoAccount?: (e: React.FormEvent) => void;
+  updateWalletCryptoAccount?: (e: React.FormEvent) => void;
+  setAccountForEditCrypto?: (acc: any) => void;
+  editingAccountId?: string | null;
+  cancelEdit?: () => void;
   loading: boolean;
+  holderName?: any;
+  setHolderName?: Function;
   accountNumber: any;
   setAccountNumber: any;
   withdrawAmount: any;
@@ -81,7 +100,14 @@ const ZenPayCrypto: React.FC<ZenPayProps> = ({
   addAccount,
   setAddAccount,
   submitDetails,
+  submitWalletCryptoAccount,
+  updateWalletCryptoAccount,
+  setAccountForEditCrypto,
+  editingAccountId,
+  cancelEdit,
   loading,
+  holderName,
+  setHolderName,
   setAccountNumber,
   accountNumber,
   withdrawAmount,
@@ -164,9 +190,9 @@ const ZenPayCrypto: React.FC<ZenPayProps> = ({
     <TabPanel value={tabValue} index={index}>
       <div className="account-details-ctn">
         <div className="sub-acc-details-ctn">
-          {paymentOption === "CRYPTO_WALLET_TRANSFER" &&
+          {(paymentOption === "CRYPTO" || paymentOption === "CRYPTO_WALLET_TRANSFER") &&
             accountDetails?.map((acc) => (
-              <div className="account-btn-ctn">
+              <div className="account-btn-ctn" key={acc?.id}>
                 <Button
                   className={
                     acc?.id?.toString() === selectedAccountId
@@ -181,30 +207,45 @@ const ZenPayCrypto: React.FC<ZenPayProps> = ({
                 >
                   <div
                     className={
-                      paymentOption === "CRYPTO_WALLET_TRANSFER"
+                      (paymentOption === "CRYPTO" || paymentOption === "CRYPTO_WALLET_TRANSFER")
                         ? "delete-btn-ctn-div"
                         : "delete-btn-ctn-div-upi"
                     }
                   >
+                    <div className="account-actions">
+                      {submitWalletCryptoAccount && setAccountForEditCrypto && (
+                        <Button
+                          className="method-edit-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAccountForEditCrypto(acc);
+                          }}
+                          title={langData?.["edit"] || "Edit"}
+                        >
+                          <Edit fontSize="small" />
+                        </Button>
+                      )}
+                      <Button
+                        className="method-delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowDeleteModal(true);
+                          setDeleteId(acc?.id);
+                        }}
+                      >
+                        <img src={deleteImg} alt="delete" />
+                      </Button>
+                    </div>
                     <div className="account-number">
-                      {paymentOption === "CRYPTO_WALLET_TRANSFER" && (
+                      {(paymentOption === "CRYPTO" || paymentOption === "CRYPTO_WALLET_TRANSFER") && (
                         <div className="account-ifsc">
                           {acc?.paymentMethodDetails?.cryptoCurrency +
                             " (" +
-                            acc?.paymentMethodDetails?.blockchain +
+                            (acc?.paymentMethodDetails?.blockchain || acc?.paymentMethodDetails?.cryptoCurrency) +
                             ")"}
                         </div>
                       )}
                     </div>
-                    <Button
-                      className="method-delete-btn"
-                      onClick={() => {
-                        setShowDeleteModal(true);
-                        setDeleteId(acc?.id);
-                      }}
-                    >
-                      <img src={deleteImg} />
-                    </Button>
                   </div>
                   <div className="account-name-new-ctn">
                     <div className="account-name-new">
@@ -227,8 +268,9 @@ const ZenPayCrypto: React.FC<ZenPayProps> = ({
           <Button
             title={"Add Wallet"}
             onClick={() => {
+              cancelEdit?.();
               setAddAccount(true);
-              getCurrencyList();
+              if (!submitWalletCryptoAccount) getCurrencyList();
             }}
             className="add-btn "
           >
@@ -240,23 +282,97 @@ const ZenPayCrypto: React.FC<ZenPayProps> = ({
         ) : null}
       </div>
 
-      {paymentOption === "CRYPTO_WALLET_TRANSFER" && addAccount && (
-        <form className="account-inputs" onSubmit={(e) => submitDetails(e)}>
+      {(paymentOption === "CRYPTO" || paymentOption === "CRYPTO_WALLET_TRANSFER") &&
+        (addAccount || editingAccountId) && (
+        <form
+          className="account-inputs"
+          onSubmit={(e) => {
+            if (submitWalletCryptoAccount) {
+              if (editingAccountId) {
+                updateWalletCryptoAccount?.(e);
+              } else {
+                submitWalletCryptoAccount(e);
+              }
+            } else {
+              submitDetails(e);
+            }
+          }}
+        >
           <div className="payment-option-title">
-            {langData?.["enter_details"]}
+            {editingAccountId
+              ? langData?.["edit_account"] || "Edit Account"
+              : langData?.["enter_details"]}
           </div>
+          {editingAccountId && cancelEdit && (
+            <Button
+              className="cancel-edit-btn"
+              onClick={cancelEdit}
+              size="small"
+              style={{ marginBottom: 8 }}
+            >
+              {langData?.["cancel"] || "Cancel"}
+            </Button>
+          )}
+          {submitWalletCryptoAccount && setHolderName && (
+            <InputTemplate
+              required
+              label={langData?.["holder_name"] || "Holder Name"}
+              value={holderName || ""}
+              placeholder={langData?.["holder_name"] || "Enter holder name"}
+              onChange={(e) => setHolderName(e)}
+            />
+          )}
           <div className="select-template">
             <div className="st-label">{langData?.["select_currency"]}</div>
             <Select
-              value={selectedCrypto}
-              onChange={(e: any) => setSelectedCrypto(e.target.value)}
+              value={
+                selectedCrypto?.crypto_currency
+                  ? `${selectedCrypto.crypto_currency}-${selectedCrypto.blockchain || ""}`
+                  : ""
+              }
+              onChange={(e: any) => {
+                const key = e.target.value;
+                if (!key) {
+                  setSelectedCrypto({});
+                  return;
+                }
+                const list = submitWalletCryptoAccount
+                  ? STATIC_CURRENCY_OPTIONS
+                  : currencyList;
+                const found = list.find(
+                  (c) =>
+                    `${c.crypto_currency}-${c.blockchain || ""}` === key
+                );
+                setSelectedCrypto(found || {});
+              }}
               className="select-compo"
+              displayEmpty
+              renderValue={(v) => {
+                if (!v) return langData?.["select_currency"] || "Select Currency";
+                const list = submitWalletCryptoAccount
+                  ? STATIC_CURRENCY_OPTIONS
+                  : currencyList;
+                const found = list.find(
+                  (c) => `${c.crypto_currency}-${c.blockchain || ""}` === v
+                );
+                return found
+                  ? `${found.crypto_currency} (${found.blockchain || ""})`
+                  : langData?.["select_currency"] || "Select Currency";
+              }}
             >
-              {currencyList.map((indv) => (
-                <MenuItem key={indv.crypto_currency} value={indv}>
-                  {indv.crypto_currency + " (" + indv.blockchain + ")"}
-                </MenuItem>
-              ))}
+              <MenuItem value="">
+                <em>{langData?.["select_currency"] || "Select Currency"}</em>
+              </MenuItem>
+              {(submitWalletCryptoAccount ? STATIC_CURRENCY_OPTIONS : currencyList).map(
+                (indv) => (
+                  <MenuItem
+                    key={`${indv.crypto_currency}-${indv.blockchain || ""}`}
+                    value={`${indv.crypto_currency}-${indv.blockchain || ""}`}
+                  >
+                    {indv.crypto_currency + " (" + (indv.blockchain || "") + ")"}
+                  </MenuItem>
+                )
+              )}
             </Select>
           </div>
           <InputTemplate
@@ -301,12 +417,14 @@ const ZenPayCrypto: React.FC<ZenPayProps> = ({
             endIcon={loading ? <IonSpinner name="lines-small" /> : ""}
             disabled={loading ? true : false}
           >
-            {langData?.["add"]}
+            {editingAccountId
+              ? langData?.["update"] || "UPDATE"
+              : langData?.["add"]}
           </Button>
         </form>
       )}
 
-      {paymentOption === "CRYPTO_WALLET_TRANSFER" && selectedAccountId ? (
+      {(paymentOption === "CRYPTO" || paymentOption === "CRYPTO_WALLET_TRANSFER") && selectedAccountId ? (
         <div className="account-inputs">
           <div className="note-msg">{langData?.["withdraw_info_txt"]}</div>
           <div className="payment-option-title">

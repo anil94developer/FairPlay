@@ -19,7 +19,16 @@ import { getCurrencyTypeFromToken } from "../../store";
 import SVLS_API from "../../svls-api";
 
 import { ReactComponent as WalletIcon } from "../../assets/images/icons/walletIcon.svg?react";
-import { FundTransferRecord } from "../../models/FundTransferRecord";
+import USABET_API from "../../api-services/usabet-api";
+
+type WalletStatementRecord = {
+  transactionId: string;
+  transactionType: number | string;
+  amount: number;
+  balanceAfter: number;
+  transactionTime: string;
+  description?: string;
+};
 import { TransactionTypeMap } from "../../util/stringUtil";
 import "./MyWallet.scss";
 
@@ -79,7 +88,7 @@ const MyWallet: React.FC<StoreProps> = (props) => {
 
   const [errorMsg, setErrorMsg] = useState(null);
   const [loading, setLoading] = useState<Boolean>(true);
-  const [records, setRecords] = useState<FundTransferRecord[]>([]);
+  const [records, setRecords] = useState<WalletStatementRecord[]>([]);
   const [balanceInfo, setBalanceInfo] = useState<BalanceInfo>(null);
   const [pageNum, setPageNum] = useState<number>(1);
   const cFactor = CURRENCY_TYPE_FACTOR[getCurrencyTypeFromToken()];
@@ -91,30 +100,51 @@ const MyWallet: React.FC<StoreProps> = (props) => {
     setLoading(true);
     setErrorMsg(null);
     try {
-      // Replaced API call with dummy data
-      const dummyStatements = [
-        {
-          transactionId: "TXN001",
-          transactionType: 0,
-          amount: 1000,
-          balanceAfter: 11000,
-          transactionTime: new Date().toISOString(),
-          remarks: "Dummy Deposit",
-        },
-        {
-          transactionId: "TXN002",
-          transactionType: 1,
-          amount: -500,
-          balanceAfter: 10500,
-          transactionTime: new Date().toISOString(),
-          remarks: "Dummy Withdrawal",
-        },
-      ];
-      setRecords(dummyStatements);
+      const fromDateStr = filters.fromDate
+        ? moment(filters.fromDate).startOf("day").toISOString()
+        : moment().subtract(7, "d").startOf("day").toISOString();
+      const toDateStr = filters.toDate
+        ? moment(filters.toDate).endOf("day").toISOString()
+        : moment().endOf("day").toISOString();
+
+      const response = await USABET_API.post("/account/statements", {
+        from_date: fromDateStr,
+        to_date: toDateStr,
+        limit: 100,
+      });
+
+      const resData = response?.data;
+      const allStatements: WalletStatementRecord[] = [];
+
+      if (resData?.status === true && Array.isArray(resData.data)) {
+        resData.data.forEach((group: any) => {
+          const rows = group?.data;
+          if (Array.isArray(rows)) {
+            rows.forEach((row: any) => {
+              const creditDebit = row.credit_debit ?? 0;
+              allStatements.push({
+                transactionId: row._id || "",
+                transactionType: creditDebit >= 0 ? 0 : 1,
+                amount: creditDebit,
+                balanceAfter: row.balance ?? 0,
+                transactionTime: row.date || "",
+                description: row.description || row.remark || "-",
+              });
+            });
+          }
+        });
+      }
+
+      setRecords(allStatements);
       setNextPageToken(null);
-    } catch (err) {
-      if (err.response && err.response.data) {
-        setErrorMsg(err.response.data.error);
+    } catch (err: any) {
+      setRecords([]);
+      if (err?.response?.data?.message) {
+        setErrorMsg(err.response.data.message);
+      } else if (err?.response?.data?.msg) {
+        setErrorMsg(err.response.data.msg);
+      } else {
+        setErrorMsg(err?.message || "Failed to fetch statements");
       }
       setNextPageToken(null);
     }
@@ -127,7 +157,8 @@ const MyWallet: React.FC<StoreProps> = (props) => {
 
   useEffect(() => {
     fetchRecords();
-  }, [filters]);
+  }, [filters.fromDate, filters.toDate]);
+
 
   const fetchCliamBalance = async () => {
     setLoading(false);
@@ -218,7 +249,7 @@ const MyWallet: React.FC<StoreProps> = (props) => {
     return (
       <div
         className={`upperrow-pad-5 ${
-          row.account > 0 ? "mw-ur-profit" : "mw-ur-loss"
+          row.amount > 0 ? "mw-ur-profit" : "mw-ur-loss"
         } `}
       >
         {row.amount > 0

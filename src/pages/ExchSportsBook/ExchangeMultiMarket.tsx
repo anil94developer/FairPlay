@@ -37,6 +37,8 @@ type T_ExchMultiMarket = {
   exposureMap: any;
   topicUrls: any;
   betFairWSConnected: boolean;
+  setAddNewBet?: Function;
+  setBetsTabVal?: Function;
 };
 
 const ExchMultiMarket: React.FC<T_ExchMultiMarket> = (props) => {
@@ -55,6 +57,8 @@ const ExchMultiMarket: React.FC<T_ExchMultiMarket> = (props) => {
     exposureMap,
     topicUrls,
     betFairWSConnected,
+    setAddNewBet,
+    setBetsTabVal,
   } = props;
   const [multiMarketData] = useMarketLocalState();
 
@@ -232,12 +236,16 @@ const ExchMultiMarket: React.FC<T_ExchMultiMarket> = (props) => {
             getFormattedMinLimit={getFormattedMinLimit}
             getFormattedMaxLimit={getFormattedMaxLimit}
             eventData={eventData}
+            fallbackEventId={eventData?.eventId}
             secondaryMatchOdds={secondaryMatchOdds}
             isMultiMarket={isMultiMarket}
             fetchEvent={fetchEvent}
             marketNotifications={null}
             showMatchOdds={true}
             showSecondaryMatchOdds={true}
+            setBetStartTime={() => {}}
+            setAddNewBet={(val) => setAddNewBet?.(val)}
+            setBetsTabVal={(val) => setBetsTabVal?.(val)}
           />
           {secondaryMarkets?.bookmakers?.length > 0 &&
           secondaryMarkets?.bookmakers[0].runners.length > 0 ? (
@@ -262,6 +270,9 @@ const ExchMultiMarket: React.FC<T_ExchMultiMarket> = (props) => {
                   isMultiMarket={isMultiMarket}
                   fetchEvent={fetchEvent}
                   marketNotifications={null}
+                  setBetStartTime={() => {}}
+                  setAddNewBet={(val) => setAddNewBet?.(val)}
+                  setBetsTabVal={(val) => setBetsTabVal?.(val)}
                 />
               </IonRow>
             </>

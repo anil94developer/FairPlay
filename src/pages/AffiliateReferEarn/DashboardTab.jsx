@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ellip from "../../assets/ellip.svg";
 import affiinviteimg from "../../assets/affi-invite-img.svg";
 import inviteGift from "../../assets/invite-gift.svg";
@@ -8,15 +8,70 @@ import affiBonus2 from "../../assets/affi-bonus-2.svg";
 import { Copy, Plus } from "../../shared/icon";
 import ShareDialog from "./ShareDialog";
 import Dialog from "../../shared/Dialog";
-
-const plData = [
-  { type: "Sports", pl: 0 },
-  { type: "Casino", pl: 0 },
-  { type: "International Casino (QT)", pl: 0 },
-];
+import USABET_API from "../../api-services/usabet-api";
 
 const DashboardTab = () => {
   const [shareDialog, setShareDialog] = useState(false);
+  const [affCount, setAffCount] = useState({
+    total_users: 0,
+    total_affiliate_comm: 0,
+    total_deposit_amount: 0,
+    total_deposit_count: 0,
+  });
+  const [todayPL, setTodayPL] = useState([]);
+  const [affCode, setAffCode] = useState({ refer_code: "", affiliate_code: "" });
+  const [loading, setLoading] = useState(true);
+
+  const inviteLink = affCode.refer_code
+    ? `https://usabet9.com?af_code=${affCode.refer_code}`
+    : affCode.affiliate_code
+    ? `https://usabet9.com?af_code=${affCode.affiliate_code}`
+    : "";
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [countRes, plRes, affCodeRes] = await Promise.all([
+          USABET_API.post("/report/getAffUserCount", {}),
+          USABET_API.post("/report/getAffUserTodayPL", {}),
+          USABET_API.post("/report/getUserAffCode", {}),
+        ]);
+
+        if (countRes?.data?.status && countRes?.data?.data) {
+          setAffCount(countRes.data.data);
+        }
+
+        if (plRes?.data?.status && Array.isArray(plRes?.data?.data?.response)) {
+          setTodayPL(plRes.data.data.response);
+        } else {
+          setTodayPL([]);
+        }
+
+        if (affCodeRes?.data?.status && affCodeRes?.data?.data) {
+          setAffCode({
+            refer_code: affCodeRes.data.data.refer_code || "",
+            affiliate_code: affCodeRes.data.data.affiliate_code || "",
+          });
+        } else {
+          setAffCode({ refer_code: "", affiliate_code: "" });
+        }
+      } catch (err) {
+        setAffCount({
+          total_users: 0,
+          total_affiliate_comm: 0,
+          total_deposit_amount: 0,
+          total_deposit_count: 0,
+        });
+        setTodayPL([]);
+        setAffCode({ refer_code: "", affiliate_code: "" });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <>
       <div class="affiliate-dashboard">
@@ -27,19 +82,27 @@ const DashboardTab = () => {
 
           <div class="status-grid">
             <div class="status-item">
-              <span class="status-value">0</span>
+              <span class="status-value">
+                {loading ? "-" : affCount.total_deposit_amount?.toLocaleString() ?? 0}
+              </span>
               <p>Total Deposit</p>
             </div>
             <div class="status-item">
-              <span class="status-value">0</span>
+              <span class="status-value">
+                {loading ? "-" : affCount.total_deposit_count?.toLocaleString() ?? 0}
+              </span>
               <p>Total Deposit Count</p>
             </div>
             <div class="status-item">
-              <span class="status-value">0</span>
+              <span class="status-value">
+                {loading ? "-" : affCount.total_users?.toLocaleString() ?? 0}
+              </span>
               <p>Total User</p>
             </div>
             <div class="status-item">
-              <span class="status-value">0</span>
+              <span class="status-value">
+                {loading ? "-" : affCount.total_affiliate_comm?.toLocaleString() ?? 0}
+              </span>
               <p>Total Commission</p>
             </div>
           </div>
@@ -67,7 +130,9 @@ const DashboardTab = () => {
               Invitation Code
             </h5>
 
-            <div class="invite-link">https://usabet9.com?af_code=sofia292</div>
+            <div class="invite-link">
+              {loading ? "-" : inviteLink || "-"}
+            </div>
 
             <div class="qr-actions">
               <div class="qr-box">
@@ -121,12 +186,32 @@ const DashboardTab = () => {
               </tr>
             </thead>
             <tbody id="plTableBody">
-              {plData.map((item, index) => (
-                <tr key={index}>
-                  <td class="table-text-left">{item.type}</td>
-                  <td className="table-text-center green-text">{item.pl}</td>
+              {loading ? (
+                <tr>
+                  <td colSpan={2} class="table-text-center">
+                    Loading...
+                  </td>
                 </tr>
-              ))}
+              ) : todayPL.length > 0 ? (
+                todayPL.map((item, index) => (
+                  <tr key={index}>
+                    <td class="table-text-left">{item.type}</td>
+                    <td
+                      className={`table-text-center ${
+                        item.pl > 0 ? "green-text" : item.pl < 0 ? "red-text" : ""
+                      }`}
+                    >
+                      {item.pl}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={2} class="table-text-center">
+                    No data
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

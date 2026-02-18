@@ -1,3 +1,44 @@
+.bonus-amounts-summary {
+  padding: 16px 0;
+  margin-bottom: 16px;
+
+  .bonus-amounts-cards {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .bonus-amount-card {
+    flex: 1;
+    min-width: 140px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    background: var(--custom-table-header-bg, #1a1a2e);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    &.earned .bonus-amount-value {
+      color: #2c8900;
+    }
+
+    &.locked .bonus-amount-value {
+      color: var(--custom-btn-text-variant-1, #f0a500);
+    }
+  }
+
+  .bonus-amount-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--custom-table-body-color);
+  }
+
+  .bonus-amount-value {
+    font-size: 18px;
+    font-weight: 700;
+  }
+}
+
 .redeem-row-ctn {
   background: #000;
 }

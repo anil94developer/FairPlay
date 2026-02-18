@@ -15,6 +15,7 @@ import {
   OPEN_DEPOSIT_MODAL,
   OPEN_WITHDRAW_MODAL,
   MLOBBY_SHOW,
+  SET_USER_PROFILE,
 } from "./authActionTypes";
 import API from "../../api";
 import SVLS_API from "../../svls-api";
@@ -62,6 +63,13 @@ export const loginFailed = (err: string) => {
   return {
     type: LOGIN_FAILED,
     payload: err,
+  };
+};
+
+export const setUserProfile = (userProfile: any) => {
+  return {
+    type: SET_USER_PROFILE,
+    payload: userProfile,
   };
 };
 
@@ -247,7 +255,7 @@ export const login = (username: string, password: string, code: string) => {
         response = await USABET_API.post("/user/userLogin", form, {
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
         });
-
+        // alert(JSON.stringify(response))
         // Check if API returned status: false (error in response body)
         if (response?.data?.status === false) {
           const errorMsg =
@@ -259,6 +267,16 @@ export const login = (username: string, password: string, code: string) => {
         }
       }
       sessionStorage.setItem("username", username);
+
+      // Store user profile from API response (for user_id in wallet APIs)
+      const userData = response?.data?.data;
+      if (userData) {
+        sessionStorage.setItem("user_profile", JSON.stringify(userData));
+        dispatch(setUserProfile(userData));
+        if (userData._id) {
+          sessionStorage.setItem("aid", String(userData._id));
+        }
+      }
 
       // USA Bet returns `token: { accessToken, refreshToken, ... }`
       const accessToken =
@@ -292,6 +310,12 @@ export const login = (username: string, password: string, code: string) => {
           const permission = decoded.perm;
           const role = decoded.role;
           const status = decoded.sts ?? decoded.status;
+          const userId =
+            decoded.uid ?? decoded._id ?? decoded.sub ?? decoded.aid ?? decoded.userId ?? decoded.id;
+          if (userId) {
+            sessionStorage.setItem("aid", String(userId));
+          }
+          // If JWT didn't have userId, use userData._id from API (already set above)
 
           if (status === 2) {
             history.replace("/terms-and-conditions");

@@ -302,64 +302,104 @@ const MyBets: React.FC<StoreProps> = (props) => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch data from API
-      const response = await USABET_API.get("/match/homeMatchesV2");
+      if (filters.selectedGame !== "SPORTS" && filters.selectedGame !== "SPORTS_BOOK") {
+        setBets([]);
+        setNextPageToken(null);
+        setLoading(false);
+        return;
+      }
+
+      const page = filters.pageToken?.length ? filters.pageToken.length + 1 : 1;
+
+      const search: Record<string, any> = {
+        delete_status: 0,
+        is_matched: 1,
+      };
+
+      if (filters.sport !== "All") {
+        search.sport_id = filters.sport;
+      }
+
+      const response = await USABET_API.post("/bet/openBets", {
+        limit: 100,
+        page,
+        search,
+      });
 
       if (response?.data?.status === true && Array.isArray(response.data.data)) {
-        let allMatches = response.data.data;
+        const allBets: UserBet[] = [];
+        let metadata: any = null;
 
-        // Filter by selected sport if not "All"
-        let filteredMatches = allMatches;
-        if (filters.sport !== "All" && filters.selectedGame === "SPORTS") {
-          filteredMatches = allMatches.filter((match: any) => {
-            const sportId = match.sportId || match.sport_id || "";
-            return sportId === filters.sport;
+        response.data.data.forEach((group: any) => {
+          if (Array.isArray(group.metadata) && group.metadata.length > 0) {
+            metadata = group.metadata[0];
+          }
+          if (Array.isArray(group.data)) {
+            group.data.forEach((bet: any) => {
+              const eventType = bet.event_type || "MATCH_ODDS";
+              const isFancy = bet.is_fancy === 1 || bet.is_fancy === "1";
+              const marketType = isFancy
+                ? "FANCY"
+                : eventType === "MATCH_ODDS"
+                ? "MATCH_ODDS"
+                : (eventType as UserBet["marketType"]);
+
+              const mapped: UserBet & {
+                sportId?: string;
+                payOutAmount?: number;
+                sessionRuns?: number | null;
+                categoryType?: string;
+              } = {
+                id: bet.bet_id || bet.id,
+                eventId: bet.match_id || "",
+                eventName: bet.match_name || "",
+                betPlacedTime: bet.createdAt || bet.created_at || "",
+                stakeAmount: (bet.stack || bet.size || 0) / cFactor,
+                payOutAmount: bet.p_l != null ? bet.p_l / cFactor : bet.profit != null ? bet.profit / cFactor : 0,
+                oddValue: bet.odds || 0,
+                marketType,
+                marketName: bet.market_name || "Match Odds",
+                outcomeDesc: bet.selection_name || "",
+                outcomeResult: bet.is_result_declared ? (bet.winner_name ? "Won" : "Lost") : "Open",
+                betType: (bet.is_back === 1 || bet.is_back === "1" ? "BACK" : "LAY") as UserBet["betType"],
+                sportId: bet.sport_id || "",
+                sessionRuns: isFancy ? bet.odds : null,
+                marketId: bet.market_id,
+                categoryType: "SPORTS",
+              };
+
+              allBets.push(mapped);
+            });
+          }
+        });
+
+        let filteredBets = allBets;
+
+        if (filters.startDate || filters.endDate) {
+          const fromTs = filters.startDate
+            ? moment(filters.startDate).startOf("day").valueOf()
+            : 0;
+          const toTs = filters.endDate
+            ? moment(filters.endDate).endOf("day").valueOf()
+            : Infinity;
+          filteredBets = allBets.filter((b) => {
+            const ts = new Date(b.betPlacedTime || 0).getTime();
+            return ts >= fromTs && ts <= toTs;
           });
         }
 
-        // Transform API data to UserBet format
-        const betList: UserBet[] = filteredMatches.map((match: any, index: number) => {
-          const sportId = match.sportId || match.sport_id || "";
-          const bet: UserBet & { sportId?: string; payOutAmount?: number; sessionRuns?: number | null; rowClassName?: string; categoryType?: string } = {
-            id: match.eventId || match.event_id || `bet-${index}`,
-            eventId: match.eventId || match.event_id || "",
-            eventName: match.eventName || match.event_name || "",
-            betPlacedTime: match.openDate || match.open_date || new Date().toISOString(),
-            stakeAmount: (match.stakeAmount || match.stake_amount || 0) / cFactor,
-            payOutAmount: (match.payOutAmount || match.pay_out_amount || 0) / cFactor,
-            oddValue: match.oddValue || match.odd_value || 0,
-            marketType: (match.marketType || match.market_type || "MATCH_ODDS") as UserBet["marketType"],
-            marketName: match.marketName || match.market_name || "Match Odds",
-            outcomeDesc: match.outcomeDesc || match.outcome_desc || "",
-            outcomeResult: match.outcomeResult || match.outcome_result || "Open",
-            betType: (match.betType || match.bet_type || "BACK") as UserBet["betType"],
-            sportId: sportId,
-            sessionRuns: match.sessionRuns || match.session_runs || null,
-              rowClassName: "",
-            categoryType: match.categoryType || match.category_type || "SPORTS",
-          };
-
-          // Set row className based on bet type
-          if (bet.betType === "BACK") {
-          bet.rowClassName = "mb-profit-amount";
-        } else {
-          bet.rowClassName = "mb-loss-amount";
-        }
-
-          return bet;
-        });
-
-        // Sort by betPlacedTime
-        betList.sort((a, b) => {
-          const dateA = new Date(a.betPlacedTime).getTime();
-          const dateB = new Date(b.betPlacedTime).getTime();
+        filteredBets.sort((a, b) => {
+          const dateA = new Date(a.betPlacedTime || 0).getTime();
+          const dateB = new Date(b.betPlacedTime || 0).getTime();
           return sortDesc ? dateB - dateA : dateA - dateB;
         });
 
-      setBets(betList);
-        setNextPageToken(response.data?.pageToken || null);
+        setBets(filteredBets);
+
+        const total = metadata?.total || 0;
+        const hasMore = page * 100 < total;
+        setNextPageToken(hasMore ? String(page + 1) : null);
       } else {
-        // Fallback to empty array if API response is invalid
         setBets([]);
         setNextPageToken(null);
       }

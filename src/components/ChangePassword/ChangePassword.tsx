@@ -10,29 +10,27 @@ import { useFormik } from "formik";
 import React, { useState } from "react";
 import { connect } from "react-redux";
 import * as Yup from "yup";
-import { AuthResponse } from "../../models/api/AuthResponse";
-import { logout } from "../../store";
-import SVLS_API from "../../svls-api";
+import USABET_API from "../../api-services/usabet-api";
 import "./ChangePassword.scss";
 import CustomButton from "../../common/CustomButton/CustomButton";
 import { IconButton, InputAdornment } from "@material-ui/core";
 import { Visibility, VisibilityOff } from "@material-ui/icons";
 
 type ChangePwdProps = {
-  logout: Function;
   showTermsCondi?: boolean;
-  closeHandler: () => void;
-  backHandler: () => void;
+  closeHandler?: () => void;
+  backHandler?: () => void;
   langData: any;
 };
 
 type ChangePasswordRequest = {
-  oldPassword: any;
-  newPassword: string;
+  old_password: string;
+  new_password: string;
+  confirm_password: string;
 };
 
 const ChangePwdForm: React.FC<ChangePwdProps> = (props) => {
-  const { logout, closeHandler, showTermsCondi, langData } = props;
+  const { closeHandler, showTermsCondi, langData } = props;
   const [progress, setProgress] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -71,8 +69,9 @@ const ChangePwdForm: React.FC<ChangePwdProps> = (props) => {
       setErrorMsg(null);
       setSuccessMsg(null);
       const data: ChangePasswordRequest = {
-        oldPassword: values.oldPwd.trim(),
-        newPassword: values.newPwd.trim(),
+        old_password: values.oldPwd.trim(),
+        new_password: values.newPwd.trim(),
+        confirm_password: values.confNewPwd.trim(),
       };
       if (values.newPwd === values.confNewPwd) {
         if (values.newPwd === values.oldPwd) {
@@ -89,25 +88,24 @@ const ChangePwdForm: React.FC<ChangePwdProps> = (props) => {
   const updateNewPassword = async (data: ChangePasswordRequest) => {
     try {
       setProgress(true);
+      setErrorMsg(null);
+      setSuccessMsg(null);
 
-      const userName = sessionStorage.getItem("username");
-      const response: AuthResponse = await SVLS_API.put(
-        `/account/v2/users/${userName}/password:change`,
-        data,
-        {
-          headers: {
-            Authorization: sessionStorage.getItem("jwt_token"),
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await USABET_API.post("/user/selfChangePassword", data);
+      const resData = response?.data;
 
-      if (response.status === 204) {
-        setSuccessMsg(langData?.["password_change_success_txt"]);
-        logout();
+      if (resData?.status === true) {
+        setSuccessMsg(resData?.msg || langData?.["password_change_success_txt"]);
+        formik.resetForm();
+      } else {
+        setErrorMsg(resData?.msg || langData?.["password_change_failed_txt"]);
       }
-    } catch (err) {
-      setErrorMsg((err as any)?.response?.data?.message);
+    } catch (err: any) {
+      setErrorMsg(
+        err?.response?.data?.msg ||
+          err?.response?.data?.message ||
+          langData?.["password_change_failed_txt"]
+      );
     } finally {
       setProgress(false);
     }
@@ -286,10 +284,4 @@ const ChangePwdForm: React.FC<ChangePwdProps> = (props) => {
   );
 };
 
-const mapDispatchToProps = (dispatch: Function) => {
-  return {
-    logout: () => dispatch(logout()),
-  };
-};
-
-export default connect(null, mapDispatchToProps)(ChangePwdForm);
+export default connect(null, null)(ChangePwdForm);

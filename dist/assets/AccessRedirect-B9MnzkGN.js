@@ -1,0 +1,1 @@
+import{c as s,j as t}from"./index-6IAG6nLd.js";const r=e=>{const{langData:c}=e;return t.jsx(t.Fragment,{children:t.jsx("div",{className:"ion-page access-redirect-page",children:c==null?void 0:c.access_redirect_txt})})},a=e=>({langData:e.common.langData}),o=s(a,null)(r);export{o as default};

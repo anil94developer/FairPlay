@@ -1,3 +1,5 @@
+import { UserProfile } from "./UserProfile";
+
 export interface AuthState {
   balanceSummary: {
     balance: number | null;
@@ -25,4 +27,5 @@ export interface AuthState {
   openDepositModal: boolean;
   openWithdrawModal: boolean;
   isMolobby: boolean;
+  userProfile: UserProfile | null;
 }

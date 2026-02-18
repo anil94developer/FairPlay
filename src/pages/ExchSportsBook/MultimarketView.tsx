@@ -182,8 +182,22 @@ const MultiMarketView: React.FC<StoreProps> = (props) => {
     }
   }, [totalOrders]);
   useEffect(() => {
-    if (bets.length > 0) {
+    if (bets?.length > 0) {
       setTabVal(0);
+      setOpenBetslip(true);
+      // Scroll to betslip section when bet is added (mobile)
+      if (isMobile) {
+        setTimeout(() => {
+          const betslipSection = document.getElementById("betslip-section");
+          if (betslipSection) {
+            betslipSection.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+              inline: "nearest",
+            });
+          }
+        }, 100);
+      }
     }
   }, [bets]);
 
@@ -343,6 +357,8 @@ const MultiMarketView: React.FC<StoreProps> = (props) => {
                   eventId={marketData[item]?.eventId}
                   isMultiMarket={true}
                   exposureMap={exposureMap ? exposureMap : null}
+                  setAddNewBet={(val) => setAddNewBet(val)}
+                  setBetsTabVal={(val) => setTabVal(val)}
                 />
               );
             })
@@ -424,6 +440,24 @@ const MultiMarketView: React.FC<StoreProps> = (props) => {
           </IonCol>
         ) : null}
       </IonRow>
+
+      {/* Betslip section - shows when bets exist (mobile & desktop) */}
+      {bets.length > 0 ? (
+        <div
+          id="betslip-section"
+          className={
+            isIOS
+              ? "betslip-section ios-betslip mob-betslip-section"
+              : "betslip-section mob-betslip-section"
+          }
+          style={{ display: "flex" }}
+        >
+          <ExchBetslip
+            setBetStartTime={(date) => setStartTime(date)}
+            setAddNewBet={(val) => setAddNewBet(val)}
+          />
+        </div>
+      ) : null}
     </>
   );
 };

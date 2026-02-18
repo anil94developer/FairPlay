@@ -126,7 +126,7 @@ const ExchangeSportsBook: React.FC<StoreProps> = (props) => {
 
               <Route
                 exact
-                path={`${path}/:eventType/:competition/:eventId/:eventInfo`}
+                path={`${path}/:eventType/:competition/:eventId/:eventInfo/:marketId?`}
                 render={() => <ExchangeAllMarkets loggedIn={loggedIn} />}
               />
 

@@ -3,6 +3,32 @@
   margin-top: 5px;
 }
 
+.tr-summary-ctn {
+  padding: 16px 0;
+  margin-bottom: 16px;
+
+  .tr-summary-card {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: var(--custom-table-header-bg, #1a1a2e);
+  }
+
+  .tr-summary-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--custom-table-body-color);
+  }
+
+  .tr-summary-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ion-color-primary);
+  }
+}
+
 .admin-pl-stmt-ctn {
   height: 100%;
 

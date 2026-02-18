@@ -20,6 +20,9 @@ import "./BonusStatement.scss";
 import { headerParams, lowerRow, upperRow } from "./bonusStatementUtils";
 import { connect } from "react-redux";
 import { RootState } from "../../models/RootState";
+import USABET_API from "../../api-services/usabet-api";
+import { CURRENCY_TYPE_FACTOR } from "../../constants/CurrencyTypeFactor";
+import { getCurrencyTypeFromToken } from "../../store";
 
 type options = { name: string; value: string };
 
@@ -77,6 +80,10 @@ const BonusStatement: React.FC<{ bonusEnabled: boolean; langData: any }> = (
     bonusId: -1,
     open: false,
   });
+  const [earnedBonus, setEarnedBonus] = useState<number>(0);
+  const [lockedBonus, setLockedBonus] = useState<number>(0);
+  const [bonusAmountsLoading, setBonusAmountsLoading] = useState<boolean>(true);
+  const cFactor = CURRENCY_TYPE_FACTOR[getCurrencyTypeFromToken()];
 
   const pageSize = 25;
 
@@ -116,10 +123,29 @@ const BonusStatement: React.FC<{ bonusEnabled: boolean; langData: any }> = (
     }
   };
 
+  const fetchBonusAmounts = async () => {
+    setBonusAmountsLoading(true);
+    try {
+      const response = await USABET_API.post("/user/getBonusAmounts", {});
+      const resData = response?.data;
+      if (resData?.status === true && resData?.data) {
+        setEarnedBonus((resData.data.earnedBonus ?? 0) / cFactor);
+        setLockedBonus((resData.data.lockedBonus ?? 0) / cFactor);
+      } else {
+        setEarnedBonus(0);
+        setLockedBonus(0);
+      }
+    } catch (err) {
+      setEarnedBonus(0);
+      setLockedBonus(0);
+    } finally {
+      setBonusAmountsLoading(false);
+    }
+  };
+
   const getBonusData = async () => {
     setLoading(true);
     try {
-      // Dummy data instead of API call
       const dummyData: BonusProps[] = [
         {
           id: 1,
@@ -324,6 +350,10 @@ const BonusStatement: React.FC<{ bonusEnabled: boolean; langData: any }> = (
   };
 
   useEffect(() => {
+    fetchBonusAmounts();
+  }, []);
+
+  useEffect(() => {
     getBonusData();
   }, [filters, bonusStatus, bonusType]);
 
@@ -369,6 +399,30 @@ const BonusStatement: React.FC<{ bonusEnabled: boolean; langData: any }> = (
       />
 
       <div className="content-ctn light-bg my-bets-content">
+        <div className="bonus-amounts-summary">
+          {bonusAmountsLoading ? (
+            <Spinner />
+          ) : (
+            <div className="bonus-amounts-cards">
+              <div className="bonus-amount-card earned">
+                <span className="bonus-amount-label">
+                  {langData?.["earned_bonus"] || "Earned Bonus"}
+                </span>
+                <span className="bonus-amount-value">
+                  {earnedBonus.toFixed(2)}
+                </span>
+              </div>
+              <div className="bonus-amount-card locked">
+                <span className="bonus-amount-label">
+                  {langData?.["locked_bonus"] || "Locked Bonus"}
+                </span>
+                <span className="bonus-amount-value">
+                  {lockedBonus.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="myb-bets-div">
           {loading ? (
             <Spinner />

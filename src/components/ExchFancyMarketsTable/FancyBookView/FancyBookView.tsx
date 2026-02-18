@@ -30,12 +30,31 @@ const FancyBookView: React.FC<PropsType> = (props) => {
   const cFactor = CURRENCY_TYPE_FACTOR[getCurrencyTypeFromToken()];
 
   const getRiskValue = () => {
-    let probableRunsList = [];
+    let probableRunsList: any[] = [];
     if (exposureMap) {
-      probableRunsList = exposureMap.sort((a, b) => Number(b) - Number(a));
-      let runsMap = {};
-      for (let pr of probableRunsList) {
-        runsMap[pr["runnerId"]] = pr;
+      // exposureMap may be provided as an Array, an Object (map-like), or a Map instance.
+      if (Array.isArray(exposureMap)) {
+        probableRunsList = [...exposureMap];
+      } else if (exposureMap instanceof Map) {
+        probableRunsList = Array.from(exposureMap.values());
+      } else if (typeof exposureMap === "object") {
+        probableRunsList = Object.values(exposureMap);
+      }
+
+      // Guard: ensure we have an array before sorting/mapping
+      if (!Array.isArray(probableRunsList)) probableRunsList = [];
+
+      // Sort by runnerId (numeric) descending so runsMap builds predictably
+      probableRunsList.sort((a: any, b: any) => {
+        const ra = Number(a?.runnerId ?? a?.runner_id ?? 0);
+        const rb = Number(b?.runnerId ?? b?.runner_id ?? 0);
+        return rb - ra;
+      });
+
+      const runsMap: Record<string, any> = {};
+      for (const pr of probableRunsList) {
+        const rId = String(pr?.runnerId ?? pr?.runner_id ?? "");
+        if (rId) runsMap[rId] = pr;
       }
       setRunsRiskMap(runsMap);
     }
@@ -75,32 +94,53 @@ const FancyBookView: React.FC<PropsType> = (props) => {
         <>
           <>
             {/* Show runtime API response if available */}
-            {runtimeData ? (
-              <div className="runtime-data-ctn">
-                {runtimeData.data && typeof runtimeData.data === "object" && !Array.isArray(runtimeData.data) ? (
-                  <TableContainer component={Paper}>
-                    <Table className="fancy-book-table">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Key</TableCell>
-                          <TableCell>Value</TableCell>
+
+            <div className="runtime-data-ctn">
+              {/* If runtimeData is an array of { key, value, valueFull } render as rows */}
+              {/* {runtimeData.length > 0 &&  */}
+              <TableContainer component={Paper}>
+                <Table className="fancy-book-table">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Runner Name</TableCell>
+                      <TableCell>Profit/Loss</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {runtimeData.data.fancy_position.map((row: any, i: number) => {
+                      const formattedKey = String(row.key)
+                        .replace(/^0-/, '')   // remove "0-"
+                        .replace(/\+/, '');  // remove "+"
+
+                      return (
+                        <TableRow key={i}>
+                          <TableCell>
+                            {formattedKey} {i === 0 ? "Or Less" : "Or More"}
+                          </TableCell>
+
+                          <TableCell
+                            className={
+                              Number(row.valueFull) > 0
+                                ? "profit"
+                                : Number(row.valueFull) < 0
+                                  ? "loss"
+                                  : undefined
+                            }
+                          >
+                            {Number(row.valueFull) > 0
+                              ? "+" + Number(row.valueFull).toFixed(2)
+                              : Number(row.valueFull).toFixed(2)}
+                          </TableCell>
                         </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {Object.keys(runtimeData.data).map((k, i) => (
-                          <TableRow key={i}>
-                            <TableCell>{k}</TableCell>
-                            <TableCell>{String(runtimeData.data[k])}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{JSON.stringify(runtimeData, null, 2)}</pre>
-                )}
-              </div>
-            ) : null}
+                      );
+                    })}
+
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {/* } */}
+            </div>
+
 
             {/* Existing open bets / exposure view as fallback */}
             {tableData && Object.keys(runsRiskMap).length > 0 ? (
@@ -121,8 +161,8 @@ const FancyBookView: React.FC<PropsType> = (props) => {
                             {idx === 0
                               ? run + " or Less"
                               : idx === Object.keys(runsRiskMap).length - 1
-                              ? run + " or More"
-                              : run}
+                                ? run + " or More"
+                                : run}
                           </TableCell>
                           <TableCell
                             key={"row-" + idx + "cell-2"}
@@ -130,8 +170,8 @@ const FancyBookView: React.FC<PropsType> = (props) => {
                               runsRiskMap[run]["userRisk"] > 0
                                 ? "profit"
                                 : runsRiskMap[run]["userRisk"] < 0
-                                ? "loss"
-                                : null
+                                  ? "loss"
+                                  : null
                             }
                           >
                             {runsRiskMap[run]["userRisk"] > 0

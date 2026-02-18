@@ -1,0 +1,1 @@
+import{ag as a,j as c}from"./index-6IAG6nLd.js";const g="/assets/title-DtuE18l5.png",p=({className:o,alt:s="website",...t})=>{const{logoSrc:e}=a(),r=e||g;return c.jsx("img",{src:r,alt:s,className:o,...t})};export{p as A};

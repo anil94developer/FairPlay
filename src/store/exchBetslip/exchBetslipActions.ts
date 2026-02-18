@@ -419,20 +419,48 @@ export const cancelBetSuccess = (betID: string) => {
 export const fetchButtonVariables = () => {
   return async (dispatch: Function) => {
     try {
-      // Dummy data instead of API call
-      const dummyButtonVariables: ButtonVariable[] = [
-        { label: "100", stake: 100 },
-        { label: "200", stake: 200 },
-        { label: "500", stake: 500 },
-        { label: "1,000", stake: 1000 },
-        { label: "2,000", stake: 2000 },
-        { label: "5,000", stake: 5000 },
-        { label: "10,000", stake: 10000 },
-        { label: "25,000", stake: 25000 },
-      ];
-      dispatch(setButtonVariables(dummyButtonVariables));
+      const response = await USABET_API.post("/user/getUserMatchStack", {});
+      const resData = response?.data;
+      let buttonVariables: ButtonVariable[] = [];
+
+      if (resData?.status === true) {
+        const matchStack =
+          resData?.data?.match_stack ?? resData?.match_stack ?? [];
+        if (Array.isArray(matchStack) && matchStack.length > 0) {
+          buttonVariables = matchStack.map((val: number) => ({
+            label: String(val),
+            stake: val,
+          }));
+        }
+      }
+
+      if (buttonVariables.length === 0) {
+        buttonVariables = [
+          { label: "100", stake: 100 },
+          { label: "200", stake: 200 },
+          { label: "500", stake: 500 },
+          { label: "1000", stake: 1000 },
+          { label: "2000", stake: 2000 },
+          { label: "5000", stake: 5000 },
+          { label: "10000", stake: 10000 },
+          { label: "25000", stake: 25000 },
+        ];
+      }
+      dispatch(setButtonVariables(buttonVariables));
     } catch (err) {
       console.log(err);
+      dispatch(
+        setButtonVariables([
+          { label: "100", stake: 100 },
+          { label: "200", stake: 200 },
+          { label: "500", stake: 500 },
+          { label: "1000", stake: 1000 },
+          { label: "2000", stake: 2000 },
+          { label: "5000", stake: 5000 },
+          { label: "10000", stake: 10000 },
+          { label: "25000", stake: 25000 },
+        ])
+      );
     }
   };
 };

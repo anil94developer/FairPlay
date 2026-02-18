@@ -17,6 +17,7 @@ import { connect, useDispatch, useSelector } from "react-redux";
 
 import { useHistory } from "react-router-dom";
 import AGPAY_API from "../../api-services/feature-api";
+import USABET_API from "../../api-services/usabet-api";
 import { ReactComponent as MyTransaction } from "../../assets/images/reportIcons/MyTransaction.svg?react";
 import CustomTableMob, {
   HeaderParamsType,
@@ -44,8 +45,6 @@ import Withdrawal from "../Payment/Withdrawal";
 import "./TransactionRequest.scss";
 import { WhatsApp } from "@material-ui/icons";
 import { setAlertMsg } from "../../store/common/commonActions";
-import REPORTING_API from "../../reporting-api";
-import { transactionRequestData } from "../../description/transactionRequest";
 
 type TransactionProps = {
   openDepositModal: boolean;
@@ -57,8 +56,7 @@ type TransactionProps = {
   fetchBalance: Function;
 };
 
-// TODO: use this.
-const TransactionMap = {
+const TransactionMap: Record<string, string> = {
   IN_PROGRESS: "In Progress",
   INITIATED: "Initiated",
   APPROVAL_PENDING: "Approval Pending",
@@ -67,6 +65,7 @@ const TransactionMap = {
   SUCCEEDED: "Succeeded",
   FAILED: "Failed",
   CANCELLED: "Cancelled",
+  ACCEPTED: "Accepted",
 };
 
 const TransactionRequest: React.FC<TransactionProps> = (props) => {
@@ -101,6 +100,7 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
   const [showDeposit, setShowDeposit] = useState<boolean>(true);
   const [showWithdrawal, setShowWithdrawal] = useState<boolean>(true);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const [totalExposure, setTotalExposure] = useState<number>(0);
   const dispatch = useDispatch();
 
   const headerParams: HeaderParamsType[] = [
@@ -198,21 +198,69 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
     setErrorMsg(null);
 
     try {
-      const items = transactionRequestData;
-      // Remove the response.data.nextPageToken line since we're using dummy data
-      setNextPageToken(null); // Set to null for dummy data
-      for (const item of items) {
-        item.amount = item.amount / cFactor;
+      const fromDateStr = fromDate
+        ? moment(fromDate).startOf("day").toISOString()
+        : moment().subtract(3, "d").startOf("day").toISOString();
+      const toDateStr = toDate
+        ? moment(toDate).endOf("day").toISOString()
+        : moment().endOf("day").toISOString();
+
+      const response = await USABET_API.post("/account/statements", {
+        from_date: fromDateStr,
+        to_date: toDateStr,
+        limit: 100,
+      });
+
+      const resData = response?.data;
+      let items: TransactionsResponse[] = [];
+
+      if (resData?.status === true && Array.isArray(resData.data)) {
+        resData.data.forEach((group: any) => {
+          const rows = group?.data;
+          if (Array.isArray(rows)) {
+            rows.forEach((row: any) => {
+              const creditDebit = row.credit_debit ?? 0;
+              const txType = creditDebit >= 0 ? "DEPOSIT" : "WITHDRAW";
+              const amt = creditDebit / cFactor;
+              items.push({
+                transactionId: row._id || "",
+                transactionType: txType,
+                amount: amt,
+                approvedAmount: amt,
+                txStatus: "ACCEPTED",
+                startTime: row.date || "",
+                notes: row.remark || row.description || "-",
+                paymentMethod: row.sport_name || "-",
+                remarks: row.remark,
+              } as TransactionsResponse);
+            });
+          }
+        });
       }
+
+      if (transactionType !== "ALL") {
+        items = items.filter((t) => t.transactionType === transactionType);
+      }
+      if (transactionStatus !== "ALL") {
+        items = items.filter((t) => t.txStatus === transactionStatus);
+      }
+
       setTransactionRequest(items);
-    } catch (err) {
-      if (err.response && err.response.data) {
+      setTotalExposure(0);
+      setNextPageToken(null);
+    } catch (err: any) {
+      setTransactionRequest([]);
+      if (err?.response?.data?.error) {
         setErrorMsg(err.response.data.error);
+      } else if (err?.response?.data?.msg) {
+        setErrorMsg(err.response.data.msg);
+      } else {
+        setErrorMsg(err?.message || "Failed to fetch transactions");
       }
       setNextPageToken(null);
     }
     setLoading(false);
-  }, [cFactor]);
+  }, [cFactor, fromDate, toDate, transactionType, transactionStatus]);
 
   const nextPage = () => {
     if (nextPageToken) {
@@ -241,7 +289,7 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
 
   useEffect(() => {
     fetchTransactionRequest();
-  }, [fetchTransactionRequest]);
+  }, [fetchTransactionRequest, fromDate, toDate, transactionType, transactionStatus]);
 
   const fromDateChangeHandler = (d: Moment) => {
     setfromDate(d);
@@ -486,6 +534,16 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
         <IonCol className="tr-table-ctn">
           <div className="reports-ctn my-bets-ctn">
             <div className="content-ctn light-bg my-bets-content">
+              <div className="tr-summary-ctn">
+                <div className="tr-summary-card">
+                  <span className="tr-summary-label">
+                    {langData?.["total_exposure"] || "Total Exposure"}
+                  </span>
+                  <span className="tr-summary-value">
+                    {loading ? "-" : totalExposure.toFixed(2)}
+                  </span>
+                </div>
+              </div>
               <div className="myb-bets-div">
                 {loading ? (
                   <Spinner />
@@ -557,11 +615,11 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
                                         {row.transactionType?.toLowerCase()}
                                       </TableCell>
                                       <TableCell align="left">
-                                        {row.amount.toFixed(2)}
+                                        {(row.amount ?? 0).toFixed(2)}
                                       </TableCell>
                                       <TableCell>
-                                        {row?.approvedAmount
-                                          ? row.approvedAmount
+                                        {row?.approvedAmount != null
+                                          ? Number(row.approvedAmount).toFixed(2)
                                           : "-"}
                                       </TableCell>
                                       <TableCell align="left">

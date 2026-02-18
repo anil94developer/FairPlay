@@ -14,6 +14,7 @@ import { useHistory } from "react-router-dom";
 import ReportBackBtn from "../../common/ReportBackBtn/ReportBackBtn";
 import { setAlertMsg } from "../../store/common/commonActions";
 import { AlertDTO } from "../../models/Alert";
+import USABET_API from "../../api-services/usabet-api";
 
 type StoreProps = {
   buttonVariables: ButtonVariable[];
@@ -31,29 +32,47 @@ const MyBets: React.FC<StoreProps> = (props) => {
   const [updateVariables, setUpdateVariables] = useState<ButtonVariable[]>();
 
   const updateButtonVariables = async () => {
+    if (!updateVariables || updateVariables.length === 0) return;
     setLoading(true);
     for (let uV of updateVariables) {
-      if (!uV.label || !uV.stake) {
-        dispatch(
-          setAlertMsg({
-            type: "error",
-            message: langData?.["invalid_label_or_amount_txt"],
-          })
-        );
+      if (!uV.label || uV.stake === undefined || uV.stake === null) {
+        setAlertMsg({
+          type: "error",
+          message: langData?.["invalid_label_or_amount_txt"],
+        });
         setLoading(false);
-        return 0;
+        return;
       }
     }
-    // Dummy data - removed API call
-    // Simulate successful save
-    setTimeout(() => {
-      setAlertMsg({
-        type: "success",
-        message: langData?.["button_variables_save_success_txt"],
+    try {
+      const matchStack = updateVariables.map((v) => Number(v.stake) || 0);
+      const response = await USABET_API.post("/user/updateMatchStack", {
+        match_stack: matchStack,
       });
-      fetchButtonVariables();
+      const resData = response?.data;
+      if (resData?.status === true) {
+        setAlertMsg({
+          type: "success",
+          message: resData?.msg || langData?.["button_variables_save_success_txt"],
+        });
+        fetchButtonVariables();
+      } else {
+        setAlertMsg({
+          type: "error",
+          message: resData?.msg || langData?.["button_variables_save_failed_txt"],
+        });
+      }
+    } catch (err: any) {
+      setAlertMsg({
+        type: "error",
+        message:
+          err?.response?.data?.msg ||
+          err?.response?.data?.message ||
+          langData?.["button_variables_save_failed_txt"],
+      });
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   useEffect(() => {

@@ -3,9 +3,11 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
+import { FormControl, MenuItem, Select } from "@material-ui/core";
 import React, { lazy, useEffect, useRef, useState } from "react";
 import { connect, useDispatch } from "react-redux";
 import FEATURE_API from "../../api-services/feature-api";
+import USABET_API from "../../api-services/usabet-api";
 import { RootState } from "../../models/RootState";
 import "./Payment.scss";
 import "./Withdraw.scss";
@@ -26,13 +28,20 @@ import {
   normalizeInput,
 } from "../../util/stringUtil";
 import { AccountDetails } from "./AccountDetails";
-import { fetchPaymentMethod } from "./WithdrawalTabPanels/common";
+import {
+  fetchPaymentMethod,
+  fetchWalletBankAccountTypesGet,
+  fetchWalletBankAccounts,
+  fetchWalletCryptoAccounts,
+  fetchWalletUpiAccounts,
+} from "./WithdrawalTabPanels/common";
 import SVLS_API from "../../api-services/svls-api";
 const AbcMoney = lazy(() => import("./WithdrawalTabPanels/AbcMoney"));
 const Pgman = lazy(() => import("./WithdrawalTabPanels/Pgman"));
 const XenonPay = lazy(() => import("./WithdrawalTabPanels/XenonPay"));
 const ZenPay = lazy(() => import("./WithdrawalTabPanels/Zenpay"));
 const ZenPayCrypto = lazy(() => import("./WithdrawalTabPanels/ZenpayCrypto"));
+const ZenPayUpi = lazy(() => import("./WithdrawalTabPanels/ZenpayUpi"));
 
 type StoreProps = {
   setOpenWithdrawModal: Function;
@@ -94,6 +103,24 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
   const [minAmountLimitPerDay, setMinAmountLimitPerDay] = useState<number>(0);
   const [phoneNumbeErrorMsg, setPhoneNumbeErrorMsg] = useState<string>("");
   const [otpLoader, setOtpLoader] = useState<boolean>(false);
+  const [bankType, setBankType] = useState<string>("SAVING");
+  const [bankAccountType, setBankAccountType] = useState<string>("");
+  const [cryptoAccountType, setCryptoAccountType] = useState<string>("");
+  const [upiAccountType, setUpiAccountType] = useState<string>("");
+  const [bankAccountTypes, setBankAccountTypes] = useState<
+    Array<{ _id: string; name?: string; category?: string }>
+  >([]);
+  const [walletPaymentTypes, setWalletPaymentTypes] = useState<
+    Array<{ _id: string; name?: string; category?: string }>
+  >([]);
+  const [bankFormErrors, setBankFormErrors] = useState<Record<string, string>>({});
+  const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
+  const [walletLimits, setWalletLimits] = useState<{
+    deposit_min_limit?: number;
+    withdraw_min_limit?: number;
+    deposit_max_limit?: number;
+    withdraw_max_limit?: number;
+  } | null>(null);
 
   const successToast = (mess: string) => {
     setAlertMsg({
@@ -158,7 +185,6 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
   };
 
   const getPaymentProviders = () => {
-    setPaymentMethodsInfo(paymentMethods?.withdrawMethods);
     setPerDayLimit(paymentMethods?.perDayLimit);
     setPerTxnLimit(paymentMethods?.perTxnLimit);
     setMinTxnAmount(paymentMethods?.minTxnAmount);
@@ -168,6 +194,50 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
   useEffect(() => {
     setPaymentGatewaysCount(0);
     getPaymentProviders();
+    USABET_API.post("/user/getUserShoutPeWalletLimit")
+      .then((res) => {
+        if (res?.data?.status && res?.data?.data) {
+          setWalletLimits(res.data.data);
+          const d = res.data.data;
+          if (d?.withdraw_min_limit != null) setMinTxnAmount(d.withdraw_min_limit);
+          if (d?.withdraw_max_limit != null) setPerTxnLimit(d.withdraw_max_limit);
+        }
+      })
+      .catch(() => {});
+    fetchWalletBankAccountTypesGet().then((types) => {
+      setWalletPaymentTypes(types);
+      const bankTypes = types.filter((t) => t?.category === "BANK");
+      const cryptoTypes = types.filter((t) => t?.category === "CRYPTO");
+      const upiTypes = types.filter((t) => t?.category === "UPI");
+      const dynamicMethods: Record<string, any> = {};
+      if (bankTypes.length > 0) {
+        dynamicMethods["BANK"] = ["ZENPAY", "ZENPAY1", "ZENPAY2"];
+        dynamicMethods["ZENPAY"] = ["BANK"];
+        dynamicMethods["ZENPAY1"] = ["BANK"];
+        dynamicMethods["ZENPAY2"] = ["BANK"];
+      }
+      if (cryptoTypes.length > 0) {
+        dynamicMethods["CRYPTO"] = ["ZENPAYCRYPTO"];
+        dynamicMethods["ZENPAYCRYPTO"] = ["CRYPTO"];
+      }
+      if (upiTypes.length > 0) {
+        dynamicMethods["UPI"] = ["ZENPAYUPI"];
+        dynamicMethods["ZENPAYUPI"] = ["UPI"];
+      }
+      if (Object.keys(dynamicMethods).length > 0) {
+        setPaymentMethodsInfo(dynamicMethods);
+        const initialOption =
+          bankTypes.length > 0 ? "BANK" : cryptoTypes.length > 0 ? "CRYPTO" : "UPI";
+        setPaymentOption(initialOption);
+        setProvidersList(dynamicMethods[initialOption] || []);
+      } else {
+        setPaymentMethodsInfo(paymentMethods?.withdrawMethods || {});
+        setPaymentOption("BANK_TRANSFER");
+      }
+    }).catch(() => {
+      setPaymentMethodsInfo(paymentMethods?.withdrawMethods || {});
+      setPaymentOption("BANK_TRANSFER");
+    });
   }, []);
 
   const submitAbcPayment = async (e, selectedPayment = "abcmoney") => {
@@ -409,14 +479,48 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
       setDisplayName("");
       setIfscCode("");
       setAddAccount(false);
+      setEditingAccountId(null);
+      if (paymentOption === "BANK" || paymentOption === "BANK_TRANSFER") {
+        const bankTypeItem = walletPaymentTypes.find((t) => t?.category === "BANK");
+        const bankTypeId = bankTypeItem?._id || bankAccountType;
+        if (bankTypeItem) setBankAccountType(bankTypeItem._id);
+        fetchWalletBankAccounts(setAccountDetails, bankTypeId);
+      } else if (
+        paymentOption === "CRYPTO" ||
+        paymentOption === "ZENPAYCRYPTO" ||
+        paymentOption === "CRYPTO_WALLET_TRANSFER"
+      ) {
+        const cryptoTypeItem = walletPaymentTypes.find(
+          (t) => t?.category === "CRYPTO"
+        );
+        const cryptoTypeId = cryptoTypeItem?._id || cryptoAccountType;
+        if (cryptoTypeItem) setCryptoAccountType(cryptoTypeItem._id);
+        fetchWalletCryptoAccounts(setAccountDetails, cryptoTypeId);
+      } else if (paymentOption === "UPI" || paymentOption === "ZENPAYUPI") {
+        const upiTypeItem = walletPaymentTypes.find((t) => t?.category === "UPI");
+        const upiTypeId = upiTypeItem?._id || upiAccountType;
+        if (upiTypeItem) setUpiAccountType(upiTypeItem._id);
+        fetchWalletUpiAccounts(setAccountDetails, upiTypeId);
+      } else {
+        fetchPaymentMethod(paymentOption, setAccountDetails);
+      }
     }
-  }, [paymentOption]);
+  }, [paymentOption, walletPaymentTypes]);
 
   useEffect(() => {
     if (addAccount) {
       setSelectedAccountId("");
+      setBankFormErrors({});
+      if (paymentOption === "BANK" || paymentOption === "BANK_TRANSFER") {
+        const bankTypes = walletPaymentTypes.filter((t) => t?.category === "BANK");
+        setBankAccountTypes(bankTypes);
+        if (bankTypes.length > 0 && !bankAccountType) {
+          setBankAccountType(bankTypes[0]._id);
+        }
+      }
     }
-  }, [addAccount]);
+  }, [addAccount, paymentOption, walletPaymentTypes]);
+
 
   useEffect(() => {
     if (selectedAccountId) {
@@ -513,6 +617,425 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
     }
   };
 
+  const validateBankAccountForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    const holder = holderName?.trim();
+    const accNum = accountNumber?.trim();
+    const ifsc = ifscCode?.trim();
+    const bank = bankName?.trim();
+
+    if (!holder) {
+      errors.holderName =
+        langData?.["account_holder_name"] || "Account holder name is required";
+    } else if (holder.length < 2) {
+      errors.holderName = "Name must be at least 2 characters";
+    }
+
+    if (!accNum) {
+      errors.accountNumber =
+        langData?.["enter_account_no"] || "Account number is required";
+    } else if (!/^\d{9,18}$/.test(accNum)) {
+      errors.accountNumber = "Account number must be 9–18 digits";
+    }
+
+    if (!bank) {
+      errors.bankName =
+        langData?.["bank_name"] || "Bank name is required";
+    }
+
+    if (!ifsc) {
+      errors.ifscCode =
+        langData?.["ifsc_code"] || "IFSC code is required";
+    } else if (!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(ifsc.toUpperCase())) {
+      errors.ifscCode = "Invalid IFSC (e.g. SBIN0001234)";
+    }
+
+    if (!bankAccountType && bankAccountTypes.length > 0) {
+      errors.bankAccountType =
+        langData?.["select_bank_type"] ||
+        "Please select a bank account type";
+    }
+
+    setBankFormErrors(errors);
+    const isValid = Object.keys(errors).length === 0;
+    if (!isValid) {
+      setAlertMsg({
+        type: "error",
+        message: Object.values(errors)[0],
+      });
+    }
+    return isValid;
+  };
+
+  const getApiErrorMessage = (msg: string): string => {
+    if (!msg) return langData?.["general_err_txt"] || "Something went wrong";
+    if (
+      msg.toLowerCase().includes("wl bank account") ||
+      msg.toLowerCase().includes("own bank account")
+    ) {
+      return (
+        langData?.["wl_bank_account_err"] ||
+        "Please select a bank account type from your allowed options."
+      );
+    }
+    if (
+      msg.toLowerCase().includes("valid objectid") ||
+      msg.toLowerCase().includes("valid object id")
+    ) {
+      return (
+        langData?.["invalid_bank_type_err"] ||
+        "Please select a valid bank account type."
+      );
+    }
+    return msg;
+  };
+
+  const submitWalletBankAccount = async (e) => {
+    e.preventDefault();
+    setBankFormErrors({});
+    if (!validateBankAccountForm()) return;
+    setLoading(true);
+    try {
+      const formData = new URLSearchParams();
+      formData.append("bank_account_type", bankAccountType);
+      formData.append("bank_account_type_category", "BANK");
+      formData.append("holder_name", normalizeInput(holderName.trim()));
+      formData.append("bank_name", normalizeInput(bankName?.trim() || ""));
+      formData.append("account_number", normalizeInput(accountNumber.trim()));
+      formData.append(
+        "ifsc_code",
+        normalizeInput(ifscCode?.trim() || "").toUpperCase()
+      );
+      formData.append("bank_type", bankType);
+
+      const response = await USABET_API.post(
+        `/wallet/bankAccountCreate`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+      const data = response?.data;
+      if (data?.status) {
+        successToast(
+          data?.msg || langData?.["details_saved_success_txt"] || "Created Successfully"
+        );
+        setAddAccount(false);
+        setHolderName("");
+        setAccountNumber("");
+        setBankName("");
+        setBranchName("");
+        setIfscCode("");
+        setBankType("SAVING");
+        setBankFormErrors({});
+        fetchWalletBankAccounts(setAccountDetails, bankAccountType);
+      } else {
+        const errMsg = getApiErrorMessage(data?.msg || data?.message || "");
+        setAlertMsg({ type: "error", message: errMsg });
+      }
+      setLoading(false);
+    } catch (error: any) {
+      const errData = error?.response?.data;
+      const errMsg = getApiErrorMessage(
+        errData?.msg || errData?.message || error?.message || ""
+      );
+      setAlertMsg({ type: "error", message: errMsg });
+      setLoading(false);
+    }
+  };
+
+  const submitWalletCryptoAccount = async (e) => {
+    e.preventDefault();
+    if (!selectedCrypto?.crypto_currency) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["select_currency"] || "Please select a currency",
+      });
+      return;
+    }
+    if (!accountNumber?.trim()) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["enter_wallet_address"] || "Please enter wallet address",
+      });
+      return;
+    }
+    if (!holderName?.trim()) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["holder_name"] || "Please enter holder name",
+      });
+      return;
+    }
+    if (!cryptoAccountType) {
+      setAlertMsg({
+        type: "error",
+        message: "Crypto account type not loaded. Please try again.",
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      const formData = new URLSearchParams();
+      formData.append("bank_account_type", cryptoAccountType);
+      formData.append("bank_account_type_category", "CRYPTO");
+      formData.append("holder_name", normalizeInput(holderName.trim()));
+      formData.append("crypto_coin_type", selectedCrypto.crypto_currency);
+      formData.append("crypto_wallet", normalizeInput(accountNumber.trim()));
+      if (selectedCrypto.blockchain) {
+     //   formData.append("blockchain", selectedCrypto.blockchain);
+      }
+      if (selectedCrypto.network_id) {
+        formData.append("network_id", selectedCrypto.network_id);
+      }
+
+      const response = await USABET_API.post(
+        `/wallet/bankAccountCreate`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+      const data = response?.data;
+      if (data?.status) {
+        successToast(
+          data?.msg || langData?.["details_saved_success_txt"] || "Wallet added successfully"
+        );
+        setAddAccount(false);
+        setAccountNumber("");
+        setHolderName("");
+        setSelectedCrypto({});
+        fetchWalletCryptoAccounts(setAccountDetails, cryptoAccountType);
+      } else {
+        const errMsg = getApiErrorMessage(data?.msg || data?.message || "");
+        setAlertMsg({ type: "error", message: errMsg });
+      }
+      setLoading(false);
+    } catch (error: any) {
+      const errData = error?.response?.data;
+      const errMsg = getApiErrorMessage(
+        errData?.msg || errData?.message || error?.message || ""
+      );
+      setAlertMsg({ type: "error", message: errMsg });
+      setLoading(false);
+    }
+  };
+
+  const updateWalletCryptoAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAccountId) return;
+    if (!selectedCrypto?.crypto_currency) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["select_currency"] || "Please select a currency",
+      });
+      return;
+    }
+    if (!accountNumber?.trim()) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["enter_wallet_address"] || "Please enter wallet address",
+      });
+      return;
+    }
+    if (!holderName?.trim()) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["holder_name"] || "Please enter holder name",
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      const formData = new URLSearchParams();
+      formData.append("id", editingAccountId);
+      formData.append("holder_name", normalizeInput(holderName.trim()));
+      formData.append("crypto_coin_type", selectedCrypto.crypto_currency);
+      formData.append("crypto_wallet", normalizeInput(accountNumber.trim()));
+
+      const response = await USABET_API.post(
+        `/wallet/bankAccountUpdate`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+      const data = response?.data;
+      if (data?.status) {
+        successToast(
+          data?.msg || langData?.["details_saved_success_txt"] || "Updated Successfully"
+        );
+        cancelEdit();
+        fetchWalletCryptoAccounts(setAccountDetails, cryptoAccountType);
+      } else {
+        setAlertMsg({
+          type: "error",
+          message: getApiErrorMessage(data?.msg || data?.message || ""),
+        });
+      }
+      setLoading(false);
+    } catch (error: any) {
+      const errData = error?.response?.data;
+      setAlertMsg({
+        type: "error",
+        message: getApiErrorMessage(
+          errData?.msg || errData?.message || error?.message || ""
+        ),
+      });
+      setLoading(false);
+    }
+  };
+
+  const submitWalletUpiAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!holderName?.trim()) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["account_name"] || "Please enter account name",
+      });
+      return;
+    }
+    if (!accountNumber?.trim()) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["upi_id"] || "Please enter UPI ID",
+      });
+      return;
+    }
+    if (!phoneNumber?.trim()) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["mobile_no"] || "Please enter mobile number",
+      });
+      return;
+    }
+    if (!upiAccountType) {
+      setAlertMsg({
+        type: "error",
+        message: "UPI account type not loaded. Please try again.",
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      const formData = new URLSearchParams();
+      formData.append("bank_account_type", upiAccountType);
+      formData.append("bank_account_type_category", "UPI");
+      formData.append("holder_name", normalizeInput(holderName.trim()));
+      formData.append("upi_id", normalizeInput(accountNumber.trim()));
+      formData.append("upi_phone_number", normalizeInput(phoneNumber.trim()));
+
+      const response = await USABET_API.post(
+        `/wallet/bankAccountCreate`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+      const data = response?.data;
+      if (data?.status) {
+        successToast(
+          data?.msg || langData?.["details_saved_success_txt"] || "UPI added successfully"
+        );
+        setAddAccount(false);
+        setHolderName("");
+        setAccountNumber("");
+        setPhoneNumber("");
+        fetchWalletUpiAccounts(setAccountDetails, upiAccountType);
+      } else {
+        setAlertMsg({
+          type: "error",
+          message: getApiErrorMessage(data?.msg || data?.message || ""),
+        });
+      }
+      setLoading(false);
+    } catch (error: any) {
+      const errData = error?.response?.data;
+      setAlertMsg({
+        type: "error",
+        message: getApiErrorMessage(
+          errData?.msg || errData?.message || error?.message || ""
+        ),
+      });
+      setLoading(false);
+    }
+  };
+
+  const updateWalletUpiAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAccountId) return;
+    if (!holderName?.trim()) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["account_name"] || "Please enter account name",
+      });
+      return;
+    }
+    if (!accountNumber?.trim()) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["upi_id"] || "Please enter UPI ID",
+      });
+      return;
+    }
+    if (!phoneNumber?.trim()) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["mobile_no"] || "Please enter mobile number",
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      const formData = new URLSearchParams();
+      formData.append("id", editingAccountId);
+      formData.append("holder_name", normalizeInput(holderName.trim()));
+      formData.append("upi_id", normalizeInput(accountNumber.trim()));
+      formData.append("upi_phone_number", normalizeInput(phoneNumber.trim()));
+
+      const response = await USABET_API.post(
+        `/wallet/bankAccountUpdate`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+      const data = response?.data;
+      if (data?.status) {
+        successToast(
+          data?.msg || langData?.["details_saved_success_txt"] || "Updated Successfully"
+        );
+        cancelEdit();
+        fetchWalletUpiAccounts(setAccountDetails, upiAccountType);
+      } else {
+        setAlertMsg({
+          type: "error",
+          message: getApiErrorMessage(data?.msg || data?.message || ""),
+        });
+      }
+      setLoading(false);
+    } catch (error: any) {
+      const errData = error?.response?.data;
+      setAlertMsg({
+        type: "error",
+        message: getApiErrorMessage(
+          errData?.msg || errData?.message || error?.message || ""
+        ),
+      });
+      setLoading(false);
+    }
+  };
+
   const submitXenonPayPaymentDetails = async (e) => {
     e.preventDefault();
     console.log(e);
@@ -560,24 +1083,159 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
   };
 
   const deletePaymentMethod = async () => {
+    const isWalletBank =
+      (paymentOption === "BANK" || paymentOption === "BANK_TRANSFER") &&
+      paymentMethodsInfo?.BANK;
+    const isWalletCrypto =
+      (paymentOption === "CRYPTO" ||
+        paymentOption === "ZENPAYCRYPTO" ||
+        paymentOption === "CRYPTO_WALLET_TRANSFER") &&
+      paymentMethodsInfo?.CRYPTO;
+    const isWalletUpi =
+      (paymentOption === "UPI" || paymentOption === "ZENPAYUPI") &&
+      paymentMethodsInfo?.UPI;
+    if ((isWalletBank || isWalletCrypto || isWalletUpi) && deleteId) {
+      try {
+        const response = await USABET_API.post(`/wallet/bankAccountDelete`, {
+          id: String(deleteId),
+        });
+        if (response?.data?.status || response?.status === 200) {
+          if (isWalletBank) {
+            fetchWalletBankAccounts(setAccountDetails, bankAccountType);
+          } else if (isWalletCrypto) {
+            fetchWalletCryptoAccounts(setAccountDetails, cryptoAccountType);
+          } else {
+            fetchWalletUpiAccounts(setAccountDetails, upiAccountType);
+          }
+          successToast(
+            response?.data?.msg ||
+              langData?.["beneficiary_account_deleted_success_txt"] ||
+              "Bank account successfully deleted."
+          );
+        } else {
+          errorToast(response?.data?.msg || langData?.["general_err_txt"]);
+        }
+      } catch (err: any) {
+        errorToast(
+          err?.response?.data?.msg ||
+            err?.response?.data?.message ||
+            langData?.["general_err_txt"]
+        );
+      }
+    } else {
+      try {
+        const response = await AGPAY_API.delete(
+          `/agpay/v2/pgman/payment-methods/${deleteId}`,
+          {
+            headers: {
+              Authorization: sessionStorage.getItem("jwt_token"),
+            },
+          }
+        );
+        if (response.status === 204 || 200) {
+          fetchPaymentMethod(paymentOption, setAccountDetails);
+          successToast(langData?.["beneficiary_account_deleted_success_txt"]);
+        }
+      } catch (err) {
+        errorToast(err.response?.data?.message);
+      }
+    }
+    setShowDeleteModal(false);
+    setDeleteId(null);
+  };
+
+  const setAccountForEdit = (acc: any) => {
+    setHolderName(acc?.paymentMethodDetails?.accountHolderName || "");
+    setAccountNumber(acc?.paymentMethodDetails?.accountNumber || "");
+    setBankName(acc?.paymentMethodDetails?.bankName || "");
+    setIfscCode(acc?.paymentMethodDetails?.ifscCode || "");
+    setBankType(acc?.paymentMethodDetails?.bankType || "SAVING");
+    setEditingAccountId(acc?.id?.toString() || null);
+    setAddAccount(true);
+  };
+
+  const cancelEdit = () => {
+    setEditingAccountId(null);
+    setAddAccount(false);
+    setHolderName("");
+    setAccountNumber("");
+    setBankName("");
+    setBranchName("");
+    setIfscCode("");
+    setPhoneNumber("");
+    setSelectedCrypto({});
+    setBankFormErrors({});
+  };
+
+  const setAccountForEditUpi = (acc: any) => {
+    setHolderName(acc?.paymentMethodDetails?.accountHolderName || "");
+    setAccountNumber(acc?.paymentMethodDetails?.upiId || acc?.paymentMethodDetails?.accountNumber || "");
+    setPhoneNumber(acc?.paymentMethodDetails?.upiPhoneNumber || "");
+    setEditingAccountId(acc?.id?.toString() || null);
+    setAddAccount(true);
+  };
+
+  const setAccountForEditCrypto = (acc: any) => {
+    setHolderName(acc?.paymentMethodDetails?.accountHolderName || "");
+    setAccountNumber(acc?.paymentMethodDetails?.walletAddress || acc?.paymentMethodDetails?.accountNumber || "");
+    setSelectedCrypto({
+      crypto_currency: acc?.paymentMethodDetails?.cryptoCurrency,
+      blockchain: acc?.paymentMethodDetails?.blockchain,
+    });
+    setEditingAccountId(acc?.id?.toString() || null);
+    setAddAccount(true);
+  };
+
+  const updateWalletBankAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAccountId) return;
+    setBankFormErrors({});
+    if (!validateBankAccountForm()) return;
+    setLoading(true);
     try {
-      const response = await AGPAY_API.delete(
-        `/agpay/v2/pgman/payment-methods/${deleteId}`,
+      const formData = new URLSearchParams();
+      formData.append("id", editingAccountId);
+      formData.append("holder_name", normalizeInput(holderName.trim()));
+      formData.append("bank_name", normalizeInput(bankName?.trim() || ""));
+      formData.append("account_number", normalizeInput(accountNumber.trim()));
+      formData.append(
+        "ifsc_code",
+        normalizeInput(ifscCode?.trim() || "").toUpperCase()
+      );
+      formData.append("bank_type", bankType);
+
+      const response = await USABET_API.post(
+        `/wallet/bankAccountUpdate`,
+        formData,
         {
           headers: {
-            Authorization: sessionStorage.getItem("jwt_token"),
+            "Content-Type": "application/x-www-form-urlencoded",
           },
         }
       );
-
-      if (response.status === 204 || 200) {
-        fetchPaymentMethod(paymentOption, setAccountDetails);
-        successToast(langData?.["beneficiary_account_deleted_success_txt"]);
+      const data = response?.data;
+      if (data?.status) {
+        successToast(
+          data?.msg || langData?.["details_saved_success_txt"] || "Updated Successfully"
+        );
+        cancelEdit();
+        fetchWalletBankAccounts(setAccountDetails, bankAccountType);
+      } else {
+        setAlertMsg({
+          type: "error",
+          message: getApiErrorMessage(data?.msg || data?.message || ""),
+        });
       }
-      // setDeleteId(null);
-    } catch (err) {
-      errorToast(err.response.data.message);
-      // setDeleteId(null);
+      setLoading(false);
+    } catch (error: any) {
+      const errData = error?.response?.data;
+      setAlertMsg({
+        type: "error",
+        message: getApiErrorMessage(
+          errData?.msg || errData?.message || error?.message || ""
+        ),
+      });
+      setLoading(false);
     }
   };
 
@@ -722,6 +1380,11 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
             addAccount={addAccount}
             setAddAccount={setAddAccount}
             submitDetails={submitDetails}
+            submitWalletBankAccount={submitWalletBankAccount}
+            updateWalletBankAccount={updateWalletBankAccount}
+            editingAccountId={editingAccountId}
+            setAccountForEdit={setAccountForEdit}
+            cancelEdit={cancelEdit}
             loading={loading}
             accountNumber={accountNumber}
             setAccountNumber={setAccountNumber}
@@ -733,6 +1396,12 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
             branchName={branchName}
             setBankName={setBankName}
             bankName={bankName}
+            bankType={bankType}
+            setBankType={setBankType}
+            bankAccountType={bankAccountType}
+            setBankAccountType={setBankAccountType}
+            bankAccountTypes={bankAccountTypes}
+            bankFormErrors={bankFormErrors}
             submitAbcPayment={submitAbcPayment}
             withdrawAmount={withdrawAmount}
             setWithdrawNotes={setWithdrawNotes}
@@ -776,6 +1445,11 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
             addAccount={addAccount}
             setAddAccount={setAddAccount}
             submitDetails={submitDetails}
+            submitWalletBankAccount={submitWalletBankAccount}
+            updateWalletBankAccount={updateWalletBankAccount}
+            editingAccountId={editingAccountId}
+            setAccountForEdit={setAccountForEdit}
+            cancelEdit={cancelEdit}
             loading={loading}
             accountNumber={accountNumber}
             setAccountNumber={setAccountNumber}
@@ -787,6 +1461,12 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
             branchName={branchName}
             setBankName={setBankName}
             bankName={bankName}
+            bankType={bankType}
+            setBankType={setBankType}
+            bankAccountType={bankAccountType}
+            setBankAccountType={setBankAccountType}
+            bankAccountTypes={bankAccountTypes}
+            bankFormErrors={bankFormErrors}
             submitAbcPayment={submitAbcPayment}
             withdrawAmount={withdrawAmount}
             setWithdrawNotes={setWithdrawNotes}
@@ -831,6 +1511,11 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
             addAccount={addAccount}
             setAddAccount={setAddAccount}
             submitDetails={submitDetails}
+            submitWalletBankAccount={submitWalletBankAccount}
+            updateWalletBankAccount={updateWalletBankAccount}
+            editingAccountId={editingAccountId}
+            setAccountForEdit={setAccountForEdit}
+            cancelEdit={cancelEdit}
             loading={loading}
             accountNumber={accountNumber}
             setAccountNumber={setAccountNumber}
@@ -842,6 +1527,12 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
             branchName={branchName}
             setBankName={setBankName}
             bankName={bankName}
+            bankType={bankType}
+            setBankType={setBankType}
+            bankAccountType={bankAccountType}
+            setBankAccountType={setBankAccountType}
+            bankAccountTypes={bankAccountTypes}
+            bankFormErrors={bankFormErrors}
             submitAbcPayment={submitAbcPayment}
             withdrawAmount={withdrawAmount}
             setWithdrawNotes={setWithdrawNotes}
@@ -859,6 +1550,37 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
             otpTimer={otpTimer}
             phoneNumbeErrorMsg={phoneNumbeErrorMsg}
             otpLoader={otpLoader}
+          />
+        );
+
+      case AvailablePaymentGateways.ZENPAYUPI:
+        return (
+          <ZenPayUpi
+            tabValue={tabValue}
+            index={index}
+            paymentOption={paymentOption}
+            accountDetails={accountDetails}
+            selectedAccountId={selectedAccountId}
+            setSelectedAccountId={setSelectedAccountId}
+            setShowDeleteModal={setShowDeleteModal}
+            setDeleteId={setDeleteId}
+            addAccount={addAccount}
+            setAddAccount={setAddAccount}
+            submitWalletUpiAccount={submitWalletUpiAccount}
+            updateWalletUpiAccount={updateWalletUpiAccount}
+            setAccountForEditUpi={setAccountForEditUpi}
+            editingAccountId={editingAccountId}
+            cancelEdit={cancelEdit}
+            loading={loading}
+            holderName={holderName}
+            setHolderName={setHolderName}
+            accountNumber={accountNumber}
+            setAccountNumber={setAccountNumber}
+            phoneNumber={phoneNumber}
+            setPhoneNumber={setPhoneNumber}
+            withdrawAmount={withdrawAmount}
+            setWithdrawAmount={setWithdrawAmount}
+            langData={langData}
           />
         );
 
@@ -885,7 +1607,14 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
             addAccount={addAccount}
             setAddAccount={setAddAccount}
             submitDetails={submitDetails}
+            submitWalletCryptoAccount={submitWalletCryptoAccount}
+            updateWalletCryptoAccount={updateWalletCryptoAccount}
+            setAccountForEditCrypto={setAccountForEditCrypto}
+            editingAccountId={editingAccountId}
+            cancelEdit={cancelEdit}
             loading={loading}
+            holderName={holderName}
+            setHolderName={setHolderName}
             accountNumber={accountNumber}
             setAccountNumber={setAccountNumber}
             withdrawAmount={withdrawAmount}
@@ -927,7 +1656,14 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
             addAccount={addAccount}
             setAddAccount={setAddAccount}
             submitDetails={submitDetails}
+            submitWalletCryptoAccount={submitWalletCryptoAccount}
+            updateWalletCryptoAccount={updateWalletCryptoAccount}
+            setAccountForEditCrypto={setAccountForEditCrypto}
+            editingAccountId={editingAccountId}
+            cancelEdit={cancelEdit}
             loading={loading}
+            holderName={holderName}
+            setHolderName={setHolderName}
             accountNumber={accountNumber}
             setAccountNumber={setAccountNumber}
             withdrawAmount={withdrawAmount}
@@ -970,6 +1706,27 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
                     {langData?.["cashable_amount"]} :{" "}
                     {Math.floor(cashableAmount)}
                   </div>
+
+                  {walletLimits && (
+                    <div className="wallet-limits-ctn">
+                      <div className="withdraw-header-text">
+                        {langData?.["withdraw_min_limit"] || "Min Withdraw"} : ₹
+                        {walletLimits.withdraw_min_limit ?? "-"}
+                      </div>
+                      <div className="withdraw-header-text">
+                        {langData?.["withdraw_max_limit"] || "Max Withdraw"} : ₹
+                        {walletLimits.withdraw_max_limit ?? "-"}
+                      </div>
+                      <div className="withdraw-header-text">
+                        {langData?.["deposit_min_limit"] || "Min Deposit"} : ₹
+                        {walletLimits.deposit_min_limit ?? "-"}
+                      </div>
+                      <div className="withdraw-header-text">
+                        {langData?.["deposit_max_limit"] || "Max Deposit"} : ₹
+                        {walletLimits.deposit_max_limit ?? "-"}
+                      </div>
+                    </div>
+                  )}
                 </>
               ),
             },
@@ -981,52 +1738,71 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
           value={paymentOption}
           onChange={(_, newValue) => {
             setPaymentOption(newValue);
-            setProvidersList(paymentMethodsInfo[newValue]);
+            setProvidersList(paymentMethodsInfo[newValue] || []);
             setTabValue(0);
             setMobileNumber("");
           }}
         >
-          {Object.keys(paymentMethodsInfo).map((paymentMethodName, index) => (
-            <Tab
-              value={paymentMethodName}
-              label={
-                paymentMethodName === "BANK_TRANSFER"
-                  ? langData?.["bank"]
-                  : paymentMethodName === "CRYPTO_WALLET_TRANSFER"
-                  ? langData?.["crypto"]
-                  : langData?.[paymentMethodName]
-              }
-              className="payment-btn"
-            />
-          ))}
+          {Object.keys(paymentMethodsInfo)
+            .filter((k) =>
+              !["ZENPAY", "ZENPAY1", "ZENPAY2", "ZENPAYCRYPTO", "ZENPAYUPI"].includes(k)
+            )
+            .map((paymentMethodName) => (
+              <Tab
+                key={paymentMethodName}
+                value={paymentMethodName}
+                label={
+                  paymentMethodName === "BANK_TRANSFER" || paymentMethodName === "BANK"
+                    ? langData?.["bank"]
+                    : paymentMethodName === "CRYPTO_WALLET_TRANSFER" ||
+                      paymentMethodName === "CRYPTO"
+                    ? langData?.["crypto"]
+                    : paymentMethodName === "UPI"
+                    ? langData?.["upi"] || "UPI"
+                    : langData?.[paymentMethodName] || paymentMethodName
+                }
+                className="payment-btn"
+              />
+            ))}
         </Tabs>
       )}
-      <div className="deposit-form-ctn">
-        {providersList?.length > 1 && (
-          <Tabs
-            value={tabValue}
-            onChange={(_, newValue) => {
-              setTabValue(newValue);
-            }}
-          >
-            {providersList.map(
-              (paymentGateway, index) =>
-                AvailablePaymentGateways[paymentGateway] && (
-                  <Tab
-                    value={index}
-                    label={`${langData?.["option"]} ${++indexCount}`}
-                    className="payment-btn"
-                  />
-                )
-            )}
-          </Tabs>
-        )}
+      <div className="deposit-form-ctn withdraw-options-ctn">
+        {/* {providersList?.length > 1 && (
+          <FormControl className="withdraw-option-dropdown" variant="outlined">
+            <label className="withdraw-dropdown-label">
+              {langData?.["choose_payment_option"] || "Choose Payment Option"}
+            </label>
+            <Select
+              value={tabValue}
+              onChange={(e) => setTabValue(Number(e.target.value))}
+              displayEmpty
+              renderValue={(v) =>
+                `${langData?.["option"] || "Option"} ${(v ?? 0) + 1}`
+              }
+            >
+              {providersList.map((paymentGateway: string, index: number) =>
+                AvailablePaymentGateways[paymentGateway] ? (
+                  <MenuItem key={paymentGateway} value={index}>
+                    {langData?.["option"] || "Option"} {index + 1}
+                  </MenuItem>
+                ) : null
+              )}
+            </Select>
+          </FormControl>
+        )} */}
         {providersList?.length > 0 &&
-          providersList.map((paymentGateway, index) =>
-            renderWithdrawForm(paymentGateway, index, tabValue)
+          providersList.map((paymentGateway: string, index: number) =>
+            AvailablePaymentGateways[paymentGateway] && index === tabValue ? (
+              <div key={`withdraw-${paymentGateway}-${index}`}>
+                {renderWithdrawForm(
+                  AvailablePaymentGateways[paymentGateway],
+                  index,
+                  tabValue
+                )}
+              </div>
+            ) : null
           )}
-      </div>
-
+      </div>  
       <Dialog
         open={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}

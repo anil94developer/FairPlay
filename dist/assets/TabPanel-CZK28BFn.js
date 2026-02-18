@@ -1,0 +1,1 @@
+import{j as l}from"./index-6IAG6nLd.js";import{B as n}from"./AlertBox-AiitOi7c.js";const m=r=>{const{children:s,className:i,value:a,index:e,...t}=r;return l.jsx("div",{role:"tabpanel",hidden:a!==e,id:`simple-tabpanel-${e}`,"aria-labelledby":`simple-tab-${e}`,className:i,...t,children:a===e&&l.jsx(n,{children:s})})};export{m as T};

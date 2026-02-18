@@ -19,6 +19,14 @@
     }
   }
 
+  .deposit-image-link {
+    color: var(--ion-color-primary);
+    text-decoration: underline;
+    &:hover {
+      text-decoration: none;
+    }
+  }
+
   @media screen and (max-width: 720px) {
     padding: 0px 8px;
     margin: 0px;

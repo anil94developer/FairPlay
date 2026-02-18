@@ -17,6 +17,7 @@ import SelectTemplate from "../../common/SelectTemplate/SelectTemplate";
 import { CONFIG_PERMISSIONS } from "../../constants/ConfigPermission";
 import { connect, useSelector } from "react-redux";
 import { RootState } from "../../models/RootState";
+import USABET_API from "../../api-services/usabet-api";
 
 type Filters = {
   fromDate: any;
@@ -105,36 +106,61 @@ const UserPLStatement: React.FC<Props> = (props: Props) => {
         filters.selectedGame === "SPORTS_BOOK" ||
         filters.selectedGame === "SPORTS"
       ) {
-        // Dummy profit statement data
+        const page = filters.pageToken?.length ? filters.pageToken.length + 1 : 1;
+        const search: Record<string, any> = {
+          delete_status: 0,
+          is_matched: 1,
+        };
+        if (filters.sport !== "SPORTS" && filters.sport) {
+          search.sport_id = filters.sport;
+        }
+
+        const apiRes = await USABET_API.post("/bet/openBets", {
+          limit: 100,
+          page,
+          search,
+        });
+
+        const pl_records_raw: any[] = [];
+        let nextToken = null;
+
+        if (apiRes?.data?.status === true && Array.isArray(apiRes.data.data)) {
+          apiRes.data.data.forEach((group: any) => {
+            if (Array.isArray(group.data)) {
+              group.data.forEach((bet: any) => {
+                pl_records_raw.push({
+                  eventId: bet.match_id || "",
+                  eventName: bet.match_name || "",
+                  marketId: bet.market_id || "",
+                  marketName: bet.market_name || "Match Odds",
+                  categoryType: filters.selectedGame,
+                  betPlacedTime: bet.createdAt || bet.created_at || "",
+                  payOutDate: bet.result_settled_at || bet.createdAt || bet.created_at || "",
+                  profit: (bet.profit ?? bet.p_l ?? 0) * cFactor,
+                  commission: 0,
+                  gameType: bet.sport_name || "",
+                });
+              });
+            }
+            const metadata = group.metadata?.[0];
+            if (metadata && page * 100 < (metadata.total || 0)) {
+              nextToken = String(page + 1);
+            }
+          });
+        }
+
+        // Client-side date filter (API does not support from_date/to_date)
+        const from = filters.fromDate ? moment(filters.fromDate).startOf("day").toISOString() : null;
+        const to = filters.toDate ? moment(filters.toDate).endOf("day").toISOString() : null;
+        pl_records = pl_records_raw.filter((r) => {
+          const t = r.betPlacedTime;
+          if (!t) return true;
+          return (!from || t >= from) && (!to || t <= to);
+        });
         response = {
           status: 200,
-          data: {
-            plEntries: [
-              {
-                eventId: "evt-001",
-                eventName: "Team A vs Team B",
-                profit: 50 * cFactor,
-                commission: 5 * cFactor,
-                marketId: "mkt-001",
-                marketName: "Match Odds",
-                categoryType: filters.selectedGame,
-                betPlacedTime: new Date().toISOString(),
-              },
-              {
-                eventId: "evt-002",
-                eventName: "Team C vs Team D",
-                profit: -20 * cFactor,
-                commission: 2 * cFactor,
-                marketId: "mkt-002",
-                marketName: "Bookmaker",
-                categoryType: filters.selectedGame,
-                betPlacedTime: new Date(Date.now() - 86400000).toISOString(),
-              },
-            ],
-            nextPageToken: null,
-          },
+          data: { nextPageToken: nextToken },
         } as AuthResponse;
-        pl_records = response.data.plEntries;
       } else {
         // Dummy orders data
         response = {

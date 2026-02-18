@@ -76,10 +76,11 @@ type StoreProps = {
     sportId: string,
     competitionId: string,
     eventId: string,
-    marketTime: string
+    marketTime: string,
   ) => void;
   setBetStartTime?: Function;
   setAddNewBet?: Function;
+  setBetsTabVal?: Function;
   marketNotifications: any;
   setAlertMsg: Function;
   langData: any;
@@ -109,6 +110,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
     bets,
     openBets,
     setAddNewBet,
+    setBetsTabVal,
     setBetStartTime,
     addExchangeBet,
     isMultiMarket,
@@ -132,7 +134,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
   } = useSelector((state: RootState) => state.exchBetslip);
   const [multiMarketData, setMultiMarketData] = useMarketLocalState();
   const [openBetsMap, setOpenBetsMap] = useState<Map<String, UserBet[]>>(
-    new Map()
+    new Map(),
   );
   const [confirmCashout, setConfirmCashout] = useState<boolean>(false);
   const [confirmTurboCashout, setConfirmTurboCashout] =
@@ -197,7 +199,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
   });
   const marketData = useMarketLocalState();
   const [notifications, setNotifications] = useState<Map<String, string>>(
-    new Map()
+    new Map(),
   );
   const disabledStatus = [
     "suspended",
@@ -234,7 +236,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
   const getOpenBetsPL = (
     runner: BookmakerRunnerDTO,
     marketId: string,
-    marketName: string
+    marketName: string,
   ) => {
     if (exposureMap && exposureMap?.[`${marketId}:${marketName}`]) {
       for (let rn of exposureMap[`${marketId}:${marketName}`]) {
@@ -248,7 +250,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
   const getOpenBetsPLInArray = (
     runner: BookmakerRunnerDTO,
     marketId: string,
-    marketName: string
+    marketName: string,
   ) => {
     let pl = getOpenBetsPL(runner, marketId, marketName);
     return pl ? [pl] : [];
@@ -257,11 +259,11 @@ const BmMTable: React.FC<StoreProps> = (props) => {
   const getTotalPL = (
     runner: BookmakerRunnerDTO,
     marketId: string,
-    marketName: string
+    marketName: string,
   ) => {
     let returns = null;
     const mBetslipBets = bets.filter(
-      (b) => b.marketId === marketId && b.amount && b.amount > 0
+      (b) => b.marketId === marketId && b.amount && b.amount > 0,
     );
     if (mBetslipBets.length > 0) {
       returns = getOpenBetsPL(runner, marketId, marketName);
@@ -306,7 +308,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
 
     const [A, B] = bmMarket.runners;
     const riskMap = new Map(
-      riskRows.map((r) => [r.runnerId, Number(r.userRisk) || 0])
+      riskRows.map((r) => [r.runnerId, Number(r.userRisk) || 0]),
     );
     const PA = Number(riskMap.get(A.runnerId) ?? 0);
     const PB = Number(riskMap.get(B.runnerId) ?? 0);
@@ -375,7 +377,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
 
     const [A, B] = market.runners;
     const riskMap = new Map(
-      riskRows.map((r) => [r.runnerId, Number(r.userRisk) || 0])
+      riskRows.map((r) => [r.runnerId, Number(r.userRisk) || 0]),
     );
     const PA = Number(riskMap.get(A.runnerId) ?? 0);
     const PB = Number(riskMap.get(B.runnerId) ?? 0);
@@ -429,7 +431,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
 
     const minStake = Number(market?.marketLimits?.minStake ?? 0);
     const maxStake = Number(
-      market?.marketLimits?.maxStake ?? Number.POSITIVE_INFINITY
+      market?.marketLimits?.maxStake ?? Number.POSITIVE_INFINITY,
     );
 
     // Simulate post-trade risk
@@ -437,7 +439,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
       betType: "BACK" | "LAY",
       onRunner: BookmakerRunnerDTO,
       s: number,
-      o: number
+      o: number,
     ): { [key: string]: number } => {
       let a = Number(PA),
         b = Number(PB);
@@ -539,7 +541,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
     });
 
     candsIdeal.sort(
-      (x, y) => scoreWorst(y.riskAfter!) - scoreWorst(x.riskAfter!)
+      (x, y) => scoreWorst(y.riskAfter!) - scoreWorst(x.riskAfter!),
     );
 
     const ideal = candsIdeal[0]
@@ -555,7 +557,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
 
     // Apply constraints
     const applyConstraints = (
-      cand: (typeof candsIdeal)[0]
+      cand: (typeof candsIdeal)[0],
     ): CashoutResponse => {
       if (!cand) {
         return null;
@@ -681,7 +683,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
 
     const [A, B] = market.runners;
     const riskMap = new Map(
-      riskRows.map((r) => [r.runnerId, Number(r.userRisk) || 0])
+      riskRows.map((r) => [r.runnerId, Number(r.userRisk) || 0]),
     );
     const PA = Number(riskMap.get(A.runnerId) ?? 0);
     const PB = Number(riskMap.get(B.runnerId) ?? 0);
@@ -745,7 +747,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
 
     const [A, B] = market.runners;
     const riskMap = new Map(
-      riskRows.map((r) => [r.runnerId, Number(r.userRisk) || 0])
+      riskRows.map((r) => [r.runnerId, Number(r.userRisk) || 0]),
     );
     const PA = Number(riskMap.get(A.runnerId) ?? 0);
     const PB = Number(riskMap.get(B.runnerId) ?? 0);
@@ -775,7 +777,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
     marketId,
     providerName,
     sportId,
-    isAdd = true
+    isAdd = true,
   ) => {
     if (loggedIn) {
       if (isAdd) {
@@ -784,7 +786,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
           eventId,
           marketId,
           providerName,
-          sportId
+          sportId,
         );
         marketId &&
           setMultiMarketData((prevState) => {
@@ -805,7 +807,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
           setMultiMarketData((prevState) => {
             let data = [...prevState];
             const index = data?.findIndex(
-              (itm) => itm.eventId === eventId && itm.marketId === marketId
+              (itm) => itm.eventId === eventId && itm.marketId === marketId,
             );
             index > -1 && data.splice(index, 1);
             return [...data];
@@ -834,7 +836,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
           checkIncludeMultiMarket(
             multiMarketData,
             market.marketId,
-            eventData.eventId
+            eventData.eventId,
           ) ? (
             <>
               <div className="bm-table-ctn">
@@ -849,7 +851,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                 {!checkIncludeMultiMarket(
                                   multiMarketData,
                                   market.marketId,
-                                  eventData?.eventId
+                                  eventData?.eventId,
                                 ) ? (
                                   <Tooltip
                                     title={
@@ -870,7 +872,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                             market.marketId,
                                             eventData?.providerName,
                                             eventData?.sportId,
-                                            true
+                                            true,
                                           );
                                       }}
                                     />
@@ -900,7 +902,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                           market.marketId,
                                           eventData?.providerName,
                                           eventData?.sportId,
-                                          false
+                                          false,
                                         );
                                       }}
                                     />
@@ -915,28 +917,30 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                           " " +
                                           langData?.[
                                             getMarketLangKeyByName(
-                                              "over bookmaker"
+                                              "over bookmaker",
                                             )
                                           ] +
                                           market.marketName.slice(17)
                                       : market.marketName
-                                          .toLowerCase()
-                                          .includes("over market")
-                                      ? market.marketName.slice(0, 2) +
-                                        " " +
-                                        langData?.[
-                                          getMarketLangKeyByName("over market")
-                                        ] +
-                                        market.marketName.slice(14)
-                                      : getMarketLangKeyByName(
-                                          market.marketName
-                                        )
-                                      ? langData?.[
-                                          getMarketLangKeyByName(
-                                            market.marketName
-                                          )
-                                        ]
-                                      : market.marketName
+                                            .toLowerCase()
+                                            .includes("over market")
+                                        ? market.marketName.slice(0, 2) +
+                                          " " +
+                                          langData?.[
+                                            getMarketLangKeyByName(
+                                              "over market",
+                                            )
+                                          ] +
+                                          market.marketName.slice(14)
+                                        : getMarketLangKeyByName(
+                                              market.marketName,
+                                            )
+                                          ? langData?.[
+                                              getMarketLangKeyByName(
+                                                market.marketName,
+                                              )
+                                            ]
+                                          : market.marketName,
                                   )}{" "}
                                 <span className="event-name">
                                   {isMultiMarket && !isMobile
@@ -983,7 +987,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                           bettingInprogress ||
                                           !isHaveCashOut(market) ||
                                           disabledStatus.includes(
-                                            market.status.toLowerCase()
+                                            market.status.toLowerCase(),
                                           ) ||
                                           market.suspend === true ||
                                           !(
@@ -1013,7 +1017,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                         className="btn turbo-cashout-btn profit"
                                         disabled={
                                           disabledStatus.includes(
-                                            market.status.toLowerCase()
+                                            market.status.toLowerCase(),
                                           ) ||
                                           market.suspend === true ||
                                           loading
@@ -1030,7 +1034,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                       >
                                         {getSpeedCashCountdown(market) > 0
                                           ? `Speed Cash (${getSpeedCashCountdown(
-                                              market
+                                              market,
                                             )}s)`
                                           : "Speed Cash"}
                                       </Button>
@@ -1043,7 +1047,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                   {ThousandFormatter(
                                     market?.marketLimits
                                       ? market?.marketLimits.minStake / cFactor
-                                      : 100
+                                      : 100,
                                   )}{" "}
                                   {langData?.["max"]}:
                                   {market?.marketLimits?.maxStake % 1000 === 0
@@ -1051,11 +1055,11 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                         market?.marketLimits
                                           ? market?.marketLimits.maxStake /
                                               cFactor
-                                          : 5000
+                                          : 5000,
                                       )
                                     : market?.marketLimits
-                                    ? market?.marketLimits.maxStake / cFactor
-                                    : 5000}
+                                      ? market?.marketLimits.maxStake / cFactor
+                                      : 5000}
                                   {/* {ThousandFormatter(
                                   market?.marketLimits
                                     ? market?.marketLimits.max / cFactor
@@ -1069,7 +1073,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                   {ThousandFormatter(
                                     market?.marketLimits
                                       ? market?.marketLimits.minStake / cFactor
-                                      : 100
+                                      : 100,
                                   )}{" "}
                                 </div>
                                 <div>
@@ -1079,11 +1083,11 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                         market?.marketLimits
                                           ? market?.marketLimits.maxStake /
                                               cFactor
-                                          : 5000
+                                          : 5000,
                                       )
                                     : market?.marketLimits
-                                    ? market?.marketLimits.maxStake / cFactor
-                                    : 5000}
+                                      ? market?.marketLimits.maxStake / cFactor
+                                      : 5000}
                                 </div>
                               </span>
                             </div>
@@ -1136,7 +1140,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                       {getOpenBetsPLInArray(
                                         bmSelection,
                                         market.marketId,
-                                        market.marketName
+                                        market.marketName,
                                       ).map((ret) =>
                                         ret !== null ? (
                                           <span
@@ -1148,7 +1152,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                               ? "+" + Number(ret).toFixed(2)
                                               : Number(ret).toFixed(2)}
                                           </span>
-                                        ) : null
+                                        ) : null,
                                       )}
                                     </div>
                                     {bets.length > 0 && bets[0].amount > 0 ? (
@@ -1156,7 +1160,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                         {getTotalPL(
                                           bmSelection,
                                           market.marketId,
-                                          market.marketName
+                                          market.marketName,
                                         ).map((ret) =>
                                           ret !== null ? (
                                             <span
@@ -1168,7 +1172,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                                 ? "+" + Number(ret).toFixed(2)
                                                 : Number(ret).toFixed(2)}
                                             </span>
-                                          ) : null
+                                          ) : null,
                                         )}
                                       </div>
                                     ) : null}
@@ -1178,10 +1182,10 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                       <ExchOddBtn
                                         mainValue={
                                           disabledStatus.includes(
-                                            market.status?.toLowerCase()
+                                            market.status?.toLowerCase(),
                                           ) ||
                                           disabledStatus.includes(
-                                            bmSelection.status?.toLowerCase()
+                                            bmSelection.status?.toLowerCase(),
                                           ) ||
                                           market.suspend === true ||
                                           market.disable
@@ -1197,19 +1201,19 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                                 cFactor
                                               : 5000
                                             : market?.marketLimits
-                                            ? market?.marketLimits.maxStake /
-                                              cFactor
-                                            : 5000
+                                              ? market?.marketLimits.maxStake /
+                                                cFactor
+                                              : 5000,
                                         )}
                                         oddType="back-odd"
                                         valueType="bookmakerOdds"
                                         showSubValueinKformat={true}
                                         disable={
                                           disabledStatus.includes(
-                                            market.status?.toLowerCase()
+                                            market.status?.toLowerCase(),
                                           ) ||
                                           disabledStatus.includes(
-                                            bmSelection.status?.toLowerCase()
+                                            bmSelection.status?.toLowerCase(),
                                           ) ||
                                           market.suspend ||
                                           market.disable
@@ -1225,10 +1229,10 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                           }
                                           if (
                                             disabledStatus.includes(
-                                              market.status?.toLowerCase()
+                                              market.status?.toLowerCase(),
                                             ) ||
                                             disabledStatus.includes(
-                                              bmSelection.status?.toLowerCase()
+                                              bmSelection.status?.toLowerCase(),
                                             ) ||
                                             market.suspend === true ||
                                             market.disable
@@ -1244,20 +1248,25 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                               eventData.competitionName,
                                             eventId: eventData.eventId,
                                             eventName: eventData.eventName,
-                                            eventDate: eventData.openDate,
+                                            eventDate: String(
+                                              eventData.openDate ?? "",
+                                            ),
                                             marketId: market.marketId,
                                             marketName: market.marketName,
                                             marketType: "BM",
-                                            outcomeId: bmSelection.runnerId,
+                                            outcomeId: String(
+                                              bmSelection.runnerId ?? "",
+                                            ),
                                             outcomeDesc: bmSelection.runnerName,
                                             betType: "BACK",
                                             amount: 0,
                                             oddValue: Number(
-                                              bmSelection.backPrice
+                                              bmSelection.backPrice,
                                             ),
                                             sessionPrice: -1,
                                             oddLimt:
-                                              market?.marketLimits?.maxOdd.toString(),
+                                              market?.marketLimits?.maxOdd?.toString() ??
+                                              "",
                                             minStake:
                                               market?.marketLimits?.minStake,
                                             maxStake:
@@ -1273,16 +1282,18 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                             betData["displayOddValue"] =
                                               TOSS_ODD_VALUE;
                                           }
+                                          setAddNewBet?.(true);
                                           if (oneClickBettingEnabled) {
                                             addExchangeBet(betData);
                                             oneClickBetPlaceHandler(
                                               [betData],
                                               langData,
                                               setAlertMsg,
-                                              eventData
+                                              eventData,
                                             );
                                           } else {
                                             addExchangeBet(betData);
+                                            setBetsTabVal?.(0);
                                           }
                                         }}
                                       />
@@ -1293,10 +1304,10 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                       <ExchOddBtn
                                         mainValue={
                                           disabledStatus.includes(
-                                            market.status?.toLowerCase()
+                                            market.status?.toLowerCase(),
                                           ) ||
                                           disabledStatus.includes(
-                                            bmSelection.status?.toLowerCase()
+                                            bmSelection.status?.toLowerCase(),
                                           ) ||
                                           market.suspend === true ||
                                           market.disable
@@ -1312,24 +1323,28 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                                 cFactor
                                               : 5000
                                             : market?.marketLimits
-                                            ? market?.marketLimits.maxStake /
-                                              cFactor
-                                            : 5000
+                                              ? market?.marketLimits.maxStake /
+                                                cFactor
+                                              : 5000,
                                         )}
                                         oddType="lay-odd"
                                         valueType="bookmakerOdds"
                                         showSubValueinKformat={true}
                                         disable={
                                           disabledStatus.includes(
-                                            market.status?.toLowerCase()
+                                            market.status?.toLowerCase(),
                                           ) ||
                                           disabledStatus.includes(
-                                            bmSelection.status?.toLowerCase()
+                                            bmSelection.status?.toLowerCase(),
                                           ) ||
                                           market.suspend === true ||
                                           market.disable
                                         }
                                         onClick={() => {
+                                          console.log(
+                                            "oneClickBettingLoading",
+                                            oneClickBettingLoading,
+                                          );
                                           if (oneClickBettingLoading) {
                                             setAlertMsg({
                                               message:
@@ -1340,10 +1355,10 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                           }
                                           if (
                                             disabledStatus.includes(
-                                              market.status?.toLowerCase()
+                                              market.status?.toLowerCase(),
                                             ) ||
                                             disabledStatus.includes(
-                                              bmSelection.status?.toLowerCase()
+                                              bmSelection.status?.toLowerCase(),
                                             ) ||
                                             market.suspend === true ||
                                             market.disable
@@ -1359,20 +1374,25 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                               eventData.competitionName,
                                             eventId: eventData.eventId,
                                             eventName: eventData.eventName,
-                                            eventDate: eventData.openDate,
+                                            eventDate: String(
+                                              eventData.openDate ?? "",
+                                            ),
                                             marketId: market.marketId,
                                             marketName: market.marketName,
                                             marketType: "BM",
-                                            outcomeId: bmSelection.runnerId,
+                                            outcomeId: String(
+                                              bmSelection.runnerId ?? "",
+                                            ),
                                             outcomeDesc: bmSelection.runnerName,
                                             betType: "LAY",
                                             amount: 0,
                                             oddValue: Number(
-                                              bmSelection.layPrice
+                                              bmSelection.layPrice,
                                             ),
                                             sessionPrice: -1,
                                             oddLimt:
-                                              market?.marketLimits?.maxOdd.toString(),
+                                              market?.marketLimits?.maxOdd?.toString() ??
+                                              "",
                                             minStake:
                                               market?.marketLimits?.minStake,
                                             maxStake:
@@ -1388,16 +1408,18 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                             betData["displayOddValue"] =
                                               TOSS_ODD_VALUE;
                                           }
+                                          setAddNewBet?.(true);
                                           if (oneClickBettingEnabled) {
                                             addExchangeBet(betData);
                                             oneClickBetPlaceHandler(
                                               [betData],
                                               langData,
                                               setAlertMsg,
-                                              eventData
+                                              eventData,
                                             );
                                           } else {
                                             addExchangeBet(betData);
+                                            setBetsTabVal?.(0);
                                           }
                                         }}
                                       />
@@ -1467,7 +1489,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                                   animationDuration: `${Math.max(
                                     10,
                                     notifications.get(market.marketId).length /
-                                      5
+                                      5,
                                   )}s`,
                                 }}
                               >
@@ -1612,7 +1634,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                     <div className="risk-value profit">
                       ₹
                       {Number(
-                        getTurboCashoutData(coMarket).runnerA.risk
+                        getTurboCashoutData(coMarket).runnerA.risk,
                       ).toFixed(2)}
                     </div>
                   </div>
@@ -1624,7 +1646,7 @@ const BmMTable: React.FC<StoreProps> = (props) => {
                     <div className="risk-value profit">
                       ₹
                       {Number(
-                        getTurboCashoutData(coMarket).runnerB.risk
+                        getTurboCashoutData(coMarket).runnerB.risk,
                       ).toFixed(2)}
                     </div>
                   </div>

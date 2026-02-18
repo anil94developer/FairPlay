@@ -12,6 +12,7 @@ import {
 } from "../../store";
 
 import API from "../../api";
+import USABET_API from "../../api-services/usabet-api";
 import { ReactComponent as AccountStatement } from "../../assets/images/reportIcons/AccountStatement.svg?react";
 import CustomTable from "../../common/CustomTable/CustomTable";
 import DateTemplate from "../../common/DateAndTimeTemplate/DateAndTimeTemplate";
@@ -801,36 +802,67 @@ const Ledger: React.FC<LedgerProps> = (props) => {
 
   const fetchRecords = async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
-      if (!bettingCurrency) return false;
+      const fromDate = filters.fromDate
+        ? moment(filters.fromDate).startOf("day").toISOString()
+        : moment().subtract(7, "d").startOf("day").toISOString();
+      const toDate = filters.toDate
+        ? moment(filters.toDate).endOf("day").toISOString()
+        : moment().endOf("day").toISOString();
 
-      // Replaced API call with dummy data
-      let statements = [
-        {
-          transactionId: "TXN001",
-          transactionType: 0,
-          amount: 1000 / cFactor,
-          balanceAfter: 11000 / cFactor,
-          transactionTime: new Date().toISOString(),
-          remarks: "Dummy Deposit",
-          eventName: "Dummy Event",
-          marketType: 0,
-        },
-        {
-          transactionId: "TXN002",
-          transactionType: 1,
-          amount: -500 / cFactor,
-          balanceAfter: 10500 / cFactor,
-          transactionTime: new Date().toISOString(),
-          remarks: "Dummy Withdrawal",
-          eventName: "Dummy Event",
-          marketType: 0,
-        },
-      ];
+      const response = await USABET_API.post("/account/statements", {
+        from_date: fromDate,
+        to_date: toDate,
+        limit: 100,
+      });
+
+      const resData = response?.data;
+      let statements: any[] = [];
+
+      if (resData?.status === true && Array.isArray(resData.data)) {
+        resData.data.forEach((group: any) => {
+          const rows = group?.data;
+          if (Array.isArray(rows)) {
+            rows.forEach((row: any) => {
+              let txType = row.statement_type ?? 0;
+              if (txType === 1) {
+                txType = (row.credit_debit ?? 0) >= 0 ? 0 : 1;
+              }
+              statements.push({
+                transactionId: row._id || "",
+                transactionType: txType,
+                amount: ((row.credit_debit ?? 0) / cFactor),
+                balanceAfter: ((row.balance ?? 0) / cFactor),
+                transactionTime: row.date || "",
+                remarks: row.remark || row.description || "-",
+                eventName: row.match_name || row.description || "-",
+                marketType: [0, 1, 2, 3].includes(row.statement_type) ? 0 : 4,
+                sportId: row.sport_id || "",
+                description: row.description,
+                remark: row.remark,
+                match_name: row.match_name,
+                event_id: row.event_id,
+                event_name: row.event_name,
+              });
+            });
+          }
+        });
+      }
 
       statements = statements.filter(
         (st) => ![28, 29, 50, 51].includes(st.transactionType)
       );
+
+      // Client-side transaction filter
+      if (filters.transaction !== "-1") {
+        const allowedTypes = filters.transaction.includes("-")
+          ? filters.transaction.split("-").map((x) => +x)
+          : [+filters.transaction];
+        statements = statements.filter((st) =>
+          allowedTypes.includes(st.transactionType)
+        );
+      }
 
       // Add serial numbers to records
       statements = statements.map((statement, index) => ({
@@ -840,11 +872,16 @@ const Ledger: React.FC<LedgerProps> = (props) => {
 
       setRecords(statements);
       setNextPageToken(null);
-    } catch (err) {
-      if (err?.response) {
+    } catch (err: any) {
+      setRecords([]);
+      if (err?.response?.data?.message) {
         setErrorMsg(err.response.data.message);
+      } else if (err?.response?.data?.msg) {
+        setErrorMsg(err.response.data.msg);
+      } else {
+        setErrorMsg(err?.message || "Failed to fetch statements");
       }
-      if (err.response && err.response.status === 401) {
+      if (err?.response?.status === 401) {
         logout();
       }
       setNextPageToken(null);

@@ -1,0 +1,30 @@
+export interface BankAccountDTO {
+  _id: string;
+  user_id: string;
+  user_name: string;
+  parent_id: string;
+  parent_name: string;
+  bank_account_type: string;
+  bank_account_type_category: string;
+  bank_name: string | null;
+  account_number: string | null;
+  ifsc_code: string | null;
+  upi_id: string | null;
+  upi_phone_number: string | null;
+  crypto_coin_type?: string;
+  crypto_wallet?: string;
+  image: string;
+  self_host: boolean;
+  holder_name: string;
+  visible_for: string;
+  min_amount: number;
+  max_amount: number;
+  total_max_amount: number;
+  total_max_request: number;
+  actual_total_max_amount: number;
+  actual_total_max_request: number;
+  status: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+}

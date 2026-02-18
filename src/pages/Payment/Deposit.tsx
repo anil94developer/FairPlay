@@ -1,46 +1,27 @@
-import Tab from "@material-ui/core/Tab";
-import Tabs from "@material-ui/core/Tabs";
-import React, { lazy, useCallback, useEffect, useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { connect } from "react-redux";
-import AGPAY_API from "../../api-services/feature-api";
 import { RootState } from "../../models/RootState";
+import { Copy, Edit } from "../../shared/icon";
 import "./Deposit.scss";
 import "./Payment.scss";
+import "./Zenpay.scss";
 
-import bank from "../../assets/images/common/icons/bank.svg";
 import { ReactComponent as depositIcon } from "../../assets/images/common/icons/depositAdd.svg?react";
-import gpay from "../../assets/images/common/icons/gpay.svg";
-import paytm from "../../assets/images/common/icons/paytm.svg";
-import phonePe from "../../assets/images/common/icons/phonepe.svg";
 import ReportBackBtn from "../../common/ReportBackBtn/ReportBackBtn";
 import ReportsHeader from "../../common/ReportsHeader/ReportsHeader";
 import { AlertDTO } from "../../models/Alert";
-import { setOpenDepositModal } from "../../store";
+import { setOpenDepositModal, fetchBalance } from "../../store";
 import { setAlertMsg } from "../../store/common/commonActions";
+import { demoUser } from "../../util/stringUtil";
+import { Link } from "react-router-dom";
+import { Button } from "@material-ui/core";
+import InputTemplate from "../../common/InputTemplate/InputTemplate";
+import USABET_API from "../../api-services/usabet-api";
 import {
-  AvailablePaymentGateways,
-  demoUser,
-  NEFT_REGEX,
-  normalizeInput,
-  RTGS_REGEX,
-  UPI_REGEX,
-} from "../../util/stringUtil";
-import { AccountDetails } from "./AccountDetails";
-import { PaymentOptions, StoreProps } from "./Deposit.types";
-import { ButtonVariable } from "../../models/ButtonVariables";
-import SVLS_API from "../../svls-api";
-import Xenonpayz from "./DepositTabPanels/Xenonpayz";
-import { depositInitiated } from "../../util/facebookPixelEvent";
-import { BRAND_DOMAIN } from "../../constants/Branding";
-const AbcMoney = lazy(() => import("./DepositTabPanels/AbcMoney"));
-const Pgman = lazy(() => import("./DepositTabPanels/Pgman"));
-const XenonPay = lazy(() => import("./DepositTabPanels/XenonPay"));
-const ZenPay = lazy(() => import("./DepositTabPanels/Zenpay"));
-const ZenpayCrypto = lazy(() => import("./DepositTabPanels/ZenpayCrypto"));
-const ZenpayCheckout = lazy(() => import("./DepositTabPanels/ZenpayCheckout"));
-const ZenpayCryptoSeamless = lazy(
-  () => import("./DepositTabPanels/ZenpayCryptoSeamless")
-);
+  WalletLimitDTO,
+  BankAccountTypeDTO,
+  BankAccountDTO,
+} from "../../models/deposit";
 
 export type BonusDto = {
   id: number;
@@ -49,273 +30,212 @@ export type BonusDto = {
   bonusCategory: string;
 };
 
-const Deposit: React.FC<StoreProps> = (props) => {
-  const {
-    setOpenDepositModal,
-    setAlertMsg,
-    whatsappDetails,
-    domainConfig,
-    loggedIn,
-    langData,
-  } = props;
-  const [tabValue, setTabValue] = useState<number>(0);
-  const [paymentOption, setPaymentOption] = useState<string>("BANK_TRANSFER");
-  const [accountDetails, setAccountDetails] = useState<AccountDetails[]>();
-  const [selectedAccountId, setSelectedAccountId] = useState<string>();
-  const [depositAmount, setDepositAmount] = useState<string>();
-  const [depositNotes, setDepositNotes] = useState<string>();
-  const [referenceId, setReferenceId] = useState<string>();
-  const [depositImage, setDepositImage] = useState<string | ArrayBuffer>();
-  const [loading, setLoading] = useState<boolean>(false);
-  const [onlinePaymentOption, setOnlinePaymentOption] =
-    useState<string>("BANK_TRANSFER");
-  const [mobileNumber, setMobileNumber] = useState<string>();
-  const [paymentDetails, setPaymentDetails] = useState<PaymentOptions[]>();
-  const [providerRefId, setProviderRefId] = useState<string>();
-  const [providersList, setProvidersList] = useState([]);
-  const [depositPaymentMethodsInfo, setDepositPaymentMethodsInfo] =
-    useState<any>({});
-  const [newUser, setNewUser] = useState<number>(0);
-  const [selectedAccount, setSelectedAccount] = useState(null);
-  const [paymentOptionFilter, setPaymentOptionFilter] =
-    useState<string>("IMPS");
-  const [ocrDepositAmount, setOcrDepositAmount] = useState<string>();
-  const [ocrReferenceId, setOcrReferenceId] = useState<string>();
-  const [paymentGatewaysCount, setPaymentGatewaysCount] = useState<number>(0);
-  const hiddenFileInput = useRef(null);
-  const [uploadImage, setUploadImage] = useState(null);
-  let indexCount = 0;
+type StoreProps = {
+  langData: any;
+  setOpenDepositModal: (val: boolean) => void;
+  setAlertMsg: (alert: AlertDTO) => void;
+  fetchBalance: () => void;
+};
 
-  const successToast = (mess: string) => {
-    setAlertMsg({
-      type: "success",
-      message: mess,
-    });
+const Deposit: React.FC<StoreProps> = (props) => {
+  const { langData, setAlertMsg, fetchBalance } = props;
+  const [amount, setAmount] = useState("");
+  const [walletLimits, setWalletLimits] = useState<WalletLimitDTO | null>(null);
+  const [loadingLimits, setLoadingLimits] = useState(true);
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+  const [depositImage, setDepositImage] = useState<string | ArrayBuffer | null>(
+    null
+  );
+  const [uploadImage, setUploadImage] = useState<File | null>(null);
+  const [remark, setRemark] = useState("");
+  const [userReferenceNo, setUserReferenceNo] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const hiddenFileInput = useRef<HTMLInputElement>(null);
+
+  const [paymentTypes, setPaymentTypes] = useState<BankAccountTypeDTO[]>([]);
+  const [loadingPaymentTypes, setLoadingPaymentTypes] = useState(false);
+  const [selectedPaymentType, setSelectedPaymentType] =
+    useState<BankAccountTypeDTO | null>(null);
+
+  const [bankAccounts, setBankAccounts] = useState<BankAccountDTO[]>([]);
+  const [loadingBankAccounts, setLoadingBankAccounts] = useState(false);
+  const [selectedBankAccount, setSelectedBankAccount] =
+    useState<BankAccountDTO | null>(null);
+
+  const [submitting, setSubmitting] = useState(false);
+
+  const depositMin = walletLimits?.deposit_min_limit ?? 100;
+  const depositMax = walletLimits?.deposit_max_limit ?? 1000;
+
+  const getNumericAmount = () => {
+    const num = parseInt(amount.replace(/,/g, ""), 10);
+    return isNaN(num) ? 0 : num;
   };
 
-  const [showWhatsapp, setShowWhatsapp] = useState<boolean>(true);
-  const [selectedBonus, setSelectedBonus] = useState<string>();
-  const [bonusTypes, setBonusTypes] = useState<BonusDto[]>();
+  useEffect(() => {
+    const fetchWalletLimits = async () => {
+      setLoadingLimits(true);
+      try {
+        const res = await USABET_API.post("/user/getUserShoutPeWalletLimit");
+        if (res?.data?.status && res?.data?.data) {
+          setWalletLimits(res.data.data);
+        }
+      } catch (err: any) {
+        const msg =
+          err?.response?.data?.msg ||
+          err?.message ||
+          "Failed to fetch wallet limits";
+        setAlertMsg({ type: "error", message: msg });
+      } finally {
+        setLoadingLimits(false);
+      }
+    };
+    fetchWalletLimits();
+  }, [setAlertMsg]);
 
-  const getAdminWhatsAppNumber = () => {
-    window.open(whatsappDetails, "_blank");
+  const fetchPaymentTypes = async () => {
+    const amt = getNumericAmount();
+    if (amt < depositMin || amt > depositMax) {
+      setAlertMsg({
+        type: "error",
+        message:
+          langData?.["amount_invalid"] ||
+          `Amount must be between ${depositMin} and ${depositMax}`,
+      });
+      return;
+    }
+    setLoadingPaymentTypes(true);
+    setPaymentTypes([]);
+    setSelectedPaymentType(null);
+    setBankAccounts([]);
+    setSelectedBankAccount(null);
+    try {
+      const res = await USABET_API.post("/wallet/bankAccountTypesGet", {
+        limit: 10,
+        page: 1,
+        payment_type: "DEPOSIT",
+        amount: amt,
+      });
+      if (res?.data?.status && Array.isArray(res?.data?.data)) {
+        setPaymentTypes(res.data.data);
+        setStep(1);
+      } else {
+        setAlertMsg({
+          type: "error",
+          message:
+            res?.data?.msg ||
+            langData?.["no_payment_methods"] ||
+            "No payment methods available",
+        });
+      }
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.msg ||
+        err?.message ||
+        "Failed to fetch payment methods";
+      setAlertMsg({ type: "error", message: msg });
+    } finally {
+      setLoadingPaymentTypes(false);
+    }
+  };
+
+  const fetchBankAccounts = async (typeItem: BankAccountTypeDTO) => {
+    const amt = getNumericAmount();
+    setSelectedPaymentType(typeItem);
+    setLoadingBankAccounts(true);
+    setBankAccounts([]);
+    setSelectedBankAccount(null);
+    try {
+      const res = await USABET_API.post("/wallet/getParentBankAccount", {
+        bank_account_type_id: typeItem._id,
+        amount: amt,
+      });
+      if (res?.data?.status && Array.isArray(res?.data?.data)) {
+        setBankAccounts(res.data.data);
+        setStep(2);
+      } else {
+        setAlertMsg({
+          type: "error",
+          message:
+            res?.data?.msg ||
+            langData?.["no_bank_accounts"] ||
+            "No bank accounts available",
+        });
+      }
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.msg ||
+        err?.message ||
+        "Failed to fetch bank accounts";
+      setAlertMsg({ type: "error", message: msg });
+    } finally {
+      setLoadingBankAccounts(false);
+    }
+  };
+
+  const selectBankAccount = (acc: BankAccountDTO) => {
+    setSelectedBankAccount(acc);
+    setStep(3);
+  };
+
+  const handleAddAmount = (value: string) => {
+    const numValue = parseInt(value.replace(/,/g, ""), 10);
+    const currentAmount = getNumericAmount();
+    const newAmount = currentAmount + numValue;
+    setAmount(newAmount.toLocaleString());
+  };
+
+  const handleAmountChange = (value: string) => {
+    const numericValue = (value || "").replace(/,/g, "");
+    if (numericValue === "" || !isNaN(parseInt(numericValue, 10))) {
+      setAmount(numericValue ? parseInt(numericValue, 10).toLocaleString() : "");
+    }
+  };
+
+  const handleEdit = () => {
+    setStep(0);
+    setSelectedPaymentType(null);
+    setBankAccounts([]);
+    setSelectedBankAccount(null);
+    setRemark("");
+    setUserReferenceNo("");
+    setDepositImage(null);
+    setUploadImage(null);
+    setTermsAccepted(false);
+  };
+
+  const handleBack = () => {
+    if (step === 3) {
+      setStep(2);
+      setSelectedBankAccount(null);
+      setRemark("");
+      setUserReferenceNo("");
+      setDepositImage(null);
+      setUploadImage(null);
+      setTermsAccepted(false);
+    } else if (step === 2) {
+      setStep(1);
+      setSelectedPaymentType(null);
+      setBankAccounts([]);
+      setSelectedBankAccount(null);
+    } else if (step === 1) {
+      setStep(0);
+      setSelectedPaymentType(null);
+      setPaymentTypes([]);
+      setBankAccounts([]);
+    }
   };
 
   const errorToast = (mess: string) => {
-    setAlertMsg({
-      type: "error",
-      message: mess ?? "",
-    });
+    setAlertMsg({ type: "error", message: mess ?? "" });
   };
 
-  const getImageDetails = async () => {
-    setLoading(true);
-    setDepositAmount("");
-    setOcrDepositAmount("");
-    setReferenceId("");
-    setOcrReferenceId("");
-    try {
-      const payload = {
-        payment_option:
-          paymentOption === "NEFT"
-            ? paymentOptionFilter
-            : paymentOption === "UPI"
-            ? "UPI"
-            : "PAYTM_WALLET",
-        image: depositImage,
-      };
-
-      const response = await AGPAY_API.post(
-        `/agpay/v2/ocr/get-details`,
-        payload,
-        {
-          headers: {
-            Authorization: sessionStorage.getItem("jwt_token"),
-          },
-          timeout: 20000,
-        }
-      );
-
-      if (response.status === 200 && response?.data) {
-        const data = response.data;
-        const amount = data.amount.trim();
-        const utr = data.utr.trim();
-
-        setDepositAmount(amount);
-        setOcrDepositAmount(amount);
-        setReferenceId(utr);
-        setOcrReferenceId(utr);
-
-        if (amount === "" || utr === "") {
-          errorToast(langData?.["enter_details_manually_txt"]);
-        } else {
-          successToast(langData?.["details_entered_success_txt"]);
-        }
-      } else {
-        errorToast(langData?.["general_err_txt"]);
-      }
-
-      setLoading(false);
-    } catch (error) {
-      errorToast(error?.response?.data?.message);
-      setLoading(false);
-    }
-  };
-
-  const getUtr = async () => {
-    setLoading(true);
-    setReferenceId("");
-    setOcrReferenceId("");
-    try {
-      const payload = {
-        payment_option:
-          paymentOption === "NEFT"
-            ? paymentOptionFilter
-            : paymentOption === "UPI"
-            ? "UPI"
-            : "PAYTM_WALLET",
-        image: depositImage,
-      };
-
-      const response = await AGPAY_API.post(`/agpay/v2/ocr/get-utr`, payload, {
-        headers: {
-          Authorization: sessionStorage.getItem("jwt_token"),
-        },
-        timeout: 20000,
-      });
-
-      if (response.status === 200 && response?.data) {
-        var utr = response.data;
-        setReferenceId(utr);
-        setOcrReferenceId(utr);
-        if (utr === "") {
-          errorToast(langData?.["enter_details_manually_txt"]);
-        } else {
-          successToast(langData?.["utr_entered_success_txt"]);
-        }
-      } else {
-        errorToast(langData?.["general_err_txt"]);
-      }
-
-      setLoading(false);
-    } catch (error) {
-      errorToast(error?.response?.data?.message);
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (
-      depositImage !== undefined &&
-      depositImage !== null &&
-      depositImage !== ""
-    ) {
-      if (tabValue === 1) {
-        // getImageDetails();
-      } else if (tabValue === 0) {
-        // getUtr();
-      }
-    }
-  }, [depositImage]);
-
-  const getPaymentProviders = async () => {
-    setLoading(true);
-    try {
-      // Payment methods structure: each key contains an array of payment gateway names
-      const dummyDepositMethods = {
-        UPI: ["ZENPAY", "PGMAN"],
-        BANK_TRANSFER: ["ZENPAY", "PGMAN"],
-        ZENPAY: ["ZENPAY"],
-        PGMAN: ["PGMAN"],
-        XENONPAY: ["XENONPAY"],
-      };
-      setDepositPaymentMethodsInfo(dummyDepositMethods);
-      console.log("[Deposit] Payment methods loaded:", dummyDepositMethods);
-    } catch (err) {
-      console.error("[Deposit] Error loading payment providers:", err);
-    }
-    setLoading(false);
-  };
-
-  const isNewUser = async () => {
-    setLoading(true);
-    try {
-      // Replaced API call with dummy data
-      // Set to 0 for existing user, 1 for new user
-      const dummyIsNewUser = 0;
-      setNewUser(dummyIsNewUser);
-    } catch (err) {}
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    // setPaymentGatewaysCount(0);
-    // getPaymentProviders();
-    if (paymentOption === "NEFT") {
-      // fetchPaymentMethod();
-    }
-    setDepositNotes("");
-    setDepositAmount("");
-    // setAccountDetails([]);
-    // setPaymentOption('NEFT');
-    setSelectedAccountId("");
-    // setOnlinePaymentOption('UPI');
-    setPaymentOptionFilter("IMPS");
-    // setBonusTypes([]);
-  }, [tabValue]);
-
-  const submitPayment = async (e) => {
-    e.preventDefault();
-    if (!depositImage) {
-      errorToast(langData?.["upload_txn_img_txt"]);
-      return false;
-    }
-    setLoading(true);
-    try {
-      const payload = {
-        amount: Number(depositAmount),
-        image: depositImage,
-        notes: depositNotes,
-        payment_method_id: selectedAccountId,
-        reference_id: referenceId,
-        payment_option:
-          paymentOption === "NEFT"
-            ? paymentOptionFilter
-            : paymentOption === "UPI"
-            ? "UPI"
-            : "PAYTM_WALLET",
-        amount_modified: ocrDepositAmount !== depositAmount,
-        reference_id_modified: ocrReferenceId !== referenceId,
-      };
-      const response = await AGPAY_API.post(
-        `/agpay/v2/pgman/transactions/:deposit`,
-        payload,
-        {
-          headers: {
-            Authorization: sessionStorage.getItem("jwt_token"),
-          },
-        }
-      );
-      if (response.status === 204) {
-        successToast(langData?.["txn_saved_success_txt"]);
-        depositInitiated();
-        window.location.href = "/my_transactions";
-        setOpenDepositModal(false);
-      } else {
-        errorToast(response?.data?.message);
-      }
-      setLoading(false);
-    } catch (error) {
-      errorToast(error?.response?.data?.message);
-      setLoading(false);
-    }
-  };
-
-  const handleCapture = ({ target }) => {
-    const file = target.files[0];
+  const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       errorToast("File upload error: The file size must be less than 5MB");
-      target.value = "";
+      e.target.value = "";
       setUploadImage(null);
       setDepositImage(null);
       return;
@@ -323,684 +243,108 @@ const Deposit: React.FC<StoreProps> = (props) => {
     setUploadImage(file);
     const fileReader = new FileReader();
     fileReader.readAsDataURL(file);
-    fileReader.onload = (e) => {
-      setDepositImage(e.target.result);
+    fileReader.onload = (ev) => {
+      setDepositImage(ev.target?.result ?? null);
     };
   };
 
   const handleClick = () => {
-    console.log("input", hiddenFileInput);
-    hiddenFileInput.current.click();
+    hiddenFileInput.current?.click();
   };
 
-  const getBonusTypes = async (
-    amount: number,
-    paymentMethod: string = onlinePaymentOption
-  ) => {
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setAlertMsg({
+        type: "success",
+        message: langData?.["copied"] || "Copied to clipboard",
+      });
+    });
+  };
+
+  const getDisplayValue = (acc: BankAccountDTO) => {
+    if (acc.crypto_wallet) return acc.crypto_wallet;
+    if (acc.crypto_coin_type) return acc.crypto_coin_type;
+    if (acc.upi_id) return acc.upi_id;
+    if (acc.account_number) return acc.account_number;
+    return acc.holder_name || "-";
+  };
+
+  const getDisplayLabel = (acc: BankAccountDTO) => {
+    if (acc.crypto_wallet) return "Crypto Wallet";
+    if (acc.crypto_coin_type) return "Coin Type";
+    if (acc.upi_id) return "UPI ID";
+    if (acc.account_number) return "Account Number";
+    return "Holder Name";
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!selectedBankAccount) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["select_bank_account"] || "Please select a bank account",
+      });
+      return;
+    }
+    if (!uploadImage) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["upload_image_required"] || "Please upload payment screenshot",
+      });
+      return;
+    }
+    if (!termsAccepted) {
+      setAlertMsg({
+        type: "error",
+        message: langData?.["accept_terms"] || "Please accept Terms & Conditions",
+      });
+      return;
+    }
+    const refNo = userReferenceNo.trim();
+    if (!refNo) {
+      setAlertMsg({
+        type: "error",
+        message:
+          langData?.["reference_required"] || "Please enter Reference ID/UTR",
+      });
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      const response = await SVLS_API.get(
-        `/marketing/v1/bonus-policies/eligible`,
-        {
-          headers: {
-            Authorization: sessionStorage.getItem("jwt_token"),
-          },
-          params: {
-            account_id: sessionStorage.getItem("aid"),
-            amount: amount,
-            payment_method:
-              paymentMethod == "UPI" ? "UPI_TRANSFER" : paymentMethod,
-          },
-        }
-      );
-      if (response.status == 200) {
-        const noBonus: BonusDto = {
-          id: null,
-          name: "-",
-          description: "",
-          bonusCategory: "",
-        };
-        setBonusTypes([noBonus, ...response.data]);
-        if (response.data && response.data?.length > 0) {
-          setSelectedBonus(response.data[0]?.id);
-        }
+      const formData = new FormData();
+      formData.append("image", uploadImage);
+      formData.append("bank_account_id", selectedBankAccount._id);
+      formData.append("amount", String(getNumericAmount()));
+      formData.append("remark", remark.trim() || "wallet");
+      formData.append("user_reference_no", refNo);
+
+      const res = await USABET_API.post("/wallet/depositRequestInit", formData);
+
+      if (res?.data?.status) {
+        setAlertMsg({
+          type: "success",
+          message: res?.data?.msg || "Request submitted successfully!",
+        });
+        fetchBalance();
+        handleEdit();
+      } else {
+        setAlertMsg({
+          type: "error",
+          message: res?.data?.msg || "Failed to submit deposit request",
+        });
       }
-    } catch (error) {
-      const noBonus: BonusDto = {
-        id: null,
-        name: "-",
-        description: "",
-        bonusCategory: "",
-      };
-      setBonusTypes([noBonus]);
-      // errorToast("Failed to fetch bonuses");
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.msg ||
+        err?.message ||
+        "Failed to submit deposit request";
+      setAlertMsg({ type: "error", message: msg });
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const submitOnlineAmount = async (e, type = "abcmoney") => {
-    e.preventDefault();
-    if (
-      type != "zenpay" &&
-      type != "zenpay1" &&
-      type != "zenpay2" &&
-      type != "xeinpay" &&
-      type != "xenonpayz" &&
-      mobileNumber?.length != 10
-    ) {
-      errorToast(langData?.["invalid_mobile_no_txt"]);
-      return false;
-    }
-    setLoading(true);
-
-    try {
-      const payload = {
-        amount: Number(depositAmount),
-        currency_type: "INR",
-        mobile_number: mobileNumber ? mobileNumber : "9876543211",
-        notes: depositNotes,
-        payment_method:
-          onlinePaymentOption === "UPI" ? "UPI_TRANSFER" : onlinePaymentOption,
-        upi_intent: onlinePaymentOption === "UPI",
-        upi_qr: onlinePaymentOption === "UPI",
-        return_url: window.location.origin + "/my_transactions",
-        bonus_policy_id: selectedBonus,
-      };
-      getBonusTypes(Number(depositAmount));
-      const response = await AGPAY_API.post(
-        `/agpay/v2/${type}/transactions/:deposit`,
-        payload,
-        {
-          headers: {
-            Authorization: sessionStorage.getItem("jwt_token"),
-          },
-        }
-      );
-      if (response.status === 200) {
-        if (response.data.payment_options?.length > 0) {
-          setPaymentDetails(response.data.payment_options);
-          setProviderRefId(response.data.provider_ref_id);
-          let upiPaymentOption = response.data.payment_options[0];
-          if (upiPaymentOption?.sessionUrl) {
-            window.location.href = upiPaymentOption?.sessionUrl;
-            return;
-          } else if (upiPaymentOption?.paymentLink) {
-            window.location.href = upiPaymentOption?.paymentLink;
-            return;
-          } else if (
-            upiPaymentOption?.payment_method_details &&
-            upiPaymentOption?.payment_method_details?.paymentLink
-          ) {
-            window.location.href =
-              upiPaymentOption?.payment_method_details?.paymentLink;
-            return;
-          }
-        }
-        successToast(langData?.["txn_saved_success_txt"]);
-      }
-      setLoading(false);
-    } catch (error) {
-      errorToast(error?.response?.data?.message);
-      setLoading(false);
-    }
-  };
-
-  const submitXenonPay = async (e) => {
-    e.preventDefault();
-    if (mobileNumber?.length != 10) {
-      errorToast(langData?.["invalid_mobile_no_txt"]);
-      return false;
-    }
-    setLoading(true);
-
-    try {
-      const payload = {
-        amount: Number(depositAmount),
-        mobile_number: mobileNumber,
-        notes: depositNotes,
-        return_url: `https://${window.location.hostname}`,
-      };
-      const response = await AGPAY_API.post(
-        `/agpay/v2/xenon-pay/transactions/:deposit`,
-        payload,
-        {
-          headers: {
-            Authorization: sessionStorage.getItem("jwt_token"),
-          },
-        }
-      );
-      successToast(langData?.["txn_saved_success_txt"]);
-      window.open(response.data.paymentLink, "_self");
-      setLoading(false);
-    } catch (error) {
-      errorToast(error?.response?.data?.message);
-      setLoading(false);
-    }
-  };
-
-  const utrRequired = paymentDetails?.filter(
-    (pm) => pm?.payment_method == onlinePaymentOption
-  )[0]?.payment_method_details?.utr_required;
-
-  const confirmPayment = async (e, selectedPaymentGateway = "abcmoney") => {
-    e.preventDefault();
-    if (!depositImage) {
-      errorToast("Please Upload Transaction Image");
-      return false;
-    }
-    if (
-      !(
-        UPI_REGEX.test(referenceId) ||
-        RTGS_REGEX.test(referenceId) ||
-        NEFT_REGEX.test(referenceId)
-      ) &&
-      utrRequired
-    ) {
-      errorToast("Invalid UTR provided");
-      return false;
-    }
-    setLoading(true);
-
-    try {
-      const payload = {
-        gateway_provider_reference_id: providerRefId,
-        utr: normalizeInput(referenceId),
-        mobile_number: mobileNumber ? mobileNumber : "9876543211",
-        bank_id: paymentDetails?.filter(
-          (i) => i?.payment_method === onlinePaymentOption
-        )[0].payment_method_details?.bank_id,
-        payment_option:
-          onlinePaymentOption === "BANK_TRANSFER" ? "IMPS" : "UPI",
-        reference_id_modified: ocrReferenceId !== referenceId,
-        upi_intent: !!paymentDetails?.filter(
-          (i) => i?.payment_method === onlinePaymentOption
-        )[0]?.payment_method_details?.upi_intent,
-        bonus_policy_id: selectedBonus,
-      };
-      let formData = new FormData();
-      formData.append("paymentSlip", uploadImage);
-      formData.append("request", JSON.stringify(payload));
-      const response = await AGPAY_API.post(
-        `/agpay/v2/${selectedPaymentGateway}/:confirm-payment`,
-        formData,
-        {
-          headers: {
-            Authorization: sessionStorage.getItem("jwt_token"),
-          },
-        }
-      );
-      if (response.status == 200) {
-        successToast(langData?.["txn_saved_success_txt"]);
-        depositInitiated();
-        window.location.href = "/my_transactions";
-        setOpenDepositModal(false);
-      }
-      setLoading(false);
-    } catch (error) {
-      errorToast(error?.response?.data?.message);
-      setLoading(false);
-    }
-  };
-
-  let [buttonVariables, setButtonVariables] = useState([
-    { label: "500", stake: 500 },
-    { label: "1000", stake: 1000 },
-    { label: "5000", stake: 5000 },
-    { label: "10000", stake: 10000 },
-    { label: "25000", stake: 25000 },
-    { label: "50000", stake: 50000 },
-    { label: "100000", stake: 100000 },
-    { label: "500000", stake: 500000 },
-    { label: "1000000", stake: 1000000 },
-  ]);
-
-  useEffect(() => {
-    if (newUser) {
-      setButtonVariables([
-        { label: "500", stake: 500 },
-        { label: "1000", stake: 1000 },
-        { label: "5000", stake: 5000 },
-        { label: "10000", stake: 10000 },
-        { label: "25000", stake: 25000 },
-        { label: "50000", stake: 50000 },
-        { label: "100000", stake: 100000 },
-        { label: "500000", stake: 500000 },
-        { label: "1000000", stake: 1000000 },
-      ]);
-    } else {
-      setButtonVariables([
-        { label: "500", stake: 500 },
-        { label: "1000", stake: 1000 },
-        { label: "5000", stake: 5000 },
-        { label: "10000", stake: 10000 },
-        { label: "25000", stake: 25000 },
-        { label: "50000", stake: 50000 },
-        { label: "100000", stake: 100000 },
-        { label: "500000", stake: 500000 },
-        { label: "1000000", stake: 1000000 },
-      ]);
-    }
-  }, [newUser]);
-
-  const copyText = (text, toastMessage = langData?.["text_copied_txt"]) => {
-    navigator.clipboard.writeText(text);
-    successToast(toastMessage);
-  };
-
-  useEffect(() => {
-    if (paymentOption) {
-      // fetchPaymentMethod();
-      setAccountDetails([]);
-      setSelectedAccountId("");
-      setDepositAmount("");
-      setDepositImage("");
-      setDepositNotes("");
-      setReferenceId("");
-    }
-  }, [paymentOption]);
-
-  useEffect(() => {
-    setPaymentDetails([]);
-    setDepositAmount("");
-    setDepositNotes("");
-    setReferenceId("");
-    setMobileNumber("");
-    setProviderRefId("");
-  }, [onlinePaymentOption, tabValue]);
-
-  const renderPaymentForm = (
-    paymentGateway: AvailablePaymentGateways,
-    index: number,
-    tabValue: number
-  ) => {
-    switch (paymentGateway) {
-      case AvailablePaymentGateways.ABCMONEY:
-        return (
-          <AbcMoney
-            index={index}
-            onlinePaymentOption={onlinePaymentOption}
-            depositPaymentMethodsInfo={depositPaymentMethodsInfo}
-            setOnlinePaymentOption={setOnlinePaymentOption}
-            tabValue={tabValue}
-            submitOnlineAmount={submitOnlineAmount}
-            paymentDetails={paymentDetails}
-            depositAmount={depositAmount}
-            setDepositAmount={setDepositAmount}
-            mobileNumber={mobileNumber}
-            setMobileNumber={setMobileNumber}
-            loading={loading}
-            providerRefId={providerRefId}
-            confirmPayment={confirmPayment}
-            copyText={copyText}
-            referenceId={referenceId}
-            setReferenceId={setReferenceId}
-            paymentOptionFilter={paymentOptionFilter}
-            setPaymentOptionFilter={setPaymentOptionFilter}
-            depositImage={depositImage}
-            handleCapture={handleCapture}
-            handleClick={handleClick}
-            ref={hiddenFileInput}
-            langData={langData}
-          />
-        );
-
-      case AvailablePaymentGateways.PGMAN:
-        return (
-          <Pgman
-            index={index}
-            tabValue={tabValue}
-            paymentOption={paymentOption}
-            setPaymentOption={setPaymentOption}
-            accountDetails={accountDetails}
-            selectedAccountId={selectedAccountId}
-            setSelectedAccountId={setSelectedAccountId}
-            setSelectedAccount={setSelectedAccount}
-            selectedAccount={selectedAccount}
-            copyText={copyText}
-            paymentOptionFilter={paymentOptionFilter}
-            setPaymentOptionFilter={setPaymentOptionFilter}
-            submitPayment={submitPayment}
-            depositAmount={depositAmount}
-            depositNotes={depositNotes}
-            referenceId={referenceId}
-            setDepositAmount={setDepositAmount}
-            setDepositNotes={setDepositNotes}
-            setReferenceId={setReferenceId}
-            depositImage={depositImage}
-            handleCapture={handleCapture}
-            handleClick={handleClick}
-            loading={loading}
-            ref={hiddenFileInput}
-            depositPaymentMethodsInfo={depositPaymentMethodsInfo}
-            setOnlinePaymentOption={setOnlinePaymentOption}
-            onlinePaymentOption={onlinePaymentOption}
-            langData={langData}
-          />
-        );
-
-      case AvailablePaymentGateways.XENONPAY:
-        return (
-          <XenonPay
-            index={index}
-            tabValue={tabValue}
-            depositAmount={depositAmount}
-            loading={loading}
-            mobileNumber={mobileNumber}
-            providerRefId={providerRefId}
-            setDepositAmount={setDepositAmount}
-            setMobileNumber={setMobileNumber}
-            submitXenonPay={submitXenonPay}
-            langData={langData}
-          />
-        );
-      case AvailablePaymentGateways.ZENPAY:
-        return (
-          <ZenPay
-            index={index}
-            providersList={providersList}
-            onlinePaymentOption={onlinePaymentOption}
-            depositPaymentMethodsInfo={depositPaymentMethodsInfo}
-            setOnlinePaymentOption={setOnlinePaymentOption}
-            tabValue={tabValue}
-            submitOnlineAmount={submitOnlineAmount}
-            paymentDetails={paymentDetails}
-            depositAmount={depositAmount}
-            setDepositAmount={setDepositAmount}
-            mobileNumber={mobileNumber}
-            setMobileNumber={setMobileNumber}
-            loading={loading}
-            providerRefId={providerRefId}
-            confirmPayment={confirmPayment}
-            copyText={copyText}
-            referenceId={referenceId}
-            setReferenceId={setReferenceId}
-            paymentOptionFilter={paymentOptionFilter}
-            setPaymentOptionFilter={setPaymentOptionFilter}
-            depositImage={depositImage}
-            handleCapture={handleCapture}
-            handleClick={handleClick}
-            ref={hiddenFileInput}
-            buttonVariables={buttonVariables}
-            getAdminWhatsAppNumber={getAdminWhatsAppNumber}
-            setShowWhatsapp={setShowWhatsapp}
-            showWhatsapp={showWhatsapp}
-            bonusTypes={bonusTypes}
-            selectedBonus={selectedBonus}
-            setSelectedBonus={setSelectedBonus}
-            pgProvider="zenpay"
-            loggedIn={loggedIn}
-            domainConfig={domainConfig}
-            langData={langData}
-          />
-        );
-      case AvailablePaymentGateways.ZENPAY1:
-        return (
-          <ZenPay
-            index={index}
-            providersList={providersList}
-            onlinePaymentOption={onlinePaymentOption}
-            depositPaymentMethodsInfo={depositPaymentMethodsInfo}
-            setOnlinePaymentOption={setOnlinePaymentOption}
-            tabValue={tabValue}
-            submitOnlineAmount={submitOnlineAmount}
-            paymentDetails={paymentDetails}
-            depositAmount={depositAmount}
-            setDepositAmount={setDepositAmount}
-            mobileNumber={mobileNumber}
-            setMobileNumber={setMobileNumber}
-            loading={loading}
-            providerRefId={providerRefId}
-            confirmPayment={confirmPayment}
-            copyText={copyText}
-            referenceId={referenceId}
-            setReferenceId={setReferenceId}
-            paymentOptionFilter={paymentOptionFilter}
-            setPaymentOptionFilter={setPaymentOptionFilter}
-            depositImage={depositImage}
-            handleCapture={handleCapture}
-            handleClick={handleClick}
-            ref={hiddenFileInput}
-            buttonVariables={buttonVariables}
-            getAdminWhatsAppNumber={getAdminWhatsAppNumber}
-            setShowWhatsapp={setShowWhatsapp}
-            showWhatsapp={showWhatsapp}
-            bonusTypes={bonusTypes}
-            selectedBonus={selectedBonus}
-            setSelectedBonus={setSelectedBonus}
-            pgProvider="zenpay1"
-            loggedIn={loggedIn}
-            domainConfig={domainConfig}
-            langData={langData}
-          />
-        );
-      case AvailablePaymentGateways.ZENPAY2:
-        return (
-          <ZenPay
-            index={index}
-            providersList={providersList}
-            onlinePaymentOption={onlinePaymentOption}
-            depositPaymentMethodsInfo={depositPaymentMethodsInfo}
-            setOnlinePaymentOption={setOnlinePaymentOption}
-            tabValue={tabValue}
-            submitOnlineAmount={submitOnlineAmount}
-            paymentDetails={paymentDetails}
-            depositAmount={depositAmount}
-            setDepositAmount={setDepositAmount}
-            mobileNumber={mobileNumber}
-            setMobileNumber={setMobileNumber}
-            loading={loading}
-            providerRefId={providerRefId}
-            confirmPayment={confirmPayment}
-            copyText={copyText}
-            referenceId={referenceId}
-            setReferenceId={setReferenceId}
-            paymentOptionFilter={paymentOptionFilter}
-            setPaymentOptionFilter={setPaymentOptionFilter}
-            depositImage={depositImage}
-            handleCapture={handleCapture}
-            handleClick={handleClick}
-            ref={hiddenFileInput}
-            buttonVariables={buttonVariables}
-            getAdminWhatsAppNumber={getAdminWhatsAppNumber}
-            setShowWhatsapp={setShowWhatsapp}
-            showWhatsapp={showWhatsapp}
-            bonusTypes={bonusTypes}
-            selectedBonus={selectedBonus}
-            setSelectedBonus={setSelectedBonus}
-            pgProvider="zenpay2"
-            loggedIn={loggedIn}
-            domainConfig={domainConfig}
-            langData={langData}
-          />
-        );
-      case AvailablePaymentGateways.XEINPAY:
-        return (
-          <ZenpayCheckout
-            index={index}
-            providersList={providersList}
-            onlinePaymentOption={onlinePaymentOption}
-            depositPaymentMethodsInfo={depositPaymentMethodsInfo}
-            setOnlinePaymentOption={setOnlinePaymentOption}
-            tabValue={tabValue}
-            submitOnlineAmount={submitOnlineAmount}
-            paymentDetails={paymentDetails}
-            depositAmount={depositAmount}
-            setDepositAmount={setDepositAmount}
-            mobileNumber={mobileNumber}
-            setMobileNumber={setMobileNumber}
-            loading={loading}
-            providerRefId={providerRefId}
-            confirmPayment={confirmPayment}
-            copyText={copyText}
-            referenceId={referenceId}
-            setReferenceId={setReferenceId}
-            paymentOptionFilter={paymentOptionFilter}
-            setPaymentOptionFilter={setPaymentOptionFilter}
-            depositImage={depositImage}
-            handleCapture={handleCapture}
-            handleClick={handleClick}
-            ref={hiddenFileInput}
-            buttonVariables={buttonVariables}
-            getAdminWhatsAppNumber={getAdminWhatsAppNumber}
-            setShowWhatsapp={setShowWhatsapp}
-            showWhatsapp={showWhatsapp}
-            bonusTypes={bonusTypes}
-            selectedBonus={selectedBonus}
-            setSelectedBonus={setSelectedBonus}
-            pgProvider="xeinpay"
-            getBonusTypes={getBonusTypes}
-            langData={langData}
-          />
-        );
-
-      case AvailablePaymentGateways.XENONPAYZ:
-        return (
-          <Xenonpayz
-            index={index}
-            providersList={providersList}
-            onlinePaymentOption={onlinePaymentOption}
-            depositPaymentMethodsInfo={depositPaymentMethodsInfo}
-            setOnlinePaymentOption={setOnlinePaymentOption}
-            tabValue={tabValue}
-            submitOnlineAmount={submitOnlineAmount}
-            paymentDetails={paymentDetails}
-            depositAmount={depositAmount}
-            setDepositAmount={setDepositAmount}
-            mobileNumber={mobileNumber}
-            setMobileNumber={setMobileNumber}
-            loading={loading}
-            providerRefId={providerRefId}
-            confirmPayment={confirmPayment}
-            copyText={copyText}
-            referenceId={referenceId}
-            setReferenceId={setReferenceId}
-            paymentOptionFilter={paymentOptionFilter}
-            setPaymentOptionFilter={setPaymentOptionFilter}
-            depositImage={depositImage}
-            handleCapture={handleCapture}
-            handleClick={handleClick}
-            ref={hiddenFileInput}
-            buttonVariables={buttonVariables}
-            getAdminWhatsAppNumber={getAdminWhatsAppNumber}
-            setShowWhatsapp={setShowWhatsapp}
-            showWhatsapp={showWhatsapp}
-            bonusTypes={bonusTypes}
-            selectedBonus={selectedBonus}
-            setSelectedBonus={setSelectedBonus}
-            pgProvider="xenonpayz"
-            getBonusTypes={getBonusTypes}
-            langData={langData}
-          />
-        );
-      case AvailablePaymentGateways.ZENPAYCRYPTO:
-        return (
-          <ZenpayCrypto
-            setOpenDepositModal={setOpenDepositModal}
-            setLoading={setLoading}
-            index={index}
-            providersList={providersList}
-            onlinePaymentOption={onlinePaymentOption}
-            depositPaymentMethodsInfo={depositPaymentMethodsInfo}
-            setOnlinePaymentOption={setOnlinePaymentOption}
-            tabValue={tabValue}
-            depositAmount={depositAmount}
-            setDepositAmount={setDepositAmount}
-            mobileNumber={mobileNumber}
-            setMobileNumber={setMobileNumber}
-            loading={loading}
-            copyText={copyText}
-            ref={hiddenFileInput}
-            buttonVariables={buttonVariables}
-            getAdminWhatsAppNumber={getAdminWhatsAppNumber}
-            setShowWhatsapp={setShowWhatsapp}
-            showWhatsapp={showWhatsapp}
-            bonusTypes={bonusTypes}
-            selectedBonus={selectedBonus}
-            setSelectedBonus={setSelectedBonus}
-            getBonusTypes={getBonusTypes}
-            langData={langData}
-            loggedIn={loggedIn}
-            domainConfig={domainConfig}
-            setAlertMsg={setAlertMsg}
-            depositImage={depositImage}
-            handleCapture={handleCapture}
-            handleClick={handleClick}
-            uploadImage={uploadImage}
-          />
-        );
-      case AvailablePaymentGateways.ZENPAYCRYPTOSEAMLESS:
-        return (
-          <ZenpayCryptoSeamless
-            index={index}
-            providersList={providersList}
-            depositPaymentMethodsInfo={depositPaymentMethodsInfo}
-            setOnlinePaymentOption={setOnlinePaymentOption}
-            tabValue={tabValue}
-            copyText={copyText}
-            ref={hiddenFileInput}
-            langData={langData}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
-  const getPaymentIcon = (method) => {
-    return method === "GPAY"
-      ? gpay
-      : method === "PHONEPE"
-      ? phonePe
-      : method === "BANK_TRANSFER"
-      ? bank
-      : method === "PAYTM"
-      ? paytm
-      : null;
-  };
-
-  useEffect(() => {
-    // Set providersList based on current paymentOption
-    if (depositPaymentMethodsInfo && Object.keys(depositPaymentMethodsInfo).length > 0) {
-      if (paymentOption && depositPaymentMethodsInfo[paymentOption]) {
-        const providers = depositPaymentMethodsInfo[paymentOption];
-        // Ensure providers is an array of strings, filter out any non-string values
-        const validProviders = Array.isArray(providers) 
-          ? providers.filter(p => typeof p === 'string' && p.length > 0)
-          : [];
-        setProvidersList(validProviders);
-        console.log("[Deposit] Providers list set for", paymentOption, ":", validProviders);
-      } else if (depositPaymentMethodsInfo["BANK_TRANSFER"]) {
-        // Fallback to BANK_TRANSFER if current paymentOption doesn't exist
-        const providers = depositPaymentMethodsInfo["BANK_TRANSFER"];
-        // Ensure providers is an array of strings, filter out any non-string values
-        const validProviders = Array.isArray(providers) 
-          ? providers.filter(p => typeof p === 'string' && p.length > 0)
-          : [];
-        setProvidersList(validProviders);
-        console.log("[Deposit] Providers list set to BANK_TRANSFER (fallback):", validProviders);
-      }
-    }
-  }, [depositPaymentMethodsInfo, paymentOption]);
-
-  useEffect(() => {
-    getPaymentProviders();
-    isNewUser();
-    setPaymentOption("BANK_TRANSFER");
-  }, []);
-
-  const eligibleBankBonusWls = [
-    "fairplay",
-    "stake786",
-    "govinda365",
-    "winadda",
-    "playadda",
-    "southbook",
-    "murganbook",
-    "guru365",
-    "ultrawin",
-  ];
-
-  const is5PercentBankBonusEligible = eligibleBankBonusWls.includes(
-    BRAND_DOMAIN.split(".")[0]
-  );
+  const nextStep = step > 0;
 
   return (
     <div className="deposit-ctn-new">
@@ -1021,109 +365,276 @@ const Deposit: React.FC<StoreProps> = (props) => {
         />
       </div>
       <div className="deposit-form-ctn account-inputs">
-        {!loading && Object.keys(depositPaymentMethodsInfo).length == 0 && (
-          <div className="pg-down-msg">
-            {demoUser()
-              ? langData?.["demo_deposits_msg"]
-              : langData?.["deposit_upi_problem_txt"]}
-          </div>
-        )}
         <div className="disclaimer-msg">
           <b>{langData?.["disclaimer"]}</b>
         </div>
-        {depositPaymentMethodsInfo && (
-          <Tabs
-            value={paymentOption}
-            onChange={(_, newValue) => {
-              if (newValue == "WHATSAPP DEPOSIT") {
-                getAdminWhatsAppNumber();
-                return;
-              }
-              setPaymentOption(newValue);
-              // Ensure providersList is an array of strings
-              const providers = depositPaymentMethodsInfo[newValue];
-              const validProviders = Array.isArray(providers) 
-                ? providers.filter(p => typeof p === 'string' && p.length > 0)
-                : [];
-              setProvidersList(validProviders);
-              setTabValue(0);
-              setMobileNumber("");
-              setPaymentDetails([]);
-              setProviderRefId("");
-              setOnlinePaymentOption(newValue);
-            }}
-          >
-            {Object.keys(depositPaymentMethodsInfo).map(
-              (paymentMethodName, index) => (
-                <Tab
-                  value={paymentMethodName}
-                  label={
-                    paymentMethodName === "BANK_TRANSFER"
-                      ? is5PercentBankBonusEligible
-                        ? "BANK (5% Bonus)"
-                        : "BANK"
-                      : paymentMethodName === "CRYPTO_WALLET_TRANSFER"
-                      ? "CRYPTO"
-                      : paymentMethodName
-                  }
-                  className="payment-btn"
-                />
-              )
-            )}
-            <Tab
-              value={"WHATSAPP DEPOSIT"}
-              label={langData?.["whatsapp_deposit"]}
-              className="whatsapp-payment-btn"
-            />
-          </Tabs>
-        )}
-        <div className="deposit-form-ctn">
-          {providersList?.length > 1 && (
-            <Tabs
-              value={tabValue}
-              onChange={(_, newValue) => setTabValue(newValue)}
-            >
-              {providersList.map(
-                (paymentGateway, index) => {
-                  // Ensure paymentGateway is a string
-                  const gatewayName = typeof paymentGateway === 'string' ? paymentGateway : String(paymentGateway || '');
-                  if (!gatewayName || !AvailablePaymentGateways[gatewayName]) {
-                    return null;
-                  }
-                  return (
-                    <Tab
-                      key={`tab-${gatewayName}-${index}`}
-                      value={index}
-                      label={`${langData?.["option"]} ${++indexCount}`}
-                      className="payment-btn"
-                    />
-                  );
-                }
-              )}
-            </Tabs>
-          )}
-          {providersList && providersList.length > 0 ? (
-            providersList.map((paymentGateway, index) => {
-              // Ensure paymentGateway is a string
-              const gatewayName = typeof paymentGateway === 'string' ? paymentGateway : String(paymentGateway || '');
-              if (!gatewayName) {
-                return null;
-              }
-              const form = renderPaymentForm(gatewayName, index, tabValue);
-              return form ? (
-                <div key={`payment-gateway-${index}-${gatewayName}`}>
-                  {form}
+        <div className="auto-deposit">
+          <div className="mt-2">
+            <div className="deposit-input">
+              <InputTemplate
+                type="text"
+                name="amount"
+                label={langData?.["enter_amount"] || "Enter Amount"}
+                placeholder={langData?.["enter_amount"] || "Enter Amount"}
+                disabled={nextStep}
+                value={amount}
+                onChange={handleAmountChange}
+              />
+              {nextStep && <Edit onClick={handleEdit} />}
+            </div>
+            <div className="amount-info">
+              <span>
+                {langData?.["min"] || "Min"} {depositMin}
+              </span>
+              <span> - </span>
+              <span>
+                {langData?.["max"] || "Max"} {depositMax}
+              </span>
+            </div>
+
+            {step === 0 && (
+              <div className="ocbValueButtons zenpay-ctn">
+                <div className="account-inputs">
+                  <Button
+                    type="button"
+                    className="qb-btn"
+                    onClick={() => handleAddAmount("100")}
+                  >
+                    <span>+100</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    className="qb-btn"
+                    onClick={() => handleAddAmount("500")}
+                  >
+                    <span>+500</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    className="qb-btn"
+                    onClick={() => handleAddAmount("1000")}
+                  >
+                    <span>+1,000</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    className="qb-btn"
+                    onClick={() => handleAddAmount("5000")}
+                  >
+                    <span>+5,000</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    className="qb-btn"
+                    onClick={() => handleAddAmount("10000")}
+                  >
+                    <span>+10,000</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    className="qb-btn"
+                    onClick={() => handleAddAmount("50000")}
+                  >
+                    <span>+50,000</span>
+                  </Button>
+                  <Button
+                    variant="contained"
+                    className="submit-payment-btn"
+                    onClick={fetchPaymentTypes}
+                    disabled={loadingPaymentTypes}
+                  >
+                    {loadingPaymentTypes
+                      ? langData?.["loading"] || "Loading..."
+                      : langData?.["next"] || "Next"}
+                  </Button>
                 </div>
-              ) : null;
-            })
-          ) : (
-            !loading && (
-              <div className="no-payment-methods">
-                {langData?.["no_payment_methods_available"] || "No payment methods available"}
               </div>
-            )
-          )}
+            )}
+          </div>
         </div>
+
+        {step === 1 && (
+          <div className="auto-deposit zenpay-ctn">
+            <Button
+              size="small"
+              className="back-step-btn"
+              onClick={handleBack}
+            >
+              {langData?.["back"] || "Back"}
+            </Button>
+            <h6 className="payment-option-title mt-10">
+              {langData?.["select_payment_method"] || "Select Payment Method"}
+            </h6>
+            <div className="payment-types-grid">
+              {paymentTypes.map((pt) => (
+                <div
+                  key={pt._id}
+                  className={`payment-type-card ${
+                    selectedPaymentType?._id === pt._id ? "active" : ""
+                  }`}
+                  onClick={() => fetchBankAccounts(pt)}
+                >
+                  {pt.image && (
+                    <img src={pt.image} alt={pt.name} className="payment-type-img" />
+                  )}
+                  <span className="payment-type-name">{pt.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="auto-deposit zenpay-ctn">
+            <Button
+              size="small"
+              className="back-step-btn"
+              onClick={handleBack}
+            >
+              {langData?.["back"] || "Back"}
+            </Button>
+            <h6 className="payment-option-title mt-10">
+              {langData?.["select_bank_account"] || "Select Bank Account"}
+            </h6>
+            <div className="bank-accounts-list">
+              {bankAccounts.map((acc) => (
+                <div
+                  key={acc._id}
+                  className={`bank-account-card ${
+                    selectedBankAccount?._id === acc._id ? "active" : ""
+                  }`}
+                  onClick={() => selectBankAccount(acc)}
+                >
+                  <div className="bank-account-holder">{acc.holder_name}</div>
+                  <div className="bank-account-detail">
+                    <span className="label">{getDisplayLabel(acc)}:</span>
+                    <span className="value">{getDisplayValue(acc)}</span>
+                    <Copy
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(getDisplayValue(acc));
+                      }}
+                    />
+                  </div>
+                  <div className="bank-account-limits">
+                    {acc.min_amount} - {acc.max_amount}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 3 && selectedBankAccount && (
+          <div className="auto-deposit zenpay-ctn">
+            <Button
+              size="small"
+              className="back-step-btn"
+              onClick={handleBack}
+            >
+              {langData?.["back"] || "Back"}
+            </Button>
+            <div className="mb-4">
+              <h6 className="payment-option-title mt-10">
+                {langData?.["account_detail"] || "Account Detail"}
+              </h6>
+              <div className="account-detail">
+                <label>{getDisplayLabel(selectedBankAccount)}</label>
+                <div className="account-info">
+                  <p>{getDisplayValue(selectedBankAccount)}</p>
+                  <Copy
+                    onClick={() =>
+                      copyToClipboard(
+                        getDisplayValue(selectedBankAccount)
+                      )
+                    }
+                  />
+                </div>
+              </div>
+              <div className="account-detail">
+                <label>{langData?.["holder_name"] || "Holder Name"}</label>
+                <div className="account-info">
+                  <p>{selectedBankAccount.holder_name}</p>
+                  <Copy
+                    onClick={() =>
+                      copyToClipboard(selectedBankAccount.holder_name)
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+            <InputTemplate
+              type="text"
+              placeholder={langData?.["enter_reference_placeholder"] || "Enter Reference ID/UTR"}
+              name="utr"
+              value={userReferenceNo}
+              onChange={(val) => setUserReferenceNo(val)}
+              label={langData?.["unique_transaction_ref"] || "Unique Transaction Reference*"}
+            />
+            <InputTemplate
+              type="text"
+              placeholder={langData?.["enter_remark"] || "Enter remark (optional)"}
+              name="remark"
+              value={remark}
+              onChange={(val) => setRemark(val)}
+              label={langData?.["remark"] || "Remark"}
+            />
+            <div className="account-input">
+              {depositImage ? (
+                <div>
+                  <div className="zenpay-uploaded-image-title">
+                    {langData?.["uploaded_image"] || "Uploaded Image"}
+                  </div>
+                  <img
+                    src={`${depositImage}`}
+                    className="deposit-upload-image"
+                    alt="Upload"
+                  />
+                </div>
+              ) : null}
+
+              <input
+                accept="image/*"
+                style={{ display: "none" }}
+                id="raised-button-file-abcmoney"
+                type="file"
+                ref={hiddenFileInput}
+                onChange={handleCapture}
+              />
+              <Button
+                component="div"
+                className="zenpay-upload-btn"
+                onClick={handleClick}
+              >
+                {langData?.["upload_image"] || "Upload Image"}
+              </Button>
+            </div>
+            <div className="form-group terms">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+              />
+              <label className="mb-0" htmlFor="terms">
+                {langData?.["accept_terms_text"] || "I accept all the"}{" "}
+                <Link to="/" className="pointer">
+                  <span>{langData?.["terms_conditions"] || "Terms & Conditions"}</span>
+                </Link>
+              </label>
+            </div>
+            <Button
+              variant="contained"
+              className="submit-payment-btn"
+              onClick={handleConfirmPayment}
+              disabled={submitting}
+            >
+              {submitting
+                ? langData?.["submitting"] || "Submitting..."
+                : langData?.["confirm_payment"] || "Confirm Payment"}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1142,8 +653,9 @@ const mapStateToProps = (state: RootState) => {
 
 const mapDispatchToProps = (dispatch: Function) => {
   return {
-    setOpenDepositModal: (val) => dispatch(setOpenDepositModal(val)),
+    setOpenDepositModal: (val: boolean) => dispatch(setOpenDepositModal(val)),
     setAlertMsg: (alert: AlertDTO) => dispatch(setAlertMsg(alert)),
+    fetchBalance: () => dispatch(fetchBalance()),
   };
 };
 

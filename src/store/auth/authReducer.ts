@@ -14,6 +14,7 @@ import {
   OPEN_DEPOSIT_MODAL,
   OPEN_WITHDRAW_MODAL,
   MLOBBY_SHOW,
+  SET_USER_PROFILE,
 } from "./authActionTypes";
 
 type Action = {
@@ -48,7 +49,14 @@ const initialState: AuthState = {
   openDepositModal: false,
   openWithdrawModal: false,
   isMolobby: sessionStorage.getItem("mlobby") ? true : false,
-  // sideBarOpen: false,
+  userProfile: (() => {
+    try {
+      const stored = sessionStorage.getItem("user_profile");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  })(),
 };
 
 const authReducer = (state = initialState, action: Action): AuthState => {
@@ -95,6 +103,7 @@ const authReducer = (state = initialState, action: Action): AuthState => {
         jwtToken: "",
         loading: false,
         mailVerified: null,
+        userProfile: null,
       };
     case LOG_OUT_SUCCESS:
       return {
@@ -105,6 +114,12 @@ const authReducer = (state = initialState, action: Action): AuthState => {
         jwtToken: null,
         loading: false,
         mailVerified: null,
+        userProfile: null,
+      };
+    case SET_USER_PROFILE:
+      return {
+        ...state,
+        userProfile: action.payload,
       };
 
     case FETCH_BALANCE_SUCCESS:

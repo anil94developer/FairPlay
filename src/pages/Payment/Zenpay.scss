@@ -1,126 +1,288 @@
-.account-inputs {
-  margin-top: 20px;
-
-  .open-txn-btn {
-    margin-top: 20px;
+.zenpay-ctn {
+  .zenpay-upload-btn {
+    background: var(--ion-color-primary);
+    border-radius: 30px;
+    font-size: 10px;
+    color: var(--custom-btn-text-variant-1);
+    border: 1px solid white;
+    margin: 10px;
+    margin-left: 0px;
   }
 
-  .otp-ctn {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 16px;
-    margin-top: -16px;
-    .send-otp-ctn {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: -4px;
-      .MuiButton-root:hover.Mui-disabled {
-        background: var(--custom-btn-bg-variant-1);
-      }
-    }
-    .otp-timer,
-    .error-msg {
-      color: red;
-      font-size: small;
-      margin-top: -4px;
+  .zenpay-uploaded-image-title,
+  .color-fff {
+    color: white;
+  }
+
+  .input-template {
+    margin: 20px 0px !important;
+
+    .it-label {
+      width: 320px;
     }
   }
 
+  .zen-pay-type {
+    background-color: white;
+    padding: 5px;
+    border-radius: 20px;
+  }
   .amount-and-wallet {
     border: 1px dashed var(--dashed-border);
     border-radius: 20px;
     padding: 8px 0;
   }
+  .account-inputs {
+    margin-top: 10px;
+    .open-txn-btn {
+      margin-top: 10px;
+    }
+    .note-msg {
+      color: orange;
+      font-size: small;
+      display: block;
+      margin: 0;
+      padding: 0;
+      line-height: normal;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      margin: 8px auto;
+    }
+    .pay-header {
+      margin: 10px 0px;
+      text-wrap: nowrap;
+      color: var(--custom-btn-bg-variant-1);
+      background: var(--ion-button-color);
+      -webkit-background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      font-family: var(--headers-font-family);
+      font-size: 16px !important;
+      font-weight: 800 !important;
+      line-height: 16.2px;
+    }
+    .mb-header {
+      font-size: 8px !important;
+      // margin: 2px 0px !important;
+    }
+    .security-input {
+      margin: 6px 0px;
+      display: inline-block;
+    }
+    .highlight {
+      border: 1px solid white;
+      text-align: center;
+      border-radius: 20px;
+      width: fit-content;
+      background: var(--input-template-bg);
+      margin-bottom: 10px;
+      margin: 10px auto;
+      padding: 0px 20px;
+    }
+    .payment-buttons {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      margin: 10px 0px;
+      .payment-btn {
+        // border: 2px solid #fff;
+      }
+    }
 
+    .amount-input {
+      position: relative;
+      .clear-row {
+        width: fit-content;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        font-family: "Lato";
+        font-style: normal;
+        font-weight: normal;
+        font-size: 12px;
+        line-height: 12px;
+        position: absolute;
+        bottom: 16px;
+        color: #fff;
+        right: 14px;
+
+        .text {
+          &:hover {
+            cursor: pointer;
+            text-decoration: underline;
+          }
+
+          &.disabled {
+            cursor: default;
+            text-decoration: none;
+          }
+        }
+      }
+    }
+    .qb-btn {
+      margin-top: 5px;
+      width: calc(33% - 5px);
+      // color: #fff;
+      box-sizing: border-box;
+      border-radius: 100px;
+      font-family: "Lato";
+      font-style: normal;
+      line-height: 15px;
+      text-transform: capitalize;
+      font-family: var(--headers-font-family);
+      font-size: 10px;
+      font-weight: 400;
+      line-height: 13.5px;
+      text-align: center;
+      background: var(--table-bg);
+      color: #ffffff;
+    }
+    .qr-code {
+      height: "auto";
+      max-width: "100%";
+      width: "100%";
+      border: 1px solid var(--custom-btn-border-variant-1);
+    }
+    .select-template {
+      display: flex;
+      justify-content: left;
+      align-items: center;
+      .st-label {
+        text-wrap: nowrap;
+        color: var(--custom-btn-bg-variant-1);
+        background: var(--ion-button-color);
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+        font-family: var(--headers-font-family);
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        line-height: 16.2px;
+        text-align: center;
+
+        @media screen and (max-width: 720px) {
+          font-family: var(--headers-font-family);
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 16.2px;
+          text-align: left;
+          padding-left: 5px;
+        }
+      }
+      .MuiInputBase-root {
+        width: 155px;
+        height: 30px;
+        border: 1px solid white;
+        border-radius: 20px;
+        margin: 10px;
+        .Mui-disabled {
+          color: rgb(161, 157, 157) !important;
+        }
+        .MuiSelect-root {
+          color: #fff;
+          font-family: var(--headers-font-family);
+          font-size: 12px;
+          font-weight: 500;
+          line-height: 16.2px;
+        }
+        .MuiSvgIcon-root {
+          color: #fff;
+        }
+      }
+      .MuiInput-underline::before,
+      .MuiInput-underline::after {
+        border-bottom: 0px;
+      }
+
+      .MuiInput-underline:hover {
+        border-bottom: 2px solid #fff;
+      }
+      .MuiInput-underline:hover:not(.Mui-disabled):before {
+        border-bottom: none;
+      }
+    }
+    .pay-sentence {
+      color: #ffffff;
+    }
+    .bottom-buttons {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+
+      .whatsapp-btn {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        background: #1eb355;
+        width: 220px;
+        height: 44px;
+        position: inherit;
+      }
+    }
+  }
   .display-amount {
     display: flex;
     justify-content: center;
     color: white;
     font-size: medium;
-    padding: 10px;
-  }
+    .highlight-figure {
+      background: var(--ion-color-primary);
+      height: fit-content;
+      color: var(--active-text-color);
+      border-radius: 4px;
+      padding: 0 6px;
+      margin-left: 6px;
+    }
+    .wallet-address-label {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+    }
+    .r-copy-btn-div {
+      height: fit-content;
+      background-color: transparent;
 
-  .select-template {
-    margin-bottom: -10px;
+      .r-copy-btn {
+        filter: var(--copy-button-color);
+        padding: 2px;
+        height: 32px;
+        width: 32px;
+        border-radius: 5px;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+      }
+    }
+  }
+  .wallet-address {
     display: flex;
-    justify-content: left;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
-
-    .st-label {
-      text-wrap: nowrap;
-      color: white;
-      font-family: var(--headers-font-family);
-      font-size: 14px;
-      font-weight: 400;
-      line-height: 16.2px;
-      text-align: center;
-
-      @media screen and (max-width: 720px) {
-        font-family: var(--headers-font-family);
-        font-size: 12px;
-        font-weight: 400;
-        line-height: 16.2px;
-        text-align: left;
-        padding-left: 5px;
-      }
-    }
-
-    .MuiInputBase-root {
-      width: 155px;
-      height: 30px;
-      border: 1px solid white;
-      border-radius: 20px;
-      margin: 10px;
-
-      .Mui-disabled {
-        color: rgb(161, 157, 157) !important;
-      }
-
-      .MuiSelect-root {
-        color: #fff;
-        font-family: var(--headers-font-family);
-        font-size: 12px;
-        font-weight: 500;
-        line-height: 16.2px;
-      }
-
-      .MuiSvgIcon-root {
-        color: #fff;
-      }
-    }
-
-    .MuiInput-underline::before,
-    .MuiInput-underline::after {
-      border-bottom: 0px;
-    }
-
-    .MuiInput-underline:hover {
-      border-bottom: 2px solid #fff;
-    }
-
-    .MuiInput-underline:hover:not(.Mui-disabled):before {
-      border-bottom: none;
-    }
+  }
+  .qr-image {
+    margin-top: 10px;
   }
 }
 
-.note-msg {
-  color: orange;
-  font-size: small;
-  display: block;
-  margin: 0;
-  padding: 0;
-  line-height: normal;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  margin: 16px auto;
+.r-copy-btn-div {
+  height: fit-content;
+  background-color: transparent;
+  cursor: pointer;
 }
 
-.limit {
-  margin-top: 0px;
+.r-copy-btn {
+  filter: var(--copy-button-color);
+  padding: 2px;
+  height: 32px;
+  width: 32px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}
+
+.samerow {
+  display: flex;
 }

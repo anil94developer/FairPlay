@@ -545,12 +545,9 @@
     background: var(--custom-btn-bg-variant-1);
     color: var(--custom-btn-text-variant-1);
     border: 1px solid var(--custom-btn-border-variant-1);
-    height: 44px;
-    padding: 8px;
     font-size: 16px;
     font-weight: bold;
     border-radius: 15px;
-    width: 120px;
     font-family: Lato;
     font-size: 16px;
     font-weight: 600;
@@ -558,7 +555,7 @@
     text-align: center;
     border-radius: 100px;
     text-transform: capitalize;
-    margin: 5px;
+    margin: 20px 5px 5px;
 
     @media screen and (max-width: 720px) {
       min-width: 38%;
@@ -570,4 +567,217 @@
 }
 .uploaded-image-heading {
   color: white !important;
+}
+.auto-deposit {
+  max-width: 600px;
+}
+
+.button-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.button-grid button {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  background-color: #1e293b;
+  color: #ffffff;
+  min-height: 36px;
+  font-size: 14px;
+  line-height: 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.button-grid button:active {
+  transform: scale(0.95);
+}
+
+.deposit-input {
+  position: relative;
+  .input-template {
+    margin-bottom: 20px;
+  }
+}
+
+.deposit-input svg {
+  position: absolute;
+  right: 12px;
+  top: 9px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.submit-btn {
+  position: relative;
+  width: 100%;
+  height: 40px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.amount-wrapper {
+  width: 100%;
+  margin-top: 10px;
+  padding: 15px 12px;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+}
+
+.amount-info {
+  padding-left: 4px;
+  margin-top: -12px;
+  font-size: 12px;
+  color: #5c5c5c;
+}
+
+.account-detail {
+  margin-top: 15px;
+  color: #fff;
+  background: #624c3e;
+  padding: 5px 30px 10px;
+  border-radius: 30px;
+}
+
+.account-detail label {
+  margin: 0px;
+  padding: 0px;
+  font-size: 12px;
+}
+
+.account-info {
+  display: flex;
+  justify-content: space-between;
+}
+
+.account-info p {
+  margin: 0;
+}
+
+.account-info svg {
+  cursor: pointer;
+}
+
+.terms {
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.payment-types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+
+  .payment-type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    background: var(--ion-card-background, #2a2a2a);
+    border: 2px solid var(--ion-border-color, #444);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: var(--ion-color-primary);
+    }
+
+    &.active {
+      border-color: var(--ion-color-primary);
+      background: rgba(var(--ion-color-primary-rgb), 0.15);
+    }
+
+    .payment-type-img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      margin-bottom: 8px;
+    }
+
+    .payment-type-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ion-text-color, #fff);
+    }
+  }
+}
+
+.back-step-btn {
+  margin-bottom: 12px;
+  color: var(--ion-text-color, #fff);
+  text-transform: capitalize;
+}
+
+.bank-accounts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+
+  .bank-account-card {
+    padding: 16px;
+    background: var(--ion-card-background, #2a2a2a);
+    border: 2px solid var(--ion-border-color, #444);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: var(--ion-color-primary);
+    }
+
+    &.active {
+      border-color: var(--ion-color-primary);
+      background: rgba(var(--ion-color-primary-rgb), 0.15);
+    }
+
+    .bank-account-holder {
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--ion-text-color, #fff);
+      margin-bottom: 8px;
+    }
+
+    .bank-account-detail {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      margin-bottom: 4px;
+
+      .label {
+        color: var(--ion-text-color, #999);
+      }
+
+      .value {
+        flex: 1;
+        color: var(--ion-text-color, #fff);
+        word-break: break-all;
+      }
+
+      svg {
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+    }
+
+    .bank-account-limits {
+      font-size: 12px;
+      color: var(--ion-text-color, #999);
+    }
+  }
 }

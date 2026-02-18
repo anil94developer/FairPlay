@@ -94,7 +94,7 @@ const OddButton: React.FC<PropType> = (props) => {
           className={
             disable ? `${oddType} disabled ` + classes : `${oddType} ` + classes
           }
-          onClick={() => onClick()}
+          onClick={() => onClick?.()}
         >
           <div className="exch-odd-button-content">
             <div className={mainValueClass ? mainValueClass : "price"}>

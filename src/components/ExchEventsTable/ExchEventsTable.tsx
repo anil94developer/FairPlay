@@ -962,15 +962,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
         // Structure 1: { data: [...], status: true } - response.data.data is array, response.data.status is true
         // Structure 2: { data: { data: [...], status: true } } - nested
         // Structure 3: response.data is directly the array
-        console.log(`[ExchEventsTable] API Response structure:`, {
-          hasData: !!response?.data,
-          dataIsArray: Array.isArray(response?.data),
-          hasDataData: !!response?.data?.data,
-          dataDataIsArray: Array.isArray(response?.data?.data),
-          dataStatus: response?.data?.status,
-          responseStatus: response?.status,
-          sampleData: response?.data?.[0] || response?.data?.data?.[0],
-        });
+   
         
         if (response?.data?.status === true && Array.isArray(response.data.data)) {
           // Structure: { data: { data: [...], status: true } }
@@ -1663,7 +1655,7 @@ const EventsTable: React.FC<StoreProps> = (props) => {
             `${event.providerName}:${event.sportId}:${event.competitionId}:${
               event.eventId
             }:${moment(event.openDate).unix()}`
-          )}`
+          )}/${event.marketId}`
     );
   };
 

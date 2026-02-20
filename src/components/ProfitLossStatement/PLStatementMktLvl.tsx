@@ -11,10 +11,10 @@ import Paper from "@material-ui/core/Paper";
 import { PLStatement, PLRecordMktLvl } from "../../models/PLStatement";
 import "./ProfitLossStatement.scss";
 import moment, { Moment } from "moment";
-import { AuthResponse } from "../../models/api/AuthResponse";
 import { CURRENCY_TYPE_FACTOR } from "../../constants/CurrencyTypeFactor";
 import { getCurrencyTypeFromToken } from "../../store";
 import { oddValueFormatter } from "../../util/stringUtil";
+import USABET_API from "../../api-services/usabet-api";
 
 type PLProps = {
   searchName: string;
@@ -23,6 +23,7 @@ type PLProps = {
   endDate: Moment;
   showGameLevel: () => void;
   langData: any;
+  useDiamondSettledBets?: boolean;
 };
 
 const PLStatementMktLvl: React.FC<PLProps> = (props) => {
@@ -33,6 +34,7 @@ const PLStatementMktLvl: React.FC<PLProps> = (props) => {
     showGameLevel,
     searchName,
     langData,
+    useDiamondSettledBets = false,
   } = props;
   const [items, setItems] = useState<PLRecordMktLvl[]>();
   const [backTotal, setBackTotal] = useState<number>(0);
@@ -156,110 +158,94 @@ const PLStatementMktLvl: React.FC<PLProps> = (props) => {
   };
 
   const fetchPLByMarket = async () => {
+    if (!selectedMarket?.eventId || !selectedMarket?.marketId) {
+      setItems([]);
+      return;
+    }
+    setLoading(true);
     try {
-      // Dummy data instead of API call
-      const response: AuthResponse = {
-        status: 200,
-        data: {
-          orders: [
-            {
-              id: "pl-001",
-              betPlacedTime: new Date().toISOString(),
-              selection: "Team A",
-              betId: "bet-001",
-              betType: "BACK",
-              odds: 1.5,
-              stake: 100 * cFactor,
-              profitLoss: 50 * cFactor,
-              status: "Won",
-              payOutAmount: 150 * cFactor,
-              stakeAmount: 100 * cFactor,
-              outcomeResult: "Won",
-              marketType: "MATCH_ODDS",
-              marketName: "Match Odds",
-              outcomeDesc: "Team A",
-              oddValue: 1.5,
-              sessionRuns: null,
-            },
-            {
-              id: "pl-002",
-              betPlacedTime: new Date(Date.now() - 86400000).toISOString(),
-              selection: "Team B",
-              betId: "bet-002",
-              betType: "LAY",
-              odds: 0.9,
-              stake: 200 * cFactor,
-              profitLoss: -20 * cFactor,
-              status: "Loss",
-              payOutAmount: 180 * cFactor,
-              stakeAmount: 200 * cFactor,
-              outcomeResult: "Lost",
-              marketType: "BOOKMAKER",
-              marketName: "Bookmaker",
-              outcomeDesc: "Team B",
-              oddValue: 0.9,
-              sessionRuns: null,
-            },
-            {
-              id: "pl-003",
-              betPlacedTime: new Date(Date.now() - 172800000).toISOString(),
-              selection: "Over 20.5",
-              betId: "bet-003",
-              betType: "BACK",
-              odds: 1.5,
-              stake: 50 * cFactor,
-              profitLoss: 25 * cFactor,
-              status: "Won",
-              payOutAmount: 75 * cFactor,
-              stakeAmount: 50 * cFactor,
-              outcomeResult: "Won",
-              marketType: "FANCY",
-              marketName: "Fancy Market",
-              outcomeDesc: "Over 20.5",
-              oddValue: 1.5,
-              sessionRuns: 25,
-            },
-          ],
-          pageToken: null,
-        },
-      } as AuthResponse;
-      if (response.status === 200) {
-        if (response.data?.orders) {
-          let records: PLRecordMktLvl[] = response.data?.orders;
-          setItems(records);
-          let backCount = 0;
-          let layCount = 0;
-          let marketAmt = 0;
-          for (let record of records) {
-            if (record.betType === "BACK") {
-              backCount += record.payOutAmount;
-            } else {
-              layCount += record.payOutAmount;
-            }
-            marketAmt += record.payOutAmount;
-          }
-          setBackTotal(backCount / cFactor);
-          setLayTotal(layCount / cFactor);
-          setMarketTotal(marketAmt / cFactor);
-          setNetMarket(
-            marketAmt / cFactor +
-              (selectedMarket.commission ? selectedMarket.commission : 0)
-          );
-        }
-        setNextPageToken(response.data?.pageToken);
-      } else {
-        throw new Error(response.data);
+      const endpoint = useDiamondSettledBets ? "/bet/diamondSettledBets" : "/bet/settledBets";
+      const search: { market_id: string; delete_status?: number[] } = {
+        market_id: selectedMarket.marketId,
+      };
+      if (useDiamondSettledBets) {
+        search.delete_status = [0];
       }
-    } catch (err) {
-      if (err.response && err.response.data) {
+      const res = await USABET_API.post(endpoint, {
+        match_id: selectedMarket.eventId,
+        search,
+      });
+
+      const rawBets: any[] = [];
+      if (res?.data?.status === true && Array.isArray(res?.data?.data)) {
+        res.data.data.forEach((group: any) => {
+          if (Array.isArray(group.data)) {
+            group.data.forEach((bet: any) => rawBets.push(bet));
+          }
+        });
+      }
+
+      const records: PLRecordMktLvl[] = rawBets.map((bet: any) => {
+        const isBack = bet.is_back === 1 || bet.is_back === "1";
+        const eventType = bet.event_type || "MATCH_ODDS";
+        const isFancy = bet.is_fancy === 1 || bet.is_fancy === "1";
+        const marketType = isFancy ? "FANCY" : eventType === "MATCH_ODDS" ? "MATCH_ODDS" : eventType;
+        const pL = bet.p_l != null ? bet.p_l : bet.profit ?? 0;
+        const won = bet.is_result_declared === 1 && bet.winner_name != null && String(bet.selection_name) === String(bet.winner_name);
+        const outcomeResult = won ? "Won" : "Loss";
+        return {
+          id: bet.bet_id || bet.id,
+          betPlacedTime: bet.createdAt || bet.created_at || "",
+          selection: bet.selection_name || "",
+          betId: bet.bet_id || "",
+          betType: isBack ? "BACK" : "LAY",
+          odds: bet.odds ?? 0,
+          stake: (bet.stack || bet.size || 0) * cFactor,
+          profitLoss: pL * cFactor,
+          status: outcomeResult,
+          payOutAmount: pL * cFactor,
+          stakeAmount: (bet.stack || bet.size || 0) * cFactor,
+          outcomeResult,
+          marketType,
+          marketName: bet.market_name || "Match Odds",
+          outcomeDesc: bet.selection_name || "",
+          oddValue: bet.odds ?? 0,
+          sessionRuns: isFancy ? bet.odds : null,
+          winner_name: bet.winner_name || "",
+        } as PLRecordMktLvl;
+      });
+
+      setItems(records);
+
+      let backTotalVal = 0;
+      let layTotalVal = 0;
+      records.forEach((r) => {
+        const amt = (r.payOutAmount || 0) / cFactor;
+        if (r.betType === "BACK") {
+          backTotalVal += amt;
+        } else {
+          layTotalVal += amt;
+        }
+      });
+      setBackTotal(backTotalVal);
+      setLayTotal(layTotalVal);
+      setMarketTotal(backTotalVal + layTotalVal);
+      setNetMarket(
+        backTotalVal + layTotalVal + (selectedMarket?.commission ?? 0)
+      );
+      setNextPageToken("");
+    } catch (err: any) {
+      setItems([]);
+      if (err?.response?.data) {
         console.error(err.response.data.error);
       }
     }
+    setLoading(false);
   };
 
   React.useEffect(() => {
     fetchPLByMarket();
-  }, [pageToken]);
+  }, [selectedMarket?.eventId, selectedMarket?.marketId, pageToken]);
 
   return (
     <div className="modal-pl">
@@ -374,10 +360,7 @@ const PLStatementMktLvl: React.FC<PLProps> = (props) => {
                             <TableCell align="left" className="pandl-col">
                               <span className="txt-bldin-mob">
                                 <div>
-                                  {row.outcomeResult == "Won" ||
-                                  row.payOutAmount > 0
-                                    ? "Win"
-                                    : "Loss"}
+                                  {row.winner_name}
                                 </div>
                               </span>
                             </TableCell>

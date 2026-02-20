@@ -372,7 +372,7 @@ export const logout = () => {
   const token = sessionStorage.getItem("jwt_token");
   return async (dispatch: Function) => {
     try {
-      await AUTH_API.post("/account/v2/logout", null, {
+      await USABET_API.post("/user/logout", null, {
         headers: {
           Authorization: token,
         },

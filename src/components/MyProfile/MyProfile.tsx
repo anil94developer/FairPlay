@@ -14,6 +14,7 @@ import ReportBackBtn from "../../common/ReportBackBtn/ReportBackBtn";
 import ReportsHeader from "../../common/ReportsHeader/ReportsHeader";
 import { RootState } from "../../models/RootState";
 import { setAlertMsg } from "../../store/common/commonActions";
+import { logout } from "../../store";
 import SVLS_API from "../../svls-api";
 import { notDemoUser } from "../../util/stringUtil";
 import ChangePassword from "../ChangePassword/ChangePassword";
@@ -98,17 +99,17 @@ const MyProfile: React.FC<{ langData: any }> = (props) => {
     setLoading(true);
     try {
       // Dummy data instead of API call
-      const dummyUserDetails: UserPersonalDetails = {
-        username: sessionStorage.getItem("username") || "dummyuser",
-        fullName: "John Doe",
-        phoneNumber: "+1234567890",
-        emailId: "john.doe@example.com",
-        address: "123 Main Street",
-        city: "New York",
-        pinCode: "10001",
-      };
+      // const dummyUserDetails: UserPersonalDetails = {
+      //   username: sessionStorage.getItem("username") || "dummyuser",
+      //   fullName: "John Doe",
+      //   phoneNumber: "+1234567890",
+      //   emailId: "john.doe@example.com",
+      //   address: "123 Main Street",
+      //   city: "New York",
+      //   pinCode: "10001",
+      // };
 
-      setUserDetails(dummyUserDetails);
+      // setUserDetails(dummyUserDetails);
       // setPhone(response.data.phone);
     } catch (err) {
       setErr(err?.response?.data?.message);
@@ -406,6 +407,7 @@ const MyProfile: React.FC<{ langData: any }> = (props) => {
             closeHandler={() => {}}
             backHandler={() => {}}
             langData={langData}
+            onPasswordChangeSuccess={() => dispatch(logout())}
           />
         );
       case 2:

@@ -1,38 +1,5 @@
 [
-  {
-    "category": "Deposit Bonus",
-    "rules": [
-      "DEPOSIT BONUS = 5% IMPS Deposit (APPLIED FOR EVERY IMPS DEPOSIT)",
-      "PAYMENT METHOD = BANK TRANSFER (IMPS)",
-      "MAX. BONUS = 500",
-      "TURNOVER = 3X ROLLING  ON DEPOSIT AMOUNT",
-      "CATEGORIES APPLIED = SPORTS [CRICKET]",
-      "EXPIRY DAYS=  7",
-      "NOTE = ROLLING WILL BE APPLICABLE ONLY ON EXCHANHGE'S CRICKET MACTHES.",
-      "(NOT APPLICABLE ON SPORTSBOOK AND PREMIUM MARKETS)"
-    ]
-  },
-  {
-    "category": "Deposit wagering",
-    "rules": [
-      "All the deposits require 50% wagering",
-      "e.g: If you deposit 100 then required wagering  = 50",
-      "Please refer to Deposit turnover report for progress of wagering  on each deposit."
-    ]
-  },
-  {
-    "category": "Deposit Limits",
-    "rules": ["Minimum deposit amount : ₹500 /-"]
-  },
-  {
-    "category": "Withdraw Limits",
-    "rules": [
-      "Any withdrawal below ₹100 is not allowed.",
-      "-> If the balance is greater than ₹500 -> Minimum withdrawal amount : ₹500 /- .",
-      "-> If the balance is less than or equal to 500, Minimum withdrawal amount : Available balance .",
-      "You can withdraw only 4 times in a day."
-    ]
-  },
+  
   {
     "category": "Football Fancy",
     "rules": [

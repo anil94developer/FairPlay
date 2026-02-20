@@ -39,6 +39,7 @@ import CustomTableMob, {
 } from "../../common/CustomTableMob/CustomTableMob";
 import { DomainConfig } from "../../models/DomainConfig";
 import TransactionDetailsCard from "./TransactionDetailsCard";
+import PLStatementMktLvl from "../../components/ProfitLossStatement/PLStatementMktLvl";
 
 type LedgerProps = {
   fetchBettingCurrency: Function;
@@ -449,7 +450,7 @@ const Ledger: React.FC<LedgerProps> = (props) => {
   function srNoCellRender(param, row) {
     return (
       <div
-        onClick={() => onShowTransactionDetails(row)}
+        // onClick={() => onShowTransactionDetails(row)}
         className="as-date-param"
       >
         {row.srNo || "-"}
@@ -460,7 +461,7 @@ const Ledger: React.FC<LedgerProps> = (props) => {
   function dateCellRender(param, row) {
     return (
       <div
-        onClick={() => onShowTransactionDetails(row)}
+        // onClick={() => onShowTransactionDetails(row)}
         className="as-date-param"
       >
         {moment(row.transactionTime).format("DD-MM-YY, h:mm:ss A")}
@@ -495,7 +496,9 @@ const Ledger: React.FC<LedgerProps> = (props) => {
 
   function eventNameCellRender(param, row) {
     return (
-      <div onClick={() => onShowTransactionDetails(row)}>
+      <div 
+      // onClick={() => onShowTransactionDetails(row)}
+      >
         {/* For casino transactions, show event name */}
         {row?.eventName || "-"}
       </div>
@@ -518,7 +521,9 @@ const Ledger: React.FC<LedgerProps> = (props) => {
 
   function marketNameCellRender(param, row) {
     return (
-      <div onClick={() => onShowTransactionDetails(row)}>
+      <div 
+      // onClick={() => onShowTransactionDetails(row)}
+      >
         {/* For casino transactions, show game code or market ID */}
         {row.marketType === 4 || row.marketType === 6
           ? row.gameCode || row.marketId || "-"
@@ -530,13 +535,17 @@ const Ledger: React.FC<LedgerProps> = (props) => {
   function remarkCellRender(param, row) {
     if (row?.remarks) {
       return (
-        <div onClick={() => onShowTransactionDetails(row)}>{row?.remarks}</div>
+        <div 
+        //  onClick={() => onShowTransactionDetails(row)}
+         >{row?.remarks}</div>
       );
     }
     // For casino transactions, show the game code and transaction ID
     if (row?.remarks) {
       return (
-        <div onClick={() => onShowTransactionDetails(row)}>{row?.remarks}</div>
+        <div 
+        // onClick={() => onShowTransactionDetails(row)}
+        >{row?.remarks}</div>
       );
     }
     if (row.marketType === 4 || row.marketType === 6) {
@@ -549,7 +558,7 @@ const Ledger: React.FC<LedgerProps> = (props) => {
             textAlign: "center",
             padding: "0px 4px",
           }}
-          onClick={() => onShowTransactionDetails(row)}
+          // onClick={() => onShowTransactionDetails(row)}
         >
           <span>
             {TransactionTypeMap[row?.transactionType]} - {row.eventName || "-"}{" "}
@@ -567,7 +576,7 @@ const Ledger: React.FC<LedgerProps> = (props) => {
             textAlign: "center",
             padding: "0px 4px",
           }}
-          onClick={() => onShowTransactionDetails(row)}
+          // onClick={() => onShowTransactionDetails(row)}
         >
           {TransactionTypeMap[row?.transactionType]}
         </div>
@@ -584,7 +593,7 @@ const Ledger: React.FC<LedgerProps> = (props) => {
           textAlign: "center",
           padding: "0px 4px",
         }}
-        onClick={() => onShowTransactionDetails(row)}
+        // onClick={() => onShowTransactionDetails(row)}
       >
         {row?.eventName ?? "-"}
         {"  "}
@@ -612,7 +621,10 @@ const Ledger: React.FC<LedgerProps> = (props) => {
 
   function marketTypeCellRender(param, row) {
     return (
-      <div onClick={() => onShowTransactionDetails(row)}>
+      <div
+      //  onClick={() => onShowTransactionDetails(row)}
+       >
+
         {row?.marketType != null && MarketTypeMap[row?.marketType]
           ? MarketTypeMap[row?.marketType]
           : "-"}
@@ -623,7 +635,7 @@ const Ledger: React.FC<LedgerProps> = (props) => {
   function creditOrDebitCellRender(param, row) {
     return (
       <div
-        onClick={() => onShowTransactionDetails(row)}
+        // onClick={() => onShowTransactionDetails(row)}
         className={
           row?.amount > 0
             ? "credit-profit"
@@ -642,7 +654,7 @@ const Ledger: React.FC<LedgerProps> = (props) => {
   function creditCellRender(param, row) {
     return (
       <div
-        onClick={() => onShowTransactionDetails(row)}
+        // onClick={() => onShowTransactionDetails(row)}
         className={row?.amount > 0 ? "credit-profit" : null}
       >
         {row?.amount > 0
@@ -658,7 +670,7 @@ const Ledger: React.FC<LedgerProps> = (props) => {
   function debitCellRender(param, row) {
     return (
       <div
-        onClick={() => onShowTransactionDetails(row)}
+        // onClick={() => onShowTransactionDetails(row)}
         className={row?.amount < 0 ? "credit-loss " : null}
       >
         {row?.amount < 0
@@ -728,7 +740,9 @@ const Ledger: React.FC<LedgerProps> = (props) => {
 
   function closingBalanceCellRender(param, row) {
     return (
-      <div onClick={() => onShowTransactionDetails(row)}>
+      <div 
+      // onClick={() => onShowTransactionDetails(row)}
+      >
         {row?.balanceAfter % 1 === 0
           ? row?.balanceAfter?.toFixed(0)
           : row?.balanceAfter?.toFixed(2)}
@@ -765,14 +779,15 @@ const Ledger: React.FC<LedgerProps> = (props) => {
       <button
         className="arrow-btn"
         onClick={() => onShowTransactionDetails(row)}
-      >
+        disabled={row?.transactionType == 1 || row?.transactionType == 0}
+      > 
         <i
           className={`arrow ${
             transactionDetails?.transactionId === row?.transactionId
               ? "up"
               : "right"
           }`}
-        ></i>
+        ></i>  
       </button>
     );
   }
@@ -845,6 +860,9 @@ const Ledger: React.FC<LedgerProps> = (props) => {
                 match_name: row.match_name,
                 event_id: row.event_id,
                 event_name: row.event_name,
+                eventId: row.match_id ?? row.event_id ?? "",
+                marketId: row.market_id ?? row.event_id ?? "",
+                marketName: row.event_name || row.match_name || "-",
               });
             });
           }
@@ -1419,10 +1437,21 @@ const Ledger: React.FC<LedgerProps> = (props) => {
         size="sm"
         customClass="acc-statement-modal transaction-details-card-modal"
       >
-        <TransactionDetailsCard
+        {/* <TransactionDetailsCard
           transactionDetails={transactionDetails}
           subBodyData={subBodyData}
           langData={langData}
+        /> */}
+        <PLStatementMktLvl
+          selectedMarket={transactionDetails}
+          startDate={filters.fromDate}
+          endDate={filters.toDate}
+          showGameLevel={() => {
+            setTransactionDetails(null);
+          }}
+          searchName={transactionDetails?.marketName}
+          langData={langData}
+          useDiamondSettledBets
         />
       </Modal>
     </div>

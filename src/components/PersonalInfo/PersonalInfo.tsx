@@ -37,20 +37,32 @@ const PersonalInfo: React.FC<{ langData: any }> = (props) => {
   const getDetails = useCallback(async () => {
     try {
       // Dummy data instead of API call
-      const dummyData = {
-        fullName: "John Doe",
-        phoneNumber: "1234567890",
-        pinCode: "10001",
-        city: "New York",
-        address: "123 Main Street",
-        emailId: "john.doe@example.com",
-      };
-      setFullName(dummyData.fullName);
-      setPhoneNumber(dummyData.phoneNumber);
-      setPinCode(dummyData.pinCode);
-      setCity(dummyData.city);
-      setAddress(dummyData.address);
-      setEmailId(dummyData.emailId);
+      // const dummyData = {
+      //   fullName: "John Doe",
+      //   phoneNumber: "1234567890",
+      //   pinCode: "10001",
+      //   city: "New York",
+      //   address: "123 Main Street",
+      //   emailId: "john.doe@example.com",
+      // };
+      // setFullName(dummyData.fullName);
+      // setPhoneNumber(dummyData.phoneNumber);
+      // setPinCode(dummyData.pinCode);
+      // setCity(dummyData.city);
+      // setAddress(dummyData.address);
+      // setEmailId(dummyData.emailId);
+      const userProfileRaw = sessionStorage.getItem("user_profile");
+      if (!userProfileRaw) {
+        setErr(null);
+        return;
+      }
+      const userProfile = JSON.parse(userProfileRaw);
+      setFullName(userProfile.fullName ?? userProfile.name ?? userProfile.user_name ?? "");
+      setPhoneNumber(userProfile.phoneNumber ?? userProfile.mobile ?? "");
+      setPinCode(userProfile.pinCode ?? "");
+      setCity(userProfile.city ?? "");
+      setAddress(userProfile.address ?? "");
+      setEmailId(userProfile.emailId ?? userProfile.email ?? "");
       setErr(null);
     } catch (err) {
       setErr(err?.response?.data?.message);

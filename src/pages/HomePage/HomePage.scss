@@ -952,6 +952,54 @@
     gap: 6px;
     height: 100%;
 
+    .banner-two-col {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      width: 100%;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+
+      &::-webkit-scrollbar {
+        height: 6px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+      }
+
+      .banner-card-div {
+        flex: 0 0 auto;
+        width: calc(50% - 3px);
+        min-width: 200px;
+        scroll-snap-align: start;
+      }
+
+      .banner-image {
+        width: 100%;
+        img {
+          width: 100%;
+          height: auto;
+          max-height: 200px;
+          object-fit: cover;
+          border-radius: 10px;
+          display: block;
+        }
+      }
+
+      @media screen and (max-width: 720px) {
+        .banner-card-div {
+          min-width: 160px;
+        }
+        .banner-image img {
+          max-height: 140px;
+        }
+      }
+    }
+
     .deposit-btn {
       background-color: #008000;
       color: #fff;

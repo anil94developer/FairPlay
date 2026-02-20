@@ -21,6 +21,8 @@ type ChangePwdProps = {
   closeHandler?: () => void;
   backHandler?: () => void;
   langData: any;
+  /** Called after password is changed successfully; e.g. logout so user signs in with new password */
+  onPasswordChangeSuccess?: () => void;
 };
 
 type ChangePasswordRequest = {
@@ -30,7 +32,7 @@ type ChangePasswordRequest = {
 };
 
 const ChangePwdForm: React.FC<ChangePwdProps> = (props) => {
-  const { closeHandler, showTermsCondi, langData } = props;
+  const { closeHandler, showTermsCondi, langData, onPasswordChangeSuccess } = props;
   const [progress, setProgress] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -97,6 +99,7 @@ const ChangePwdForm: React.FC<ChangePwdProps> = (props) => {
       if (resData?.status === true) {
         setSuccessMsg(resData?.msg || langData?.["password_change_success_txt"]);
         formik.resetForm();
+        onPasswordChangeSuccess?.();
       } else {
         setErrorMsg(resData?.msg || langData?.["password_change_failed_txt"]);
       }

@@ -122,6 +122,7 @@ const MyWallet: React.FC<StoreProps> = (props) => {
           if (Array.isArray(rows)) {
             rows.forEach((row: any) => {
               const creditDebit = row.credit_debit ?? 0;
+              if(row.statement_type == "1"){
               allStatements.push({
                 transactionId: row._id || "",
                 transactionType: creditDebit >= 0 ? 0 : 1,
@@ -130,6 +131,7 @@ const MyWallet: React.FC<StoreProps> = (props) => {
                 transactionTime: row.date || "",
                 description: row.description || row.remark || "-",
               });
+            }
             });
           }
         });
@@ -276,13 +278,13 @@ const MyWallet: React.FC<StoreProps> = (props) => {
             titleIcon={WalletIcon}
             reportName={langData?.["my_wallet"]}
             tabsOrBtns={[
-              {
-                label: `${langData?.["available_balance_caps_txt"]}: ${
-                  balance ? Number(balance / cFactor).toFixed(2) : "0.00"
-                }`,
-                onSelect: () => {},
-                className: "avail-bal-label",
-              },
+              // {
+              //   label: `${langData?.["available_balance_caps_txt"]}: ${
+              //     balance ? Number(balance / cFactor).toFixed(2) : "0.00"
+              //   }`,
+              //   onSelect: () => {},
+              //   className: "avail-bal-label",
+              // },
             ]}
             reportFilters={[
               {

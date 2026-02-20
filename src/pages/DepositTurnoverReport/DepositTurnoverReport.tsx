@@ -14,6 +14,7 @@ import ReportBackBtn from "../../common/ReportBackBtn/ReportBackBtn";
 import ReportsHeader from "../../common/ReportsHeader/ReportsHeader";
 import SelectTemplate from "../../common/SelectTemplate/SelectTemplate";
 import Spinner from "../../components/Spinner/Spinner";
+import Modal from "../../components/Modal/Modal";
 import { CURRENCY_TYPE_FACTOR } from "../../constants/CurrencyTypeFactor";
 import { getCurrencyTypeFromToken } from "../../store";
 import "./DepositTurnoverReport.scss";
@@ -51,8 +52,8 @@ const DepositTurnoverReport: React.FC<{
   const cFactor = CURRENCY_TYPE_FACTOR[getCurrencyTypeFromToken()];
 
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [imageModalUrl, setImageModalUrl] = useState<string | null>(null);
 
-  
   const fetchData = async () => {
    
     setLoading(true);
@@ -299,10 +300,10 @@ const DepositTurnoverReport: React.FC<{
                                           : "-"}
                                       </TableCell>
                                       <TableCell>
-                                        {row.reference_no || "-"}
+                                        {row.payment_deatails?.[0]?._id || "-"}
                                       </TableCell>
                                       <TableCell>
-                                        {row.description || row.remark || "-"}
+                                        {row.remark || "-"}
                                       </TableCell>
                                       <TableCell>
                                         {getPaymentMethod(row)}
@@ -312,14 +313,13 @@ const DepositTurnoverReport: React.FC<{
                                       </TableCell>
                                       <TableCell>
                                         {row.images ? (
-                                          <a
-                                            href={row.images}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                          <button
+                                            type="button"
+                                            onClick={() => setImageModalUrl(row.images)}
                                             className="deposit-image-link"
                                           >
-                                            {langData?.["view"] || "View"}
-                                          </a>
+                                           <img src={row.images} alt="Deposit" style={{ width: "20px", height: "20px" }} />
+                                          </button>
                                         ) : (
                                           "-"
                                         )}
@@ -374,6 +374,23 @@ const DepositTurnoverReport: React.FC<{
           </div>
         </IonCol>
       </IonRow>
+      <Modal
+        open={!!imageModalUrl}
+        closeHandler={() => setImageModalUrl(null)}
+        title={langData?.["view"] || "View"}
+        size="sm"
+        customClass="deposit-turnover-image-modal"
+      >
+        {imageModalUrl && (
+          <div className="deposit-turnover-image-modal-content">
+            <img
+              src={imageModalUrl}
+              alt="Deposit"
+              style={{ maxWidth: "100%", height: "auto", display: "block" }}
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

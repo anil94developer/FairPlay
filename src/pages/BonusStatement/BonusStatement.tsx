@@ -31,7 +31,7 @@ type BonusProps = {
   award_date: Moment;
   bonus_status: string;
   bonus_category: string;
-  id: number;
+  id: number | string;
   last_vest_date: Moment;
   notes: string;
   redeemed_amount: number;
@@ -143,210 +143,68 @@ const BonusStatement: React.FC<{ bonusEnabled: boolean; langData: any }> = (
     }
   };
 
+  const mapStatusToApi = (): string => {
+    if (bonusStatus === "All") return "ALL";
+    if (bonusStatus === "Expired") return "EXPIRED";
+    if (bonusStatus === "Awarded" || bonusStatus === "Partially Redeemed" || bonusStatus === "Redeemed") return "IN_PROGRESS";
+    return "ALL";
+  };
+
   const getBonusData = async () => {
     setLoading(true);
     try {
-      const dummyData: BonusProps[] = [
-        {
-          id: 1,
-          award_amount: 1000,
-          award_date: moment().subtract(5, "days"),
-          bonus_status: "Awarded",
-          bonus_category: "Joining Bonus",
-          last_vest_date: moment().subtract(5, "days"),
-          notes: "Welcome bonus",
-          redeemed_amount: 0,
-          last_redeem_date: null,
-          redemptions: [],
-          installments_given: 0,
-          installments: 5,
-          approval_required: false,
-          turnover_required: 5000,
-          turnover_met: 0,
-          expiry_date: moment().add(30, "days"),
-        },
-        {
-          id: 2,
-          award_amount: 2000,
-          award_date: moment().subtract(10, "days"),
-          bonus_status: "Partially Redeemed",
-          bonus_category: "Deposit Bonus",
-          last_vest_date: moment().subtract(10, "days"),
-          notes: "First deposit bonus",
-          redeemed_amount: 800,
-          last_redeem_date: moment().subtract(2, "days"),
-          redemptions: [
-            {
-              redemption_id: 1,
-              redeem_amount: 400,
-              redeem_date: moment().subtract(5, "days"),
-              status: "Completed",
-              notes: "First installment",
-            },
-            {
-              redemption_id: 2,
-              redeem_amount: 400,
-              redeem_date: moment().subtract(2, "days"),
-              status: "Completed",
-              notes: "Second installment",
-            },
-          ],
-          installments_given: 2,
-          installments: 5,
-          approval_required: true,
-          turnover_required: 10000,
-          turnover_met: 6000,
-          expiry_date: moment().add(20, "days"),
-        },
-        {
-          id: 3,
-          award_amount: 1500,
-          award_date: moment().subtract(15, "days"),
-          bonus_status: "Redeemed",
-          bonus_category: "Deposit Bonus",
-          last_vest_date: moment().subtract(15, "days"),
-          notes: "Deposit bonus fully redeemed",
-          redeemed_amount: 1500,
-          last_redeem_date: moment().subtract(1, "days"),
-          redemptions: [
-            {
-              redemption_id: 3,
-              redeem_amount: 500,
-              redeem_date: moment().subtract(10, "days"),
-              status: "Completed",
-              notes: "First installment",
-            },
-            {
-              redemption_id: 4,
-              redeem_amount: 500,
-              redeem_date: moment().subtract(5, "days"),
-              status: "Completed",
-              notes: "Second installment",
-            },
-            {
-              redemption_id: 5,
-              redeem_amount: 500,
-              redeem_date: moment().subtract(1, "days"),
-              status: "Completed",
-              notes: "Third installment",
-            },
-          ],
-          installments_given: 3,
-          installments: 3,
-          approval_required: false,
-          turnover_required: 7500,
-          turnover_met: 7500,
-          expiry_date: moment().add(10, "days"),
-        },
-        {
-          id: 4,
-          award_amount: 500,
-          award_date: moment().subtract(40, "days"),
-          bonus_status: "Expired",
-          bonus_category: "Joining Bonus",
-          last_vest_date: moment().subtract(40, "days"),
-          notes: "Expired bonus",
-          redeemed_amount: 0,
-          last_redeem_date: null,
-          redemptions: [],
-          installments_given: 0,
-          installments: 3,
-          approval_required: false,
-          turnover_required: 2500,
-          turnover_met: 500,
-          expiry_date: moment().subtract(10, "days"),
-        },
-        {
-          id: 5,
-          award_amount: 3000,
-          award_date: moment().subtract(3, "days"),
-          bonus_status: "Awarded",
-          bonus_category: "Deposit Bonus",
-          last_vest_date: moment().subtract(3, "days"),
-          notes: "Large deposit bonus",
-          redeemed_amount: 0,
-          last_redeem_date: null,
-          redemptions: [],
-          installments_given: 0,
-          installments: 10,
-          approval_required: true,
-          turnover_required: 15000,
-          turnover_met: 2000,
-          expiry_date: moment().add(60, "days"),
-        },
-        {
-          id: 6,
-          award_amount: 750,
-          award_date: moment().subtract(7, "days"),
-          bonus_status: "Partially Redeemed",
-          bonus_category: "Joining Bonus",
-          last_vest_date: moment().subtract(7, "days"),
-          notes: "Joining bonus partial",
-          redeemed_amount: 250,
-          last_redeem_date: moment().subtract(1, "days"),
-          redemptions: [
-            {
-              redemption_id: 6,
-              redeem_amount: 250,
-              redeem_date: moment().subtract(1, "days"),
-              status: "Completed",
-              notes: "First installment",
-            },
-          ],
-          installments_given: 1,
-          installments: 3,
-          approval_required: false,
-          turnover_required: 3750,
-          turnover_met: 1500,
-          expiry_date: moment().add(23, "days"),
-        },
-      ];
-
-      // Filter by bonus status
-      let filteredData = dummyData;
-      if (bonusStatus !== "All") {
-        filteredData = filteredData.filter((item) => {
-          const statusMap: { [key: string]: string } = {
-            Awarded: "Awarded",
-            "Partially Redeemed": "Partially Redeemed",
-            Redeemed: "Redeemed",
-            Expired: "Expired",
-          };
-          return item.bonus_status === statusMap[bonusStatus];
+      const page = filters.pageNum || 1;
+      const res = await USABET_API.post("/user/getLockedBonusProgress", {
+        limit: pageSize,
+        page,
+        status: mapStatusToApi(),
+      });
+      const resData = res?.data;
+      const list: BonusProps[] = [];
+      if (resData?.status === true && Array.isArray(resData.data)) {
+        resData.data.forEach((row: any) => {
+          const createdMoment = row.created_at ? moment(row.created_at) : moment();
+          const expireMoment = row.expire_at ? moment(row.expire_at) : null;
+          const totalRolling = (row.total_rolling_amount ?? 0) / cFactor;
+          const usedRolling = (row.used_rolling_amount ?? 0) / cFactor;
+          const lockedAmount = (row.total_locked_bonus_amount ?? 0) / cFactor;
+          const unlockedAmount = (row.unlocked_bonus_amount ?? 0) / cFactor;
+          list.push({
+            id: row._id ?? row.id ?? `row-${list.length}`,
+            award_amount: lockedAmount,
+            award_date: createdMoment,
+            bonus_status: row.status_str || (row.status ? "IN_PROGRESS" : "EXPIRED"),
+            bonus_category: formatBonusType(row.bonus_type),
+            last_vest_date: createdMoment,
+            notes: "",
+            redeemed_amount: unlockedAmount,
+            last_redeem_date: null,
+            redemptions: [],
+            installments_given: 0,
+            installments: row.rolling_multiplier ?? 0,
+            approval_required: false,
+            turnover_required: totalRolling,
+            turnover_met: usedRolling,
+            expiry_date: expireMoment || moment().add(1, "day"),
+          });
         });
       }
-
-      // Filter by bonus type
-      if (bonusType !== "All") {
-        filteredData = filteredData.filter(
-          (item) => item.bonus_category === bonusType
-        );
-      }
-
-      // Filter by date range
-      filteredData = filteredData.filter((item) => {
-        const itemDate = moment(item.award_date);
-        return (
-          itemDate.isSameOrAfter(filters.fromDate.startOf("day")) &&
-          itemDate.isSameOrBefore(filters.toDate.endOf("day"))
-        );
-      });
-
-      // Simulate pagination
-      const currentPage = filters.pageToken.length;
-      const startIndex = currentPage * pageSize;
-      const endIndex = startIndex + pageSize;
-      const paginatedData = filteredData.slice(startIndex, endIndex);
-      const hasNextPage = endIndex < filteredData.length;
-
-      setNextPageToken(hasNextPage ? `page_${currentPage + 1}` : null);
-      setBonusData(paginatedData);
+      const extras = resData?.extras;
+      const totalPages = extras?.total_pages ?? 1;
+      const hasNextPage = page < totalPages;
+      setNextPageToken(hasNextPage ? String(page + 1) : null);
+      setBonusData(list);
     } catch (err) {
-      console.log(err);
       setBonusData([]);
       setNextPageToken(null);
     }
     setLoading(false);
+  };
+
+  const formatBonusType = (bonusTypeStr: string): string => {
+    if (!bonusTypeStr) return "-";
+    if (bonusTypeStr === "EVERY_DEPOSIT_BONUS") return "Every Deposit Bonus";
+    return bonusTypeStr.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
   useEffect(() => {
@@ -412,7 +270,7 @@ const BonusStatement: React.FC<{ bonusEnabled: boolean; langData: any }> = (
                   {earnedBonus.toFixed(2)}
                 </span>
               </div>
-              <div className="bonus-amount-card locked">
+              <div className="bonus-amount-card earned">
                 <span className="bonus-amount-label">
                   {langData?.["locked_bonus"] || "Locked Bonus"}
                 </span>

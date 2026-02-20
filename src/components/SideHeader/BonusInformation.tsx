@@ -9,11 +9,40 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@material-ui/core";
+import Table from "@material-ui/core/Table";
+import TableBody from "@material-ui/core/TableBody";
+import TableCell from "@material-ui/core/TableCell";
+import TableContainer from "@material-ui/core/TableContainer";
+import TableHead from "@material-ui/core/TableHead";
+import TableRow from "@material-ui/core/TableRow";
+import Paper from "@material-ui/core/Paper";
 import USABET_API from "../../api-services/usabet-api";
 import { CURRENCY_TYPE_FACTOR } from "../../constants/CurrencyTypeFactor";
 import { getCurrencyTypeFromToken } from "../../store";
 import { RootState } from "../../models/RootState";
 import Spinner from "../Spinner/Spinner";
+import moment from "moment";
+
+type LockedBonusItem = {
+  _id: string;
+  bonus_type: string;
+  total_locked_bonus_amount: number;
+  unlocked_bonus_amount: number;
+  total_rolling_amount: number;
+  used_rolling_amount: number;
+  rolling_multiplier: number;
+  status_str: string;
+  is_expired: boolean;
+  expire_at: string;
+  created_at: string;
+};
+
+const formatBonusType = (bonusType: string): string => {
+  if (!bonusType) return "-";
+  if (bonusType === "EVERY_DEPOSIT_BONUS") return "Every Deposit Bonus";
+  if (bonusType === "FIRST_DEPOSIT_BONUS") return "First Deposit Bonus";
+  return bonusType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+};
 
 const BonusInformation = (props: { langData?: any }) => {
   const { langData } = props;
@@ -21,6 +50,8 @@ const BonusInformation = (props: { langData?: any }) => {
   const [earnedBonus, setEarnedBonus] = useState<number>(0);
   const [lockedBonus, setLockedBonus] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
+  const [modalLoading, setModalLoading] = useState<boolean>(false);
+  const [lockedBonusList, setLockedBonusList] = useState<LockedBonusItem[]>([]);
   const cFactor = CURRENCY_TYPE_FACTOR[getCurrencyTypeFromToken()];
 
   const fetchBonusAmounts = async () => {
@@ -43,12 +74,46 @@ const BonusInformation = (props: { langData?: any }) => {
     }
   };
 
+  const fetchLockedBonusProgress = async () => {
+    setModalLoading(true);
+    try {
+      const res = await USABET_API.post("/user/getLockedBonusProgress", {
+        limit: 50,
+        page: 1,
+        status: "ALL",
+      });
+      if (res?.data?.status === true && Array.isArray(res?.data?.data)) {
+        const list: LockedBonusItem[] = res.data.data.map((row: any) => ({
+          _id: row._id,
+          bonus_type: row.bonus_type,
+          total_locked_bonus_amount: (row.total_locked_bonus_amount ?? 0) / cFactor,
+          unlocked_bonus_amount: (row.unlocked_bonus_amount ?? 0) / cFactor,
+          total_rolling_amount: (row.total_rolling_amount ?? 0) / cFactor,
+          used_rolling_amount: (row.used_rolling_amount ?? 0) / cFactor,
+          rolling_multiplier: row.rolling_multiplier ?? 0,
+          status_str: row.status_str ?? "",
+          is_expired: row.is_expired ?? false,
+          expire_at: row.expire_at ?? "",
+          created_at: row.created_at ?? "",
+        }));
+        setLockedBonusList(list);
+      } else {
+        setLockedBonusList([]);
+      }
+    } catch {
+      setLockedBonusList([]);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchBonusAmounts();
   }, []);
 
   const handleClickOpen = () => {
     setOpen(true);
+    fetchLockedBonusProgress();
   };
 
   const handleClose = () => {
@@ -141,15 +206,52 @@ const BonusInformation = (props: { langData?: any }) => {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
         PaperProps={{ className: "common-dialog-bg" }}
+        maxWidth="md"
+        fullWidth
       >
-        <DialogTitle id="alert-dialog-title">{"Locked Bonus"}</DialogTitle>
+        <DialogTitle id="alert-dialog-title">
+          {langData?.["locked_bonus"] || "Locked Bonus"}
+        </DialogTitle>
         <DialogContent>
-          <div className="bonus-content">
-            <DialogContentText id="alert-dialog-description">
-              {lockedBonus > 0
-                ? `${langData?.["locked_bonus"] || "Locked Bonus"}: ${lockedBonus.toFixed(2)}`
-                : langData?.["no_locked_bonus_found_txt"] || "No Locked Bonus Found"}
-            </DialogContentText>
+          <div className="bonus-content locked-bonus-modal-content">
+            {modalLoading ? (
+              <div style={{ padding: "24px", textAlign: "center" }}>
+                <Spinner />
+              </div>
+            ) : lockedBonusList.length === 0 ? (
+              <DialogContentText id="alert-dialog-description">
+                {langData?.["no_locked_bonus_found_txt"] || "No Locked Bonus Found"}
+              </DialogContentText>
+            ) : (
+              <TableContainer component={Paper} style={{ maxHeight: 400 }}>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>{langData?.["bonus_type"] || "Bonus Type"}</TableCell>
+                      <TableCell align="right">{langData?.["amount"] || "Amount"}</TableCell>
+                      <TableCell align="right">{langData?.["turnover"] || "Turnover"}</TableCell>
+                      <TableCell>{langData?.["status"] || "Status"}</TableCell>
+                      <TableCell>{langData?.["expires_on"] || "Expires On"}</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {lockedBonusList.map((row) => (
+                      <TableRow key={row._id} style={{ backgroundColor: row.is_expired ? "#f0f0f0" : "white" }}>
+                        <TableCell>{formatBonusType(row.bonus_type)}</TableCell>
+                        <TableCell align="right">₹{row.total_locked_bonus_amount.toFixed(2)}</TableCell>
+                        <TableCell align="right">
+                          {row.rolling_multiplier}x ({row.used_rolling_amount.toFixed(0)} / {row.total_rolling_amount.toFixed(0)})
+                        </TableCell>
+                        <TableCell>{row.status_str || (row.is_expired ? "EXPIRED" : "IN_PROGRESS")}</TableCell>
+                        <TableCell>
+                          {row.expire_at ? moment(row.expire_at).format("DD/MM/YY HH:mm") : "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </div>
         </DialogContent>
         <DialogActions>

@@ -1,0 +1,10 @@
+[
+  { "name": "General", "key": "General" },
+  { "name": "Registration Bonus", "key": "RegistrationBonus" },
+  { "name": "First Deposit Bonus", "key": "FirstDepositBonus" },
+  { "name": "Every Deposit Bonus", "key": "EveryDepositBonus" },
+  { "name": "Refer And Earn Bonus", "key": "ReferAndEarnBonus" },
+  { "name": "Welcome Bonus", "key": "WelcomeBonus" },
+  { "name": "Affiliate Bonus", "key": "AffiliateBonus" },
+  { "name": "Next 4 Refer And Earn Bonus", "key": "Next4ReferAndEarnBouns" }
+]

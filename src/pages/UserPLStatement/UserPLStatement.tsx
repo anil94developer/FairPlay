@@ -59,15 +59,15 @@ const UserPLStatement: React.FC<Props> = (props: Props) => {
       name: "Main Profit and Loss",
       allow: true,
     },
-    {
-      value: "TURBO_PL",
-      name: "Speed Cash Profit and Loss",
-      allow: true,
-    },
+    // {
+    //   value: "TURBO_PL",
+    //   name: "Speed Cash Profit and Loss",
+    //   allow: true,
+    // },
   ];
 
   const [nextPageToken, setNextPageToken] = useState<string>(null);
-  const pageSize = 25;
+  const pageSize = 50;
 
   const fetchPLStatement = useCallback(async () => {
     setProgress(true);
@@ -107,56 +107,49 @@ const UserPLStatement: React.FC<Props> = (props: Props) => {
         filters.selectedGame === "SPORTS"
       ) {
         const page = filters.pageToken?.length ? filters.pageToken.length + 1 : 1;
-        const search: Record<string, any> = {
-          delete_status: 0,
-          is_matched: 1,
-        };
-        if (filters.sport !== "SPORTS" && filters.sport) {
-          search.sport_id = filters.sport;
-        }
+        const from_date = filters.fromDate
+          ? moment(filters.fromDate).startOf("day").toISOString()
+          : moment().subtract(7, "days").startOf("day").toISOString();
+        const to_date = filters.toDate
+          ? moment(filters.toDate).endOf("day").toISOString()
+          : moment().endOf("day").toISOString();
 
-        const apiRes = await USABET_API.post("/bet/openBets", {
-          limit: 100,
+        const apiRes = await USABET_API.post("/report/eventsProfitLoss", {
+          from_date,
+          to_date,
+          limit: pageSize,
           page,
-          search,
         });
 
         const pl_records_raw: any[] = [];
         let nextToken = null;
 
-        if (apiRes?.data?.status === true && Array.isArray(apiRes.data.data)) {
-          apiRes.data.data.forEach((group: any) => {
-            if (Array.isArray(group.data)) {
-              group.data.forEach((bet: any) => {
-                pl_records_raw.push({
-                  eventId: bet.match_id || "",
-                  eventName: bet.match_name || "",
-                  marketId: bet.market_id || "",
-                  marketName: bet.market_name || "Match Odds",
-                  categoryType: filters.selectedGame,
-                  betPlacedTime: bet.createdAt || bet.created_at || "",
-                  payOutDate: bet.result_settled_at || bet.createdAt || bet.created_at || "",
-                  profit: (bet.profit ?? bet.p_l ?? 0) * cFactor,
-                  commission: 0,
-                  gameType: bet.sport_name || "",
-                });
-              });
-            }
-            const metadata = group.metadata?.[0];
-            if (metadata && page * 100 < (metadata.total || 0)) {
-              nextToken = String(page + 1);
-            }
+        if (apiRes?.data?.status === true && apiRes?.data?.data) {
+          const resData = apiRes.data.data;
+          const meta = Array.isArray(resData.metadata) && resData.metadata[0] ? resData.metadata[0] : null;
+          const rows = Array.isArray(resData.data) ? resData.data : [];
+
+          rows.forEach((row: any) => {
+            pl_records_raw.push({
+              eventId: row.match_id || row.event_id || "",
+              eventName: row.match_name || "",
+              marketId: row.event_id || "",
+              marketName: row.event_name || "Match Odds",
+              categoryType: filters.selectedGame,
+              betPlacedTime: row.match_date || "",
+              payOutDate: row.result_date || row.match_date || "",
+              profit: row.user_pl ?? row.net_pl ?? 0,
+              commission: row.user_commission_pl ?? 0,
+              gameType: row.sport_name || "",
+            });
           });
+
+          if (meta && page * pageSize < (meta.total || 0)) {
+            nextToken = String(page + 1);
+          }
         }
 
-        // Client-side date filter (API does not support from_date/to_date)
-        const from = filters.fromDate ? moment(filters.fromDate).startOf("day").toISOString() : null;
-        const to = filters.toDate ? moment(filters.toDate).endOf("day").toISOString() : null;
-        pl_records = pl_records_raw.filter((r) => {
-          const t = r.betPlacedTime;
-          if (!t) return true;
-          return (!from || t >= from) && (!to || t <= to);
-        });
+        pl_records = pl_records_raw;
         response = {
           status: 200,
           data: { nextPageToken: nextToken },
@@ -259,12 +252,12 @@ const UserPLStatement: React.FC<Props> = (props: Props) => {
       name: "Sports",
       allow: (allowedConfig & CONFIG_PERMISSIONS.sports) !== 0,
     },
-    {
-      value: "SPORTS_BOOK",
-      name: "Sportsbook",
-      allow: (allowedConfig & CONFIG_PERMISSIONS.sports) !== 0,
-    },
-    { value: "PREMIUM", name: "Premium", allow: true },
+    // {
+    //   value: "SPORTS_BOOK",
+    //   name: "Sportsbook",
+    //   allow: (allowedConfig & CONFIG_PERMISSIONS.sports) !== 0,
+    // },
+    // { value: "PREMIUM", name: "Premium", allow: true },
     {
       value: "CASINO",
       name: "Casino",

@@ -20,6 +20,7 @@ const BottomTab = ({
   whatsappDetails,
   domainConfig,
   setDemoUserWhatsappDetails,
+  socialMediaContent,
 }) => {
   const [telegramLink, setTelegramLink] = useState("");
   const [instagramLink, setInstagramLink] = useState("");
@@ -27,17 +28,22 @@ const BottomTab = ({
   useEffect(() => {
     supportContacts?.forEach((ct) => {
       if (ct.contactType === "TELEGRAM_NUMBER") {
-        console.log("TELEGRAM_NUMBER", ct.details);
         setTelegramLink(ct.details);
       } else if (ct.contactType === "INSTAGRAM_LINK") {
-        console.log("INSTAGRAM_LINK", ct.details);
         setInstagramLink(ct.details);
       } else if (ct.contactType === "REGISTRATION_WHATSAPP_LINK") {
-        console.log("REGISTRATION_WHATSAPP_LINK", ct.details);
         setDemoUserWhatsappDetails(ct.details);
       }
     });
   }, [domainConfig]);
+
+  const whatsapp = socialMediaContent?.Whatsapp;
+  const telegram = socialMediaContent?.Telegram;
+  const gmail = socialMediaContent?.Gmail;
+  const facebook = socialMediaContent?.Facebook;
+  const showWhatsapp = whatsapp?.is_active !== false && (whatsapp?.url || whatsappDetails);
+  const showTelegram = (telegram?.is_active !== false && telegram?.url) || telegramLink;
+  const telegramUrl = telegram?.url || telegramLink;
 
   return (
     <div className="bottom-tab">
@@ -46,10 +52,10 @@ const BottomTab = ({
           Need help? Our 24/7 support team is here for you anytime!
         </span>
         <div className="social-icons">
-          {telegramLink && (
+          {showTelegram && (
             <button
               className="sm-link wp-svg"
-              onClick={() => window.open(telegramLink, "_blank")}
+              onClick={() => window.open(telegramUrl, "_blank")}
             >
               <CustomTelegramSvg />
             </button>
@@ -64,9 +70,14 @@ const BottomTab = ({
             </button>
           )}
 
-          <button className="sm-link">
-            <WhatsApp width={20} height={20} className="wp-svg" />
-          </button>
+          {showWhatsapp && (
+            <button
+              className="sm-link wp-svg"
+              onClick={() => window.open(whatsapp?.url || whatsappDetails, "_blank")}
+            >
+              <WhatsApp width={20} height={20} className="wp-svg" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -111,6 +122,7 @@ const mapStateToProps = (state: RootState) => {
     whatsappDetails: demoUser()
       ? state.common.demoUserWhatsappDetails
       : state.common.whatsappDetails,
+    socialMediaContent: state.common.socialMediaContent,
   };
 };
 

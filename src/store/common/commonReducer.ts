@@ -25,6 +25,7 @@ import {
   SET_TRENDING_GAMES,
   SET_WHATSAPP_DETAILS,
   SET_DEMO_USER_WHATSAPP_DETAILS,
+  SET_SOCIAL_MEDIA_CONTENT,
   TOGGLE_DARK_MODE,
   TRIGGER_FETCH_BALANCE,
   TRIGGER_FETCH_NOTIFICATIONS,
@@ -77,6 +78,7 @@ const initialState: CommonState = {
   },
   whatsappDetails: "",
   demoUserWhatsappDetails: "",
+  socialMediaContent: null,
   languages: [],
   langSelected: null,
   langData: null,
@@ -212,6 +214,13 @@ const commonReducer = (state = initialState, action: Action): CommonState => {
       return {
         ...state,
         demoUserWhatsappDetails: action.payload,
+      };
+    }
+
+    case SET_SOCIAL_MEDIA_CONTENT: {
+      return {
+        ...state,
+        socialMediaContent: action.payload,
       };
     }
 

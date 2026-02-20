@@ -30,6 +30,7 @@ import {
   setDomainConfig,
   setLangSelected,
   setLanguages,
+  fetchSocialMediaContent,
 } from "./store/common/commonActions";
 import {
   defaultLang,
@@ -68,6 +69,7 @@ type StateProps = {
   setLangData: (langData: any) => void;
   langData: any;
   setAlertMsg: Function;
+  fetchSocialMediaContent: (loggedIn: boolean) => void;
   // setDomainConfig: (config: DomainConfig) => void;
 };
 
@@ -148,6 +150,7 @@ const App: React.FC<StateProps> = (props) => {
     setLangData,
     langData,
     setAlertMsg,
+    fetchSocialMediaContent,
     // setDomainConfig,
   } = props;
 
@@ -200,6 +203,10 @@ const App: React.FC<StateProps> = (props) => {
       getLangData();
     }
   }, [lang]);
+
+  useEffect(() => {
+    fetchSocialMediaContent(!!loggedIn);
+  }, [loggedIn]);
 
   const getLangData = async () => {
     try {
@@ -306,6 +313,8 @@ const mapDispatchToProps = (dispatch: Function) => {
     setLangSelected: (lang: string) => dispatch(setLangSelected(lang)),
     setLangData: (langData: any) => dispatch(setLangData(langData)),
     setDomainConfig: (config: any) => dispatch(setDomainConfig(config)),
+    fetchSocialMediaContent: (loggedIn: boolean) =>
+      dispatch(fetchSocialMediaContent(loggedIn)),
   };
 };
 

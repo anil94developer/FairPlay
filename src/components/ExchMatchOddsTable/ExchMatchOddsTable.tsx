@@ -244,18 +244,18 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
       minStake:
         Number(
           src.marketLimits?.minStake ??
-            src.minStake ??
-            src.market_min_stack ??
-            ed.market_min_stack ??
-            0,
+          src.minStake ??
+          src.market_min_stack ??
+          ed.market_min_stack ??
+          0,
         ) || 0,
       maxStake:
         Number(
           src.marketLimits?.maxStake ??
-            src.maxStake ??
-            src.market_max_stack ??
-            ed.market_max_stack ??
-            0,
+          src.maxStake ??
+          src.market_max_stack ??
+          ed.market_max_stack ??
+          0,
         ) || 0,
       delay: Number(src.marketLimits?.delay ?? src.delay ?? 0) || 0,
       maxOdd:
@@ -643,13 +643,13 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
 
     const ideal = candsIdeal[0]
       ? {
-          runnerId: candsIdeal[0].runner.runnerId,
-          runnerName: candsIdeal[0].runner.runnerName,
-          betType: candsIdeal[0].betType,
-          oddValue: +candsIdeal[0].odds.toFixed(2),
-          stake: +candsIdeal[0].stake.toFixed(2),
-          riskAfter: candsIdeal[0].riskAfter!,
-        }
+        runnerId: candsIdeal[0].runner.runnerId,
+        runnerName: candsIdeal[0].runner.runnerName,
+        betType: candsIdeal[0].betType,
+        oddValue: +candsIdeal[0].odds.toFixed(2),
+        stake: +candsIdeal[0].stake.toFixed(2),
+        riskAfter: candsIdeal[0].riskAfter!,
+      }
       : null;
 
     // Apply constraints
@@ -1036,7 +1036,7 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                   matchOddsData.marketId,
                   eventData.eventId,
                 )) &&
-              showMatchOdds ? (
+                showMatchOdds ? (
                 <TableContainer component={Paper}>
                   <Table className="matchodds-table">
                     <TableHead>
@@ -1083,7 +1083,7 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                     className="multi-remove-icon"
                                     src={
                                       multiPinsMap[
-                                        localStorage.getItem("userTheme")
+                                      localStorage.getItem("userTheme")
                                       ]
                                     }
                                     alt="multimarket"
@@ -1104,18 +1104,18 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                               {getMarketLangKeyByName(
                                 matchOddsData?.marketName,
                               ) &&
-                              langData?.[
+                                langData?.[
                                 getMarketLangKeyByName(
                                   matchOddsData?.marketName,
                                 )
-                              ]
+                                ]
                                 ? langData[
-                                    getMarketLangKeyByName(
-                                      matchOddsData?.marketName,
-                                    )
-                                  ]
+                                getMarketLangKeyByName(
+                                  matchOddsData?.marketName,
+                                )
+                                ]
                                 : matchOddsData?.marketName ||
-                                  langData?.["match_odds"]}{" "}
+                                langData?.["match_odds"]}{" "}
                               <span className="event-name">
                                 {isMultiMarket && !isMobile
                                   ? "(" + eventData?.eventName + ")"
@@ -1129,11 +1129,10 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                     size="small"
                                     color="primary"
                                     variant="contained"
-                                    className={`btn cashout-btn ${
-                                      getCashoutProfit(matchOddsData) > 0
-                                        ? "profit"
-                                        : "loss"
-                                    }`}
+                                    className={`btn cashout-btn ${getCashoutProfit(matchOddsData) > 0
+                                      ? "profit"
+                                      : "loss"
+                                      }`}
                                     style={{
                                       borderRadius:
                                         eventData.sportId === "1"
@@ -1153,7 +1152,7 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                   >
                                     {langData?.["cashout"]}{" "}
                                     {getCashoutProfit(matchOddsData) !==
-                                    Infinity
+                                      Infinity
                                       ? `: ₹${getCashoutProfit(matchOddsData)}`
                                       : ""}
                                   </Button>
@@ -1182,8 +1181,8 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                     {/* add in language file */}
                                     {getSpeedCashCountdown(matchOddsData) > 0
                                       ? `Speed Cash (${getSpeedCashCountdown(
-                                          matchOddsData,
-                                        )}s)`
+                                        matchOddsData,
+                                      )}s)`
                                       : "Speed Cash"}
                                   </Button>
                                 )}
@@ -1256,13 +1255,13 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                         <>
                           {((bettingInprogress || oneClickBettingLoading) &&
                             bets?.[0]?.marketName ===
-                              matchOddsData?.marketName &&
+                            matchOddsData?.marketName &&
                             bets?.[0]?.marketId === matchOddsData?.marketId &&
                             bets?.[0]?.marketType === "MO") ||
-                          (bettingInprogress &&
-                            cashoutInProgress?.marketId ===
+                            (bettingInprogress &&
+                              cashoutInProgress?.marketId ===
                               matchOddsData?.marketId &&
-                            cashoutInProgress?.marketName ===
+                              cashoutInProgress?.marketName ===
                               matchOddsData?.marketName) ? (
                             <OneClickBettingCountdown
                               delay={matchOddsData?.marketLimits?.delay || 0}
@@ -1274,28 +1273,41 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                 runner?.status.toLowerCase() !== "loser",
                             )
                             .map((runner, index) => {
-                              const teamPositionProfit = teamPositionPL?.length
-                                ? (teamPositionPL.find(
+                              const marketArr = Array.isArray(teamPositionPL)
+                                ? teamPositionPL
+                                : teamPositionPL?.[matchOddsData?.marketId];
+                              const teamPositionProfit =
+                                marketArr?.length
+                                  ? (marketArr.find(
                                     (p) =>
+                                      p.selection_id == runner.selectionId ||
+                                      p.selectionId == runner.selectionId ||
+                                      String(p.selection_id) ===
+                                      String(runner.selectionId) ||
                                       String(p.selectionId) ===
-                                        String(runner.selectionId) ||
-                                      p.runnerId === runner.runnerId ||
-                                      p.outcomeId === runner.runnerId,
-                                  )?.profit ?? teamPositionPL[index]?.profit)
-                                : undefined;
+                                      String(runner.selectionId),
+                                  )?.user_pl ??
+                                    marketArr.find(
+                                      (p) =>
+                                        p.runnerId === runner.runnerId ||
+                                        p.outcomeId === runner.runnerId,
+                                    )?.user_pl ??
+                                    marketArr[index]?.user_pl ??
+                                    marketArr[index]?.profit)
+                                  : undefined;
                               return (
                                 <MatchOddsRow
                                   key={runner.runnerId}
                                   minStake={
                                     matchOddsData?.marketLimits
                                       ? matchOddsData?.marketLimits?.minStake /
-                                        cFactor
+                                      cFactor
                                       : 100
                                   }
                                   maxStake={
                                     matchOddsData?.marketLimits
                                       ? matchOddsData?.marketLimits?.maxStake /
-                                        cFactor
+                                      cFactor
                                       : 5000
                                   }
                                   eventData={eventData}
@@ -1385,9 +1397,9 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
           {normalizedSecondaryMatchOdds.map((moData, idx) => (
             <div key={moData?.marketId || idx}>
               {moData.status.toLowerCase() !== "closed" &&
-              !moData.marketName
-                ?.toLowerCase()
-                ?.includes("who will win the match") ? (
+                !moData.marketName
+                  ?.toLowerCase()
+                  ?.includes("who will win the match") ? (
                 <>
                   {((!moData.disable && !isMultiMarket) ||
                     checkIncludeMultiMarket(
@@ -1395,7 +1407,7 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                       moData.marketId,
                       eventData.eventId,
                     )) &&
-                  showSecondaryMatchOdds ? (
+                    showSecondaryMatchOdds ? (
                     <TableContainer component={Paper}>
                       <span className="event-name">
                         {isMultiMarket && isMobile
@@ -1444,7 +1456,7 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                     <Tooltip
                                       title={
                                         langData?.[
-                                          "remove_from_multi_markets_txt"
+                                        "remove_from_multi_markets_txt"
                                         ]
                                       }
                                       placement="left-start"
@@ -1453,7 +1465,7 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                         className="multi-remove-icon"
                                         src={
                                           multiPinsMap[
-                                            localStorage.getItem("userTheme")
+                                          localStorage.getItem("userTheme")
                                           ]
                                         }
                                         alt="multimarket"
@@ -1475,39 +1487,39 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                     (moData.marketName?.length > 15
                                       ? moData.marketName.includes("Half Goals")
                                         ? getMarketLangKeyByName(
+                                          moData.marketName?.slice(0, 16),
+                                        )
+                                          ? langData?.[
+                                          getMarketLangKeyByName(
                                             moData.marketName?.slice(0, 16),
                                           )
-                                          ? langData?.[
-                                              getMarketLangKeyByName(
-                                                moData.marketName?.slice(0, 16),
-                                              )
-                                            ] +
-                                            " " +
-                                            moData.marketName?.slice(17)
+                                          ] +
+                                          " " +
+                                          moData.marketName?.slice(17)
                                           : moData.marketName
                                         : getMarketLangKeyByName(
-                                              moData.marketName?.slice(0, 11),
-                                            )
+                                          moData.marketName?.slice(0, 11),
+                                        )
                                           ? langData?.[
-                                              getMarketLangKeyByName(
-                                                moData.marketName?.slice(0, 11),
-                                              )
-                                            ] +
-                                            " " +
-                                            moData.marketName?.slice(11, 14) +
-                                            " " +
-                                            (isMobile
-                                              ? ".."
-                                              : langData?.["goals"])
+                                          getMarketLangKeyByName(
+                                            moData.marketName?.slice(0, 11),
+                                          )
+                                          ] +
+                                          " " +
+                                          moData.marketName?.slice(11, 14) +
+                                          " " +
+                                          (isMobile
+                                            ? ".."
+                                            : langData?.["goals"])
                                           : moData.marketName
                                       : getMarketLangKeyByName(
-                                            moData.marketName,
-                                          )
+                                        moData.marketName,
+                                      )
                                         ? langData?.[
-                                            getMarketLangKeyByName(
-                                              moData.marketName,
-                                            )
-                                          ]
+                                        getMarketLangKeyByName(
+                                          moData.marketName,
+                                        )
+                                        ]
                                         : moData.marketName)}{" "}
                                   <span className="event-name">
                                     {isMultiMarket && !isMobile
@@ -1529,7 +1541,7 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                     <span
                                       className={
                                         getMarketStatus(moData.marketTime) ===
-                                        "OPEN"
+                                          "OPEN"
                                           ? "profit web-view"
                                           : "loss web-view"
                                       }
@@ -1546,11 +1558,10 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                         size="small"
                                         color="primary"
                                         variant="contained"
-                                        className={`btn cashout-btn ${
-                                          getCashoutProfit(moData) > 0
-                                            ? "profit"
-                                            : "loss"
-                                        }`}
+                                        className={`btn cashout-btn ${getCashoutProfit(moData) > 0
+                                          ? "profit"
+                                          : "loss"
+                                          }`}
                                         style={{
                                           borderRadius:
                                             eventData.sportId === "1"
@@ -1599,8 +1610,8 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                         {/* add in language file */}
                                         {getSpeedCashCountdown(moData) > 0
                                           ? `Speed Cash (${getSpeedCashCountdown(
-                                              moData,
-                                            )}s)`
+                                            moData,
+                                          )}s)`
                                           : "Speed Cash"}
                                       </Button>
                                     )}
@@ -1611,41 +1622,41 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                   {formatStakeValue(
                                     eventData?.matchOdds?.inplay === false
                                       ? (moData?.market_advance_bet_min_stake ??
-                                          eventData?.matchOdds
-                                            ?.market_advance_bet_min_stake ??
-                                          eventData?.market_advance_bet_min_stake ??
-                                          moData?.marketLimits?.minStake ??
-                                          matchOddsData?.marketLimits
-                                            ?.minStake ??
-                                          0)
+                                        eventData?.matchOdds
+                                          ?.market_advance_bet_min_stake ??
+                                        eventData?.market_advance_bet_min_stake ??
+                                        moData?.marketLimits?.minStake ??
+                                        matchOddsData?.marketLimits
+                                          ?.minStake ??
+                                        0)
                                       : (moData?.market_min_stack ??
-                                          eventData?.matchOdds
-                                            ?.market_min_stack ??
-                                          eventData?.market_min_stack ??
-                                          moData?.marketLimits?.minStake ??
-                                          matchOddsData?.marketLimits
-                                            ?.minStake ??
-                                          0),
+                                        eventData?.matchOdds
+                                          ?.market_min_stack ??
+                                        eventData?.market_min_stack ??
+                                        moData?.marketLimits?.minStake ??
+                                        matchOddsData?.marketLimits
+                                          ?.minStake ??
+                                        0),
                                   )}{" "}
                                   {langData?.["max"]}:{" "}
                                   {formatStakeValue(
                                     eventData?.matchOdds?.inplay === false
                                       ? (moData?.market_advance_bet_stake ??
-                                          eventData?.matchOdds
-                                            ?.market_advance_bet_stake ??
-                                          eventData?.market_advance_bet_stake ??
-                                          moData?.marketLimits?.maxStake ??
-                                          matchOddsData?.marketLimits
-                                            ?.maxStake ??
-                                          0)
+                                        eventData?.matchOdds
+                                          ?.market_advance_bet_stake ??
+                                        eventData?.market_advance_bet_stake ??
+                                        moData?.marketLimits?.maxStake ??
+                                        matchOddsData?.marketLimits
+                                          ?.maxStake ??
+                                        0)
                                       : (moData?.market_max_stack ??
-                                          eventData?.matchOdds
-                                            ?.market_max_stack ??
-                                          eventData?.market_max_stack ??
-                                          moData?.marketLimits?.maxStake ??
-                                          matchOddsData?.marketLimits
-                                            ?.maxStake ??
-                                          0),
+                                        eventData?.matchOdds
+                                          ?.market_max_stack ??
+                                        eventData?.market_max_stack ??
+                                        moData?.marketLimits?.maxStake ??
+                                        matchOddsData?.marketLimits
+                                          ?.maxStake ??
+                                        0),
                                   )}
                                 </span>
                                 <span className="bet-limits-section mob-view">
@@ -1654,41 +1665,41 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                     {formatStakeValue(
                                       eventData?.matchOdds?.inplay === false
                                         ? (moData?.market_advance_bet_min_stake ??
-                                            eventData?.matchOdds
-                                              ?.market_advance_bet_min_stake ??
-                                            eventData?.market_advance_bet_min_stake ??
-                                            moData?.marketLimits?.minStake ??
-                                            matchOddsData?.marketLimits
-                                              ?.minStake ??
-                                            0)
+                                          eventData?.matchOdds
+                                            ?.market_advance_bet_min_stake ??
+                                          eventData?.market_advance_bet_min_stake ??
+                                          moData?.marketLimits?.minStake ??
+                                          matchOddsData?.marketLimits
+                                            ?.minStake ??
+                                          0)
                                         : (moData?.market_min_stack ??
-                                            eventData?.matchOdds
-                                              ?.market_min_stack ??
-                                            eventData?.market_min_stack ??
-                                            moData?.marketLimits?.minStake ??
-                                            matchOddsData?.marketLimits
-                                              ?.minStake ??
-                                            0),
+                                          eventData?.matchOdds
+                                            ?.market_min_stack ??
+                                          eventData?.market_min_stack ??
+                                          moData?.marketLimits?.minStake ??
+                                          matchOddsData?.marketLimits
+                                            ?.minStake ??
+                                          0),
                                     )}{" "}
                                     {langData?.["max"]}:{" "}
                                     {formatStakeValue(
                                       eventData?.matchOdds?.inplay === false
                                         ? (moData?.market_advance_bet_stake ??
-                                            eventData?.matchOdds
-                                              ?.market_advance_bet_stake ??
-                                            eventData?.market_advance_bet_stake ??
-                                            moData?.marketLimits?.maxStake ??
-                                            matchOddsData?.marketLimits
-                                              ?.maxStake ??
-                                            0)
+                                          eventData?.matchOdds
+                                            ?.market_advance_bet_stake ??
+                                          eventData?.market_advance_bet_stake ??
+                                          moData?.marketLimits?.maxStake ??
+                                          matchOddsData?.marketLimits
+                                            ?.maxStake ??
+                                          0)
                                         : (moData?.market_max_stack ??
-                                            eventData?.matchOdds
-                                              ?.market_max_stack ??
-                                            eventData?.market_max_stack ??
-                                            moData?.marketLimits?.maxStake ??
-                                            matchOddsData?.marketLimits
-                                              ?.maxStake ??
-                                            0),
+                                          eventData?.matchOdds
+                                            ?.market_max_stack ??
+                                          eventData?.market_max_stack ??
+                                          moData?.marketLimits?.maxStake ??
+                                          matchOddsData?.marketLimits
+                                            ?.maxStake ??
+                                          0),
                                     )}
                                   </div>
                                 </span>
@@ -1718,13 +1729,13 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                     {langData?.[tF.labelKey]}
 
                                     {index === 0 &&
-                                    ["7", "4339"].includes(
-                                      selectedEventType?.id,
-                                    ) ? (
+                                      ["7", "4339"].includes(
+                                        selectedEventType?.id,
+                                      ) ? (
                                       <label
                                         className={
                                           getMarketStatus(moData.marketTime) ===
-                                          "OPEN"
+                                            "OPEN"
                                             ? "profit mob-view"
                                             : "loss mob-view"
                                         }
@@ -1746,9 +1757,9 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                           {((oneClickBettingLoading || bettingInprogress) &&
                             bets?.[0]?.marketName === moData?.marketName &&
                             bets?.[0]?.marketId === moData?.marketId) ||
-                          (bettingInprogress &&
-                            cashoutInProgress?.marketId === moData?.marketId &&
-                            cashoutInProgress?.marketName ===
+                            (bettingInprogress &&
+                              cashoutInProgress?.marketId === moData?.marketId &&
+                              cashoutInProgress?.marketName ===
                               moData?.marketName) ? (
                             <OneClickBettingCountdown
                               delay={moData?.marketLimits?.delay || 0}
@@ -1762,29 +1773,42 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                                     runner?.status.toLowerCase() !== "loser",
                                 )
                                 .map((runner, index) => {
+                                  const marketArr = Array.isArray(teamPositionPL)
+                                    ? teamPositionPL
+                                    : teamPositionPL?.[moData?.marketId];
                                   const teamPositionProfit =
-                                    teamPositionPL?.length
-                                      ? (teamPositionPL.find(
+                                    marketArr?.length
+                                      ? (marketArr.find(
+                                        (p) =>
+                                          p.selection_id ==
+                                          runner.selectionId ||
+                                          p.selectionId ==
+                                          runner.selectionId ||
+                                          String(p.selection_id) ===
+                                          String(runner.selectionId) ||
+                                          String(p.selectionId) ===
+                                          String(runner.selectionId),
+                                      )?.user_pl ??
+                                        marketArr.find(
                                           (p) =>
-                                            String(p.selectionId) ===
-                                              String(runner.selectionId) ||
                                             p.runnerId === runner.runnerId ||
                                             p.outcomeId === runner.runnerId,
-                                        )?.profit ??
-                                        teamPositionPL[index]?.profit)
+                                        )?.user_pl ??
+                                        marketArr[index]?.user_pl ??
+                                        marketArr[index]?.profit)
                                       : undefined;
                                   return (
                                     <MatchOddsRow
                                       minStake={
                                         moData?.marketLimits
                                           ? moData?.marketLimits?.minStake /
-                                            cFactor
+                                          cFactor
                                           : 100
                                       }
                                       maxStake={
                                         moData?.marketLimits
                                           ? moData?.marketLimits?.maxStake /
-                                            cFactor
+                                          cFactor
                                           : 5000
                                       }
                                       eventData={eventData}
@@ -1878,7 +1902,7 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
             }
             className="light-bg-title game-rules-drawer web-view"
             title="Rules"
-            // size="md"
+          // size="md"
           >
             <div className="game-rules-header">
               <div className="game-rules-title">{langData?.["game_rules"]}</div>
@@ -1909,7 +1933,7 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
             }
             className="light-bg-title game-rules-drawer mob-view"
             title="Rules"
-            // size="md"
+          // size="md"
           >
             <div className="game-rules-header">
               <div className="game-rules-title">{langData?.["game_rules"]}</div>
@@ -2033,9 +2057,8 @@ const MatchOddsTable: React.FC<StoreProps> = (props) => {
                     {/* add in language file */}
                     {loading
                       ? "PROCESSING..."
-                      : `SPEED CASH ₹${
-                          getTurboCashoutData(coMarket).turboCashoutAmount
-                        }`}
+                      : `SPEED CASH ₹${getTurboCashoutData(coMarket).turboCashoutAmount
+                      }`}
                   </Button>
                 </div>
               </>
@@ -2175,21 +2198,23 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
     document.getElementsByClassName("router-ctn")[0].scrollIntoView();
   }, []);
   const getTeamPositionProfit = (
-    runner: MatchOddsRunnerDTO,
+    marketId: string,
+    selectionId: number | string,
   ): number | undefined => {
-    if (
-      !teamPositionPL ||
-      !Array.isArray(teamPositionPL) ||
-      teamPositionPL.length === 0
-    )
-      return undefined;
-    const item = teamPositionPL.find(
+    if (!teamPositionPL) return undefined;
+    const arr = Array.isArray(teamPositionPL)
+      ? teamPositionPL
+      : teamPositionPL[marketId] ?? teamPositionPL?.data?.[marketId];
+    if (!arr || !Array.isArray(arr) || arr.length === 0) return undefined;
+    const item = arr.find(
       (p) =>
-        String(p.selectionId) === String(runner.selectionId) ||
-        p.runnerId === runner.runnerId ||
-        p.outcomeId === runner.runnerId,
+        p.selection_id == selectionId ||
+        p.selectionId == selectionId ||
+        String(p.selection_id) === String(selectionId) ||
+        String(p.selectionId) === String(selectionId),
     );
-    return item?.profit ?? undefined;
+    const pl = item?.user_pl ?? item?.profit;
+    return pl != null ? Number(pl) : undefined;
   };
   return (
     <>
@@ -2293,7 +2318,10 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
             <div className="team">
               {runner.runnerName}
               {(() => {
-                const pl = getTeamPositionProfit(runner);
+                const pl = getTeamPositionProfit(
+                  String(matchOddsData.marketId ?? ""),
+                  runner.selectionId as number | string,
+                );
                 return pl !== undefined && pl !== null ? (
                   <div className="profit-loss-box team-position-pl">
                     <span className={pl >= 0 ? "profit" : "loss"}>
@@ -2339,191 +2367,228 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
 
         <TableCell className="odds-cell">
           <div className="odds-block web-view back-odds-block">
+
             {runner.backPrices?.length > 0
               ? runner.backPrices.map((odds, idx) => (
+                <ExchOddBtn
+                  mainValue={odds?.price ?? 0}
+                  subValue={odds?.size ?? 0}
+                  showSubValueinKformat={true}
+                  oddType="back-odd"
+                  valueType="matchOdds"
+                  oddsSet={[
+                    runner.backPrices[0] ? runner.backPrices[0]?.price : 0,
+                    runner.backPrices[1] ? runner.backPrices[1]?.price : 0,
+                    runner.backPrices[2] ? runner.backPrices[2]?.price : 0,
+                  ]}
+                  key={idx}
+                  onClick={() => {
+                    try {
+                      if (oneClickBettingLoading) {
+                        setAlertMsg({
+                          message: langData?.betIsInProgress,
+                          type: "error",
+                        });
+                        return;
+                      }
+
+                      const price =
+                        odds?.price ??
+                        (odds as any)?.Price ??
+                        (odds as any)?.price_value ??
+                        0;
+                      if (!price || Number(price) <= 0) return;
+                      const resolvedEventId =
+                        eventData?.eventId ??
+                        (eventData as any)?.match_id ??
+                        (eventData as any)?.matchId ??
+                        fallbackEventId ??
+                        "";
+                      const resolvedMarketId =
+                        matchOddsData?.marketId ??
+                        (matchOddsData as any)?.market_id ??
+                        fallbackMarketId ??
+                        "";
+
+                      const betRequest: PlaceBetRequest = {
+                        providerId: eventData?.providerName || "BetFair",
+                        sportId: eventData?.sportId,
+                        seriesId: eventData?.competitionId,
+                        seriesName: eventData?.competitionName,
+                        eventId: resolvedEventId || fallbackEventId || "",
+                        eventName: eventData?.eventName ?? "",
+                        eventDate: String(eventData?.openDate ?? ""),
+                        marketId: resolvedMarketId || fallbackMarketId || "",
+                        marketName: marketName ?? "Match Odds",
+                        marketType: "MO",
+                        outcomeId: runner.runnerId,
+                        outcomeDesc: runner.runnerName ?? "",
+                        betType: "BACK",
+                        amount: 0,
+                        oddValue: Number(price) || 0,
+                        oddSize:
+                          odds?.size ??
+                          (odds as any)?.Size ??
+                          (odds as any)?.size_value ??
+                          0,
+                        sessionPrice: -1,
+                        minStake: minStake,
+                        maxStake: maxStake,
+                        oddLimt:
+                          matchOddsData?.marketLimits?.maxOdd?.toString() ??
+                          "",
+                        mcategory: "ALL",
+                        srEventId: resolvedEventId || fallbackEventId,
+                        srSeriesId: eventData?.competitionId,
+                        srSportId: eventData?.sportId,
+                      };
+                      setAddNewBet?.(true);
+                      if (setBetsTabVal) setBetsTabVal(0);
+                      if (oneClickBettingEnabled) {
+                        addExchangeBet(betRequest);
+                        oneClickBetPlaceHandler(
+                          [betRequest],
+                          langData,
+                          setAlertMsg,
+                          eventData,
+                        );
+                      } else {
+                        setSelectedRow(runner.runnerId + marketName + "MO");
+                        addExchangeBet(betRequest);
+                      }
+                    } catch (e) {
+                      setAlertMsg?.({
+                        type: "error",
+                        message:
+                          langData?.["general_err_txt"] ||
+                          "Unable to add bet",
+                      });
+                    }
+                  }}
+                />
+
+              ))
+              : [0, 1, 2].map((idx) => {
+                const odds = runner.backPrices?.[idx];
+                return (
                   <ExchOddBtn
-                    mainValue={odds?.price ?? 0}
-                    subValue={odds?.size ?? 0}
+                    key={idx}
+                    mainValue={odds?.price}
+                    subValue={odds?.size}
                     showSubValueinKformat={true}
                     oddType="back-odd"
                     valueType="matchOdds"
                     oddsSet={[
-                      runner.backPrices[0] ? runner.backPrices[0]?.price : 0,
-                      runner.backPrices[1] ? runner.backPrices[1]?.price : 0,
-                      runner.backPrices[2] ? runner.backPrices[2]?.price : 0,
+                      runner.backPrices?.[0]?.price || 0,
+                      runner.backPrices?.[1]?.price || 0,
+                      runner.backPrices?.[2]?.price || 0,
                     ]}
-                    key={idx}
+                    //disable={eventData?.matchOdds?.market_min_stack > eventData?.matchOdds?.market_max_stack}
                     onClick={() => {
-                      try {
-                        if (oneClickBettingLoading) {
-                          setAlertMsg({
-                            message: langData?.betIsInProgress,
-                            type: "error",
-                          });
-                          return;
-                        }
-
-                        const price =
-                          odds?.price ??
-                          (odds as any)?.Price ??
-                          (odds as any)?.price_value ??
-                          0;
-                        if (!price || Number(price) <= 0) return;
-                        const resolvedEventId =
-                          eventData?.eventId ??
-                          (eventData as any)?.match_id ??
-                          (eventData as any)?.matchId ??
-                          fallbackEventId ??
-                          "";
-                        const resolvedMarketId =
-                          matchOddsData?.marketId ??
-                          (matchOddsData as any)?.market_id ??
-                          fallbackMarketId ??
-                          "";
-
-                        const betRequest: PlaceBetRequest = {
-                          providerId: eventData?.providerName || "BetFair",
-                          sportId: eventData?.sportId,
-                          seriesId: eventData?.competitionId,
-                          seriesName: eventData?.competitionName,
-                          eventId: resolvedEventId || fallbackEventId || "",
-                          eventName: eventData?.eventName ?? "",
-                          eventDate: String(eventData?.openDate ?? ""),
-                          marketId: resolvedMarketId || fallbackMarketId || "",
-                          marketName: marketName ?? "Match Odds",
-                          marketType: "MO",
-                          outcomeId: runner.runnerId,
-                          outcomeDesc: runner.runnerName ?? "",
-                          betType: "BACK",
-                          amount: 0,
-                          oddValue: Number(price) || 0,
-                          oddSize:
-                            odds?.size ??
-                            (odds as any)?.Size ??
-                            (odds as any)?.size_value ??
-                            0,
-                          sessionPrice: -1,
-                          minStake: minStake,
-                          maxStake: maxStake,
-                          oddLimt:
-                            matchOddsData?.marketLimits?.maxOdd?.toString() ??
-                            "",
-                          mcategory: "ALL",
-                          srEventId: resolvedEventId || fallbackEventId,
-                          srSeriesId: eventData?.competitionId,
-                          srSportId: eventData?.sportId,
-                        };
-                        setAddNewBet?.(true);
-                        if (setBetsTabVal) setBetsTabVal(0);
-                        if (oneClickBettingEnabled) {
-                          addExchangeBet(betRequest);
-                          oneClickBetPlaceHandler(
-                            [betRequest],
-                            langData,
-                            setAlertMsg,
-                            eventData,
-                          );
-                        } else {
-                          setSelectedRow(runner.runnerId + marketName + "MO");
-                          addExchangeBet(betRequest);
-                        }
-                      } catch (e) {
-                        setAlertMsg?.({
+                      if (oneClickBettingLoading) {
+                        setAlertMsg({
+                          message: langData?.betIsInProgress,
                           type: "error",
-                          message:
-                            langData?.["general_err_txt"] ||
-                            "Unable to add bet",
                         });
+                        return;
+                      }
+                      // Use the clicked odds value from the map, not always the first one
+                      if (!odds?.price || odds.price <= 0) {
+                        return;
+                      }
+                      const resolvedEventId2 =
+                        eventData?.eventId ??
+                        (eventData as any)?.match_id ??
+                        (eventData as any)?.matchId ??
+                        fallbackEventId ??
+                        "";
+                      const resolvedMarketId2 =
+                        matchOddsData?.marketId ??
+                        (matchOddsData as any)?.market_id ??
+                        fallbackMarketId ??
+                        "";
+
+                      const betRequest: PlaceBetRequest = {
+                        providerId: eventData?.providerName || "BetFair",
+                        sportId: eventData?.sportId,
+                        seriesId: eventData?.competitionId,
+                        seriesName: eventData?.competitionName,
+                        eventId: resolvedEventId2,
+                        eventName: eventData?.eventName,
+                        eventDate: String(eventData?.openDate ?? ""),
+                        marketId: resolvedMarketId2,
+                        marketName: marketName,
+                        marketType: "MO",
+                        outcomeId: runner.runnerId,
+                        outcomeDesc: runner.runnerName,
+                        betType: "BACK",
+                        amount: 0,
+                        oddValue: odds?.price ?? 0,
+                        oddSize: odds?.size ?? 0,
+                        sessionPrice: -1,
+                        srEventId: resolvedEventId2,
+                        srSeriesId: eventData?.competitionId,
+                        srSportId: eventData?.sportId,
+                        minStake: minStake,
+                        maxStake: maxStake,
+                        oddLimt:
+                          matchOddsData?.marketLimits?.maxOdd?.toString() ??
+                          "",
+                        mcategory: "ALL",
+                      };
+                      setAddNewBet?.(true);
+                      if (setBetsTabVal) setBetsTabVal(0);
+                      if (oneClickBettingEnabled) {
+                        addExchangeBet(betRequest);
+                        oneClickBetPlaceHandler(
+                          [betRequest],
+                          langData,
+                          setAlertMsg,
+                          eventData,
+                        );
+                      } else {
+                        setSelectedRow(runner.runnerId + marketName + "MO");
+                        addExchangeBet(betRequest);
                       }
                     }}
                   />
-                ))
-              : [0, 1, 2].map((idx) => {
-                  const odds = runner.backPrices?.[idx];
-                  return (
-                    <ExchOddBtn
-                      key={idx}
-                      mainValue={odds?.price}
-                      subValue={odds?.size}
-                      showSubValueinKformat={true}
-                      oddType="back-odd"
-                      valueType="matchOdds"
-                      oddsSet={[
-                        runner.backPrices?.[0]?.price || 0,
-                        runner.backPrices?.[1]?.price || 0,
-                        runner.backPrices?.[2]?.price || 0,
-                      ]}
-                      //disable={eventData?.matchOdds?.market_min_stack > eventData?.matchOdds?.market_max_stack}
-                      onClick={() => {
-                        if (oneClickBettingLoading) {
-                          setAlertMsg({
-                            message: langData?.betIsInProgress,
-                            type: "error",
-                          });
-                          return;
-                        }
-                        // Use the clicked odds value from the map, not always the first one
-                        if (!odds?.price || odds.price <= 0) {
-                          return;
-                        }
-                        const resolvedEventId2 =
-                          eventData?.eventId ??
-                          (eventData as any)?.match_id ??
-                          (eventData as any)?.matchId ??
-                          fallbackEventId ??
-                          "";
-                        const resolvedMarketId2 =
-                          matchOddsData?.marketId ??
-                          (matchOddsData as any)?.market_id ??
-                          fallbackMarketId ??
-                          "";
+                );
+              })}
+            {/* {runner.backPrices.length == 1 ?
+              [0, 1].map((idx) => {
+                const odds = runner.backPrices?.[idx];
+                return (
+                  <ExchOddBtn
+                    key={idx}
+                    mainValue={0}
+                    subValue={0}
+                    showSubValueinKformat={true}
+                    oddType="back-odd"
+                    valueType="matchOdds"
+                    oddsSet={[]}
+                    //disable={eventData?.matchOdds?.market_min_stack > eventData?.matchOdds?.market_max_stack}
+                    onClick={()=>{}}
+                  />
+                );
+              })
+              : runner.backPrices.length == 2 &&
+              [0].map((idx) => {
+                const odds = runner.backPrices?.[idx];
+                return (
+                  <ExchOddBtn
+                    key={idx}
+                    mainValue={0}
+                    subValue={0}
+                    showSubValueinKformat={true}
+                    oddType="back-odd"
+                    valueType="matchOdds"
+                    oddsSet={[]}
+                    //disable={eventData?.matchOdds?.market_min_stack > eventData?.matchOdds?.market_max_stack}
+                    onClick={() => { }}
+                  />
+                );
+              })} */}
 
-                        const betRequest: PlaceBetRequest = {
-                          providerId: eventData?.providerName || "BetFair",
-                          sportId: eventData?.sportId,
-                          seriesId: eventData?.competitionId,
-                          seriesName: eventData?.competitionName,
-                          eventId: resolvedEventId2,
-                          eventName: eventData?.eventName,
-                          eventDate: String(eventData?.openDate ?? ""),
-                          marketId: resolvedMarketId2,
-                          marketName: marketName,
-                          marketType: "MO",
-                          outcomeId: runner.runnerId,
-                          outcomeDesc: runner.runnerName,
-                          betType: "BACK",
-                          amount: 0,
-                          oddValue: odds?.price ?? 0,
-                          oddSize: odds?.size ?? 0,
-                          sessionPrice: -1,
-                          srEventId: resolvedEventId2,
-                          srSeriesId: eventData?.competitionId,
-                          srSportId: eventData?.sportId,
-                          minStake: minStake,
-                          maxStake: maxStake,
-                          oddLimt:
-                            matchOddsData?.marketLimits?.maxOdd?.toString() ??
-                            "",
-                          mcategory: "ALL",
-                        };
-                        setAddNewBet?.(true);
-                        if (setBetsTabVal) setBetsTabVal(0);
-                        if (oneClickBettingEnabled) {
-                          addExchangeBet(betRequest);
-                          oneClickBetPlaceHandler(
-                            [betRequest],
-                            langData,
-                            setAlertMsg,
-                            eventData,
-                          );
-                        } else {
-                          setSelectedRow(runner.runnerId + marketName + "MO");
-                          addExchangeBet(betRequest);
-                        }
-                      }}
-                    />
-                  );
-                })}
           </div>
           <div className="odds-block mob-view">
             <ExchOddBtn
@@ -2618,6 +2683,99 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
           <div className="odds-block web-view">
             {runner.layPrices?.length > 0
               ? runner.layPrices.map((odds, idx) => (
+                <ExchOddBtn
+                  mainValue={
+                    ["7", "4339"].includes(eventData.sportId)
+                      ? 0
+                      : odds?.price
+                  }
+                  subValue={odds?.size ?? 0}
+                  showSubValueinKformat={true}
+                  oddType="lay-odd"
+                  valueType="matchOdds"
+                  oddsSet={[
+                    runner.layPrices[0] ? runner.layPrices[0]?.price : 0,
+                    runner.layPrices[1] ? runner.layPrices[1]?.price : 0,
+                    runner.layPrices[2] ? runner.layPrices[2]?.price : 0,
+                  ]}
+                  key={idx}
+                  // disable={eventData?.matchOdds?.market_min_stack > eventData?.matchOdds?.market_max_stack}
+
+                  // disable={isOddDisable(
+                  //   eventData,
+                  //   matchOddsData.status.toLowerCase(),
+                  //   matchOddsData.suspend,
+                  //   matchOddsData.disable,
+                  //   "lay",
+                  //   odds.price
+                  // )}
+                  onClick={() => {
+                    if (oneClickBettingLoading) {
+                      setAlertMsg({
+                        message: langData?.betIsInProgress,
+                        type: "error",
+                      });
+                      return;
+                    }
+                    if (!odds?.price || odds.price <= 0) return;
+                    const resolvedEventIdLay =
+                      eventData?.eventId ??
+                      (eventData as any)?.match_id ??
+                      (eventData as any)?.matchId ??
+                      fallbackEventId ??
+                      "";
+                    const resolvedMarketIdLay =
+                      matchOddsData?.marketId ??
+                      (matchOddsData as any)?.market_id ??
+                      fallbackMarketId ??
+                      "";
+                    const betRequest: PlaceBetRequest = {
+                      providerId: eventData?.providerName || "BetFair",
+                      sportId: eventData?.sportId,
+                      seriesId: eventData?.competitionId,
+                      seriesName: eventData?.competitionName,
+                      eventId: resolvedEventIdLay,
+                      eventName: eventData?.eventName,
+                      eventDate: String(eventData?.openDate ?? ""),
+                      marketId: resolvedMarketIdLay,
+                      marketName: marketName,
+                      marketType: "MO",
+                      outcomeId: runner.runnerId,
+                      outcomeDesc: runner.runnerName,
+                      betType: "LAY",
+                      amount: 0,
+                      oddValue: odds?.price ?? 0,
+                      oddSize: odds?.size ?? 0,
+                      sessionPrice: -1,
+                      srEventId: resolvedEventIdLay,
+                      srSeriesId: eventData?.competitionId,
+                      srSportId: eventData?.sportId,
+                      minStake: minStake,
+                      maxStake: maxStake,
+                      oddLimt:
+                        matchOddsData?.marketLimits?.maxOdd?.toString() ?? "",
+                      mcategory: "ALL",
+                    };
+                    setAddNewBet?.(true);
+                    if (setBetsTabVal) setBetsTabVal(0);
+                    if (oneClickBettingEnabled) {
+                      addExchangeBet(betRequest);
+                      oneClickBetPlaceHandler(
+                        [betRequest],
+                        langData,
+                        setAlertMsg,
+                        eventData,
+                      );
+                    } else {
+                      setSelectedRow(runner.runnerId + marketName + "MO");
+                      addExchangeBet(betRequest);
+                    }
+                  }}
+                />
+              ))
+              : [0, 1, 2].map((idx) => {
+                const odds = runner.backPrices?.[idx];
+                return (
                   <ExchOddBtn
                     mainValue={
                       ["7", "4339"].includes(eventData.sportId)
@@ -2653,13 +2811,13 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
                         return;
                       }
                       if (!odds?.price || odds.price <= 0) return;
-                      const resolvedEventIdLay =
+                      const resolvedEventIdLay2 =
                         eventData?.eventId ??
                         (eventData as any)?.match_id ??
                         (eventData as any)?.matchId ??
                         fallbackEventId ??
                         "";
-                      const resolvedMarketIdLay =
+                      const resolvedMarketIdLay2 =
                         matchOddsData?.marketId ??
                         (matchOddsData as any)?.market_id ??
                         fallbackMarketId ??
@@ -2669,10 +2827,10 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
                         sportId: eventData?.sportId,
                         seriesId: eventData?.competitionId,
                         seriesName: eventData?.competitionName,
-                        eventId: resolvedEventIdLay,
+                        eventId: resolvedEventIdLay2,
                         eventName: eventData?.eventName,
                         eventDate: String(eventData?.openDate ?? ""),
-                        marketId: resolvedMarketIdLay,
+                        marketId: resolvedMarketIdLay2,
                         marketName: marketName,
                         marketType: "MO",
                         outcomeId: runner.runnerId,
@@ -2682,13 +2840,103 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
                         oddValue: odds?.price ?? 0,
                         oddSize: odds?.size ?? 0,
                         sessionPrice: -1,
-                        srEventId: resolvedEventIdLay,
+                        srEventId: resolvedEventIdLay2,
                         srSeriesId: eventData?.competitionId,
                         srSportId: eventData?.sportId,
                         minStake: minStake,
                         maxStake: maxStake,
                         oddLimt:
-                          matchOddsData?.marketLimits?.maxOdd?.toString() ?? "",
+                          matchOddsData?.marketLimits?.maxOdd?.toString() ??
+                          "",
+                        mcategory: "ALL",
+                      };
+                      setAddNewBet?.(true);
+
+                      if (setBetsTabVal) setBetsTabVal(0);
+                      if (oneClickBettingEnabled) {
+                        addExchangeBet(betRequest);
+                        oneClickBetPlaceHandler(
+                          [betRequest],
+                          langData,
+                          setAlertMsg,
+                          eventData,
+                        );
+                      } else {
+                        setSelectedRow(runner.runnerId + marketName + "MO");
+                        addExchangeBet(betRequest);
+                      }
+                    }}
+                  />
+                );
+              })}
+
+            {/* {runner.layPrices.length == 1 ?
+              [0, 1].map((idx) => {
+                const odds = runner.layPrices?.[idx];
+                return (
+                  <ExchOddBtn
+                    key={idx}
+                    mainValue={odds?.price}
+                    subValue={odds?.size}
+                    showSubValueinKformat={true}
+                    oddType="back-odd"
+                    valueType="matchOdds"
+                    oddsSet={[
+                      runner.backPrices?.[0]?.price || 0,
+                      runner.backPrices?.[1]?.price || 0,
+                      runner.backPrices?.[2]?.price || 0,
+                    ]}
+                    //disable={eventData?.matchOdds?.market_min_stack > eventData?.matchOdds?.market_max_stack}
+                    onClick={() => {
+                      if (oneClickBettingLoading) {
+                        setAlertMsg({
+                          message: langData?.betIsInProgress,
+                          type: "error",
+                        });
+                        return;
+                      }
+                      // Use the clicked odds value from the map, not always the first one
+                      if (!odds?.price || odds.price <= 0) {
+                        return;
+                      }
+                      const resolvedEventId2 =
+                        eventData?.eventId ??
+                        (eventData as any)?.match_id ??
+                        (eventData as any)?.matchId ??
+                        fallbackEventId ??
+                        "";
+                      const resolvedMarketId2 =
+                        matchOddsData?.marketId ??
+                        (matchOddsData as any)?.market_id ??
+                        fallbackMarketId ??
+                        "";
+
+                      const betRequest: PlaceBetRequest = {
+                        providerId: eventData?.providerName || "BetFair",
+                        sportId: eventData?.sportId,
+                        seriesId: eventData?.competitionId,
+                        seriesName: eventData?.competitionName,
+                        eventId: resolvedEventId2,
+                        eventName: eventData?.eventName,
+                        eventDate: String(eventData?.openDate ?? ""),
+                        marketId: resolvedMarketId2,
+                        marketName: marketName,
+                        marketType: "MO",
+                        outcomeId: runner.runnerId,
+                        outcomeDesc: runner.runnerName,
+                        betType: "BACK",
+                        amount: 0,
+                        oddValue: odds?.price ?? 0,
+                        oddSize: odds?.size ?? 0,
+                        sessionPrice: -1,
+                        srEventId: resolvedEventId2,
+                        srSeriesId: eventData?.competitionId,
+                        srSportId: eventData?.sportId,
+                        minStake: minStake,
+                        maxStake: maxStake,
+                        oddLimt:
+                          matchOddsData?.marketLimits?.maxOdd?.toString() ??
+                          "",
                         mcategory: "ALL",
                       };
                       setAddNewBet?.(true);
@@ -2707,103 +2955,95 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
                       }
                     }}
                   />
-                ))
-              : [0, 1, 2].map((idx) => {
-                  const odds = runner.backPrices?.[idx];
-                  return (
-                    <ExchOddBtn
-                      mainValue={
-                        ["7", "4339"].includes(eventData.sportId)
-                          ? 0
-                          : odds?.price
+                );
+              })
+              : runner.layPrices.length == 2 &&
+              [0].map((idx) => {
+                const odds = runner.layPrices?.[idx];
+                return (
+                  <ExchOddBtn
+                    key={idx}
+                    mainValue={odds?.price}
+                    subValue={odds?.size}
+                    showSubValueinKformat={true}
+                    oddType="back-odd"
+                    valueType="matchOdds"
+                    oddsSet={[
+                      runner.backPrices?.[0]?.price || 0,
+                      runner.backPrices?.[1]?.price || 0,
+                      runner.backPrices?.[2]?.price || 0,
+                    ]}
+                    //disable={eventData?.matchOdds?.market_min_stack > eventData?.matchOdds?.market_max_stack}
+                    onClick={() => {
+                      if (oneClickBettingLoading) {
+                        setAlertMsg({
+                          message: langData?.betIsInProgress,
+                          type: "error",
+                        });
+                        return;
                       }
-                      subValue={odds?.size ?? 0}
-                      showSubValueinKformat={true}
-                      oddType="lay-odd"
-                      valueType="matchOdds"
-                      oddsSet={[
-                        runner.layPrices[0] ? runner.layPrices[0]?.price : 0,
-                        runner.layPrices[1] ? runner.layPrices[1]?.price : 0,
-                        runner.layPrices[2] ? runner.layPrices[2]?.price : 0,
-                      ]}
-                      key={idx}
-                      // disable={eventData?.matchOdds?.market_min_stack > eventData?.matchOdds?.market_max_stack}
+                      // Use the clicked odds value from the map, not always the first one
+                      if (!odds?.price || odds.price <= 0) {
+                        return;
+                      }
+                      const resolvedEventId2 =
+                        eventData?.eventId ??
+                        (eventData as any)?.match_id ??
+                        (eventData as any)?.matchId ??
+                        fallbackEventId ??
+                        "";
+                      const resolvedMarketId2 =
+                        matchOddsData?.marketId ??
+                        (matchOddsData as any)?.market_id ??
+                        fallbackMarketId ??
+                        "";
 
-                      // disable={isOddDisable(
-                      //   eventData,
-                      //   matchOddsData.status.toLowerCase(),
-                      //   matchOddsData.suspend,
-                      //   matchOddsData.disable,
-                      //   "lay",
-                      //   odds.price
-                      // )}
-                      onClick={() => {
-                        if (oneClickBettingLoading) {
-                          setAlertMsg({
-                            message: langData?.betIsInProgress,
-                            type: "error",
-                          });
-                          return;
-                        }
-                        if (!odds?.price || odds.price <= 0) return;
-                        const resolvedEventIdLay2 =
-                          eventData?.eventId ??
-                          (eventData as any)?.match_id ??
-                          (eventData as any)?.matchId ??
-                          fallbackEventId ??
-                          "";
-                        const resolvedMarketIdLay2 =
-                          matchOddsData?.marketId ??
-                          (matchOddsData as any)?.market_id ??
-                          fallbackMarketId ??
-                          "";
-                        const betRequest: PlaceBetRequest = {
-                          providerId: eventData?.providerName || "BetFair",
-                          sportId: eventData?.sportId,
-                          seriesId: eventData?.competitionId,
-                          seriesName: eventData?.competitionName,
-                          eventId: resolvedEventIdLay2,
-                          eventName: eventData?.eventName,
-                          eventDate: String(eventData?.openDate ?? ""),
-                          marketId: resolvedMarketIdLay2,
-                          marketName: marketName,
-                          marketType: "MO",
-                          outcomeId: runner.runnerId,
-                          outcomeDesc: runner.runnerName,
-                          betType: "LAY",
-                          amount: 0,
-                          oddValue: odds?.price ?? 0,
-                          oddSize: odds?.size ?? 0,
-                          sessionPrice: -1,
-                          srEventId: resolvedEventIdLay2,
-                          srSeriesId: eventData?.competitionId,
-                          srSportId: eventData?.sportId,
-                          minStake: minStake,
-                          maxStake: maxStake,
-                          oddLimt:
-                            matchOddsData?.marketLimits?.maxOdd?.toString() ??
-                            "",
-                          mcategory: "ALL",
-                        };
-                        setAddNewBet?.(true);
-
-                        if (setBetsTabVal) setBetsTabVal(0);
-                        if (oneClickBettingEnabled) {
-                          addExchangeBet(betRequest);
-                          oneClickBetPlaceHandler(
-                            [betRequest],
-                            langData,
-                            setAlertMsg,
-                            eventData,
-                          );
-                        } else {
-                          setSelectedRow(runner.runnerId + marketName + "MO");
-                          addExchangeBet(betRequest);
-                        }
-                      }}
-                    />
-                  );
-                })}
+                      const betRequest: PlaceBetRequest = {
+                        providerId: eventData?.providerName || "BetFair",
+                        sportId: eventData?.sportId,
+                        seriesId: eventData?.competitionId,
+                        seriesName: eventData?.competitionName,
+                        eventId: resolvedEventId2,
+                        eventName: eventData?.eventName,
+                        eventDate: String(eventData?.openDate ?? ""),
+                        marketId: resolvedMarketId2,
+                        marketName: marketName,
+                        marketType: "MO",
+                        outcomeId: runner.runnerId,
+                        outcomeDesc: runner.runnerName,
+                        betType: "BACK",
+                        amount: 0,
+                        oddValue: odds?.price ?? 0,
+                        oddSize: odds?.size ?? 0,
+                        sessionPrice: -1,
+                        srEventId: resolvedEventId2,
+                        srSeriesId: eventData?.competitionId,
+                        srSportId: eventData?.sportId,
+                        minStake: minStake,
+                        maxStake: maxStake,
+                        oddLimt:
+                          matchOddsData?.marketLimits?.maxOdd?.toString() ??
+                          "",
+                        mcategory: "ALL",
+                      };
+                      setAddNewBet?.(true);
+                      if (setBetsTabVal) setBetsTabVal(0);
+                      if (oneClickBettingEnabled) {
+                        addExchangeBet(betRequest);
+                        oneClickBetPlaceHandler(
+                          [betRequest],
+                          langData,
+                          setAlertMsg,
+                          eventData,
+                        );
+                      } else {
+                        setSelectedRow(runner.runnerId + marketName + "MO");
+                        addExchangeBet(betRequest);
+                      }
+                    }}
+                  />
+                );
+              })} */}
           </div>
           <div className="odds-block mob-view">
             <ExchOddBtn
@@ -2893,11 +3133,11 @@ const MatchOddsRow: React.FC<MatchOddsRowProps> = (props) => {
       </TableRow>
 
       {!oneClickBettingEnabled &&
-      bets?.length > 0 && isMobile &&
-      String(bets?.[0]?.marketName ?? "") === String(marketName ?? "") &&
-      String(bets?.[0]?.marketId ?? "") ===
+        bets?.length > 0 && isMobile &&
+        String(bets?.[0]?.marketName ?? "") === String(marketName ?? "") &&
+        String(bets?.[0]?.marketId ?? "") ===
         String(matchOddsData?.marketId ?? "") &&
-      String(bets?.[0]?.outcomeId ?? "") === String(runner?.runnerId ?? "") ? (
+        String(bets?.[0]?.outcomeId ?? "") === String(runner?.runnerId ?? "") ? (
         <TableRow
           className="inline-betslip"
           ref={(el) => {

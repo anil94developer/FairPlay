@@ -28,7 +28,10 @@ import {
 } from "../../store/exchangeSports/exchangeSportsSelectors";
 import moment from "moment";
 type Notification = {
-  message: string;
+  message?: string;
+  heading?: string;
+  user_id?: string;
+  user_type_id?: number;
 };
 // import "../../assets/global_styles/marquee.scss";
 import AdminNotification from "../../components/AdminNotifications/AdminNotification";
@@ -61,6 +64,7 @@ import {
   fetchSportsFromAPI,
   transformSportsToTabs,
   SportTabData,
+  getNews,
 } from "../../util/sportsApiUtil";
 
 type InplayEventsObj = {
@@ -138,7 +142,7 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
     // Fallback: derive from route slug or raw text
     const routeSlug =
       typeof sport?.route === "string" &&
-      sport.route.includes("/exchange_sports/")
+        sport.route.includes("/exchange_sports/")
         ? sport.route.split("/exchange_sports/")[1]?.split("/")[0]
         : "";
     const raw = routeSlug || sport?.text || sport?.langKey || "Sport";
@@ -167,15 +171,23 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
   const isMobile = window.innerWidth > 1120 ? false : true;
 
   const fetchNotifications = async () => {
-    // const response = await SVLS_API.get("/catalog/v2/notifications/", {
-    //   headers: {
-    //     Authorization: sessionStorage.getItem("jwt_token"),
-    //   },
-    //   params: {
-    //     type: "ACTIVE",
-    //   },
-    // });
-    setNotifications(notificationsData);
+    try {
+      const res = await getNews();
+      const items = Array.isArray(res) ? res : [];
+      setNotifications(
+        items
+          .filter((item: any) => item.heading || item.message)
+          .map((item: any) => ({
+            message: item.heading ?? item.message ?? "",
+            heading: item.heading ?? item.message ?? "",
+            user_id: item.user_id,
+            user_type_id: item.user_type_id,
+          })),
+      );
+    } catch (err) {
+      console.error("[ExchInplayEventsView] fetchNotifications error:", err);
+      setNotifications([]);
+    }
   };
 
   const fetchUpcomingEvents = async () => {
@@ -368,12 +380,12 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
         const matchOdds =
           transformedRunners.length > 0
             ? {
-                marketId: event.market_id || event.marketId || "",
-                marketName:
-                  event.market_name || event.marketName || "Match Odds",
-                status: event.status || "UPCOMING",
-                runners: transformedRunners,
-              }
+              marketId: event.market_id || event.marketId || "",
+              marketName:
+                event.market_name || event.marketName || "Match Odds",
+              status: event.status || "UPCOMING",
+              runners: transformedRunners,
+            }
             : undefined;
 
         const eventDTO: EventDTO = {
@@ -469,7 +481,7 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
   }, []);
 
   useEffect(() => {
-    setFavouriteEvents(favourites);
+    // setFavouriteEvents(favourites);
   });
 
   useEffect(() => {
@@ -482,11 +494,14 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
       const sports = await fetchSportsFromAPI();
       if (sports.length > 0) {
         const transformedTabs = transformSportsToTabs(sports);
-        setSportsTabs(transformedTabs);
+        console.log("favourites=======")
+        // setSportsTabs(transformedTabs);
       }
     };
     fetchSports();
   }, []);
+
+
 
   // Sport ID mapping for filtering
   const sportIdMap: { [key: string]: string[] } = {
@@ -730,12 +745,12 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
           const matchOdds =
             transformedRunners.length > 0
               ? {
-                  marketId: event.market_id || event.marketId || "",
-                  marketName:
-                    event.market_name || event.marketName || "Match Odds",
-                  status: event.status || "UPCOMING",
-                  runners: transformedRunners,
-                }
+                marketId: event.market_id || event.marketId || "",
+                marketName:
+                  event.market_name || event.marketName || "Match Odds",
+                status: event.status || "UPCOMING",
+                runners: transformedRunners,
+              }
               : undefined;
 
           // Transform to EventDTO format
@@ -784,14 +799,14 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
                 awayTeam,
                 matchOdds: matchOdds
                   ? {
-                      marketId: matchOdds.marketId,
-                      runnersCount: matchOdds.runners.length,
-                      runners: matchOdds.runners.map((r) => ({
-                        name: r.runnerName,
-                        backPrices: r.backPrices.length,
-                        layPrices: r.layPrices.length,
-                      })),
-                    }
+                    marketId: matchOdds.marketId,
+                    runnersCount: matchOdds.runners.length,
+                    runners: matchOdds.runners.map((r) => ({
+                      name: r.runnerName,
+                      backPrices: r.backPrices.length,
+                      layPrices: r.layPrices.length,
+                    })),
+                  }
                   : null,
                 is_lock: event.is_lock,
                 status: event.status,
@@ -972,31 +987,23 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
   const getNotificationMessages = (notificationsList: Notification[]) => {
     return (
       <div className="marquee-new">
-        {notificationsList.map((notifi) => {
+        {notificationsList.map((notifi, idx) => {
+          const text = notifi.heading ?? notifi.message ?? "";
+          const duration = Math.max(10, text.length / 5);
           return (
-            <div className="notifi-item">
+            <div key={idx} className="notifi-item">
               <img
                 src={ScrollIcons}
                 alt=""
                 className="notifi-scroll-icon"
                 loading="lazy"
-                style={{
-                  animationDuration: `${Math.max(
-                    10,
-                    notifi.message.length / 5,
-                  )}s`,
-                }}
+                style={{ animationDuration: `${duration}s` }}
               />
               <span
                 className="notifi-mssage"
-                style={{
-                  animationDuration: `${Math.max(
-                    10,
-                    notifi.message.length / 5,
-                  )}s`,
-                }}
+                style={{ animationDuration: `${duration}s` }}
               >
-                {notifi.message}
+                {text}
               </span>
               <img
                 src={ScrollIcons}
@@ -1005,10 +1012,7 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
                 loading="lazy"
                 style={{
                   transform: "scaleX(-1)",
-                  animationDuration: `${Math.max(
-                    10,
-                    notifi.message.length / 5,
-                  )}s`,
+                  animationDuration: `${duration}s`,
                 }}
               />
             </div>
@@ -1043,12 +1047,12 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
   const handleEventChange = (event: EventDTO) => {
     const competitionSlug = event.competitionName
       ? event.competitionName
-          .toLocaleLowerCase()
-          .replace(/[^a-z0-9]/g, " ")
-          .replace(/ +/g, " ")
-          .trim()
-          .split(" ")
-          .join("-")
+        .toLocaleLowerCase()
+        .replace(/[^a-z0-9]/g, " ")
+        .replace(/ +/g, " ")
+        .trim()
+        .split(" ")
+        .join("-")
       : "league";
     setCompetition({
       id: event.competitionId,
@@ -1195,11 +1199,10 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
               <div className="time-tabs">
                 <Tabs variant="scrollable" scrollButtons="off">
                   <button
-                    className={`inplay-tab ${
-                      Status.LIVE_MATCH === statusNew
+                    className={`inplay-tab ${Status.LIVE_MATCH === statusNew
                         ? "selected-inplay-tab"
                         : ""
-                    }`}
+                      }`}
                     onClick={() => {
                       handleStatusChange(Status.LIVE_MATCH);
                     }}
@@ -1210,12 +1213,11 @@ const ExchInplayEventsView: React.FC<StoreProps> = (props) => {
                     (sport) =>
                       sport.text !== "Multi markets" && (
                         <button
-                          className={`inplay-tab ${
-                            selectedSport === sport.id &&
-                            Status.LIVE_MATCH !== statusNew
+                          className={`inplay-tab ${selectedSport === sport.id &&
+                              Status.LIVE_MATCH !== statusNew
                               ? "selected-inplay-tab"
                               : ""
-                          }`}
+                            }`}
                           onClick={() => {
                             setStatusNew(Status.SPORT);
                             setSelectedSport(sport.id);

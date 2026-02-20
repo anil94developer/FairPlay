@@ -28,6 +28,11 @@ export interface CommonState {
   };
   whatsappDetails: string;
   demoUserWhatsappDetails: string;
+  /** Social media from content/get or getSocialMediaContent: Whatsapp, Telegram, Gmail, Facebook with is_active, url, etc. */
+  socialMediaContent: Record<
+    string,
+    { title: string; url: string; is_active: boolean; image_url: string }
+  > | null;
   languages: any[];
   langSelected: any;
   langData: any;

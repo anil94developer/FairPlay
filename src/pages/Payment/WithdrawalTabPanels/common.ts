@@ -74,8 +74,11 @@ export const fetchWalletUpiAccounts = async (
       page: 1,
       bank_account_type_id: upiAccountTypeId,
     });
-    if (response?.data?.status && Array.isArray(response?.data?.data)) {
-      const mapped = response.data.data.map((acc: any) => mapUpiAccount(acc));
+    const rawData = response?.data?.data ?? response?.data;
+    const list = Array.isArray(rawData) ? rawData : [];
+    if (response?.data?.status && list.length >= 0) {
+      const activeOnly = list.filter((acc: any) => !acc?.is_deleted);
+      const mapped = activeOnly.map((acc: any) => mapUpiAccount(acc));
       setAccountDetails(mapped);
     }
   } catch (error) {}
@@ -87,14 +90,17 @@ export const fetchWalletBankAccounts = async (
 ) => {
   try {
     const bank_account_type_id =
-      bankAccountTypeId || "698bd69abc8ee923195db9c1";
+      bankAccountTypeId || "";
     const response = await USABET_API.post(`/wallet/bankAccountGet`, {
       limit: 10,
       page: 1,
       bank_account_type_id,
     });
     if (response?.data?.status && Array.isArray(response?.data?.data)) {
-      const mapped = response.data.data.map((acc: any) => mapBankAccount(acc));
+      const activeOnly = response.data.data.filter(
+        (acc: any) => !acc?.is_deleted
+      );
+      const mapped = activeOnly.map((acc: any) => mapBankAccount(acc));
       setAccountDetails(mapped);
     }
   } catch (error) {
@@ -115,7 +121,10 @@ export const fetchWalletCryptoAccounts = async (
       bank_account_type_id,
     });
     if (response?.data?.status && Array.isArray(response?.data?.data)) {
-      const mapped = response.data.data.map((acc: any) => mapCryptoAccount(acc));
+      const activeOnly = response.data.data.filter(
+        (acc: any) => !acc?.is_deleted
+      );
+      const mapped = activeOnly.map((acc: any) => mapCryptoAccount(acc));
       setAccountDetails(mapped);
     }
   } catch (error) {}

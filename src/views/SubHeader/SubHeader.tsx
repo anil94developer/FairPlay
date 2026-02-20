@@ -65,6 +65,7 @@ type StoreProps = {
   toggleDarkMode: (val: string) => void;
   whatsappDetails: string;
   setWhatsappDetails: (details: string) => void;
+  socialMediaContent: Record<string, { title: string; url: string; is_active: boolean; image_url: string }> | null;
   languages: string[];
   langSelected: string;
   setLangSelected: (lang: string) => void;
@@ -89,6 +90,7 @@ const SubHeader: React.FC<StoreProps> = (props) => {
     toggleDarkMode,
     whatsappDetails,
     setWhatsappDetails,
+    socialMediaContent,
     languages,
     langSelected,
     setLangSelected,
@@ -442,8 +444,10 @@ const SubHeader: React.FC<StoreProps> = (props) => {
     history.push("/home");
   };
 
+  const whatsappUrl = socialMediaContent?.Whatsapp?.url || whatsappDetails;
+  const showWhatsappIcon = socialMediaContent?.Whatsapp?.is_active !== false;
   const redirectToContact = () => {
-    window.open(whatsappDetails, "_blank");
+    if (whatsappUrl) window.open(whatsappUrl, "_blank");
   };
 
   const handleSkinChange = (domain) => {
@@ -483,9 +487,11 @@ const SubHeader: React.FC<StoreProps> = (props) => {
         </div>
 
         <div className="whatsapp-login-signup">
-          <button className="new-whatsapp web-view" onClick={redirectToContact}>
-            <img src={WhatsupImg} height={28} width={28} alt="whatsapp" />
-          </button>
+          {showWhatsappIcon && (
+            <button className="new-whatsapp web-view" onClick={redirectToContact}>
+              <img src={WhatsupImg} height={28} width={28} alt="whatsapp" />
+            </button>
+          )}
 
           {loggedIn ? (
             <>
@@ -561,6 +567,7 @@ const SubHeader: React.FC<StoreProps> = (props) => {
 
       {domainConfig.whatsapp &&
         domainConfig.b2cEnabled &&
+        showWhatsappIcon &&
         isMobile &&
         showWhatsapp &&
         (location.pathname.includes("/home") ||
@@ -625,6 +632,7 @@ const mapStateToProps = (state: RootState) => {
       demoUser() || !state.auth.loggedIn
         ? state.common.demoUserWhatsappDetails
         : state.common.whatsappDetails,
+    socialMediaContent: state.common.socialMediaContent,
     langSelected: state.common.langSelected,
     languages: state.common.languages,
     langData: state.common.langData,

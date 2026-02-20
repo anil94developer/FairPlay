@@ -201,14 +201,14 @@ export const otherMenuTabs = [
     route: "/transaction/withdraw",
     showWithoutLogin: false,
   },
-  {
-    id: 24,
-    text: "Promotions",
-    langKey: "promotions",
-    img: Promotions,
-    route: "/promotions",
-    showWithoutLogin: true,
-  },
+  // {
+  //   id: 24,
+  //   text: "Promotions",
+  //   langKey: "promotions",
+  //   img: Promotions,
+  //   route: "/promotions",
+  //   showWithoutLogin: true,
+  // },
   {
     id: 11,
     text: "My Bets",

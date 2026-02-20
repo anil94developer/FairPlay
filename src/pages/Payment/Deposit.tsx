@@ -43,13 +43,17 @@ const Deposit: React.FC<StoreProps> = (props) => {
   const [walletLimits, setWalletLimits] = useState<WalletLimitDTO | null>(null);
   const [loadingLimits, setLoadingLimits] = useState(true);
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+  const [step1, setStep1] = useState<0 | 1 | 2 | 3>(0);
+  const [step2, setStep2] = useState<0 | 1 | 2 | 3>(0);
+  const [step3, setStep3] = useState<0 | 1 | 2 | 3>(0);
+
   const [depositImage, setDepositImage] = useState<string | ArrayBuffer | null>(
     null
   );
   const [uploadImage, setUploadImage] = useState<File | null>(null);
   const [remark, setRemark] = useState("");
   const [userReferenceNo, setUserReferenceNo] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(true);
   const hiddenFileInput = useRef<HTMLInputElement>(null);
 
   const [paymentTypes, setPaymentTypes] = useState<BankAccountTypeDTO[]>([]);
@@ -152,7 +156,7 @@ const Deposit: React.FC<StoreProps> = (props) => {
       });
       if (res?.data?.status && Array.isArray(res?.data?.data)) {
         setBankAccounts(res.data.data);
-        setStep(2);
+        setStep1(1);
       } else {
         setAlertMsg({
           type: "error",
@@ -175,7 +179,8 @@ const Deposit: React.FC<StoreProps> = (props) => {
 
   const selectBankAccount = (acc: BankAccountDTO) => {
     setSelectedBankAccount(acc);
-    setStep(3);
+    setStep2(1);
+    setStep3(1);
   };
 
   const handleAddAmount = (value: string) => {
@@ -194,6 +199,9 @@ const Deposit: React.FC<StoreProps> = (props) => {
 
   const handleEdit = () => {
     setStep(0);
+    setStep1(0);
+    setStep2(0);
+    setStep3(0);
     setSelectedPaymentType(null);
     setBankAccounts([]);
     setSelectedBankAccount(null);
@@ -204,27 +212,52 @@ const Deposit: React.FC<StoreProps> = (props) => {
     setTermsAccepted(false);
   };
 
-  const handleBack = () => {
-    if (step === 3) {
-      setStep(2);
-      setSelectedBankAccount(null);
-      setRemark("");
-      setUserReferenceNo("");
-      setDepositImage(null);
-      setUploadImage(null);
-      setTermsAccepted(false);
-    } else if (step === 2) {
-      setStep(1);
-      setSelectedPaymentType(null);
-      setBankAccounts([]);
-      setSelectedBankAccount(null);
-    } else if (step === 1) {
-      setStep(0);
-      setSelectedPaymentType(null);
-      setPaymentTypes([]);
-      setBankAccounts([]);
-    }
+  const handleBackFromStep3 = () => {
+    setStep2(0);
+    setStep3(0);
+    setSelectedBankAccount(null);
   };
+
+  const handleBackFromStep2 = () => {
+    setStep1(0);
+    setStep2(0);
+    setStep3(0);
+    setBankAccounts([]);
+    setSelectedBankAccount(null);
+  };
+
+  const handleBackFromStep1 = () => {
+    setStep(0);
+    setStep1(0);
+    setStep2(0);
+    setStep3(0);
+    setPaymentTypes([]);
+    setSelectedPaymentType(null);
+    setBankAccounts([]);
+    setSelectedBankAccount(null);
+  };
+
+  // const handleBack = () => {
+  //   if (step === 3) {
+  //     setStep(2);
+  //     setSelectedBankAccount(null);
+  //     setRemark("");
+  //     setUserReferenceNo("");
+  //     setDepositImage(null);
+  //     setUploadImage(null);
+  //     setTermsAccepted(false);
+  //   } else if (step === 2) {
+  //     setStep(1);
+  //     setSelectedPaymentType(null);
+  //     setBankAccounts([]);
+  //     setSelectedBankAccount(null);
+  //   } else if (step === 1) {
+  //     setStep(0);
+  //     setSelectedPaymentType(null);
+  //     setPaymentTypes([]);
+  //     setBankAccounts([]);
+  //   }
+  // };
 
   const errorToast = (mess: string) => {
     setAlertMsg({ type: "error", message: mess ?? "" });
@@ -368,7 +401,9 @@ const Deposit: React.FC<StoreProps> = (props) => {
         <div className="disclaimer-msg">
           <b>{langData?.["disclaimer"]}</b>
         </div>
-        <div className="auto-deposit">
+
+        {/* Step 0: Enter amount - always visible */}
+        <div className="auto-deposit deposit-step deposit-step-0">
           <div className="mt-2">
             <div className="deposit-input">
               <InputTemplate
@@ -391,7 +426,6 @@ const Deposit: React.FC<StoreProps> = (props) => {
                 {langData?.["max"] || "Max"} {depositMax}
               </span>
             </div>
-
             {step === 0 && (
               <div className="ocbValueButtons zenpay-ctn">
                 <div className="account-inputs">
@@ -453,12 +487,13 @@ const Deposit: React.FC<StoreProps> = (props) => {
           </div>
         </div>
 
-        {step === 1 && (
-          <div className="auto-deposit zenpay-ctn">
+        {/* Step 1: Select payment method - visible once loaded, never hidden */}
+        {step >= 1 && (
+          <div className="auto-deposit zenpay-ctn deposit-step deposit-step-1">
             <Button
               size="small"
-              className="back-step-btn"
-              onClick={handleBack}
+              className="submit-payment-btn"
+              onClick={handleBackFromStep1}
             >
               {langData?.["back"] || "Back"}
             </Button>
@@ -484,12 +519,13 @@ const Deposit: React.FC<StoreProps> = (props) => {
           </div>
         )}
 
-        {step === 2 && (
-          <div className="auto-deposit zenpay-ctn">
+        {/* Step 2: Select bank account - visible once loaded, never hidden */}
+        {step1 >= 1 && (
+          <div className="auto-deposit zenpay-ctn deposit-step deposit-step-2">
             <Button
               size="small"
-              className="back-step-btn"
-              onClick={handleBack}
+              className="submit-payment-btn"
+              onClick={handleBackFromStep2}
             >
               {langData?.["back"] || "Back"}
             </Button>
@@ -525,12 +561,13 @@ const Deposit: React.FC<StoreProps> = (props) => {
           </div>
         )}
 
-        {step === 3 && selectedBankAccount && (
-          <div className="auto-deposit zenpay-ctn">
+        {/* Step 3: Account detail & confirm - visible once bank selected, never hidden */}
+        {step2 >= 1 && selectedBankAccount && (
+          <div className="auto-deposit zenpay-ctn deposit-step deposit-step-3">
             <Button
               size="small"
-              className="back-step-btn"
-              onClick={handleBack}
+              className="submit-payment-btn"
+              onClick={handleBackFromStep3}
             >
               {langData?.["back"] || "Back"}
             </Button>

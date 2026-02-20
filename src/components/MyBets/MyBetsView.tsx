@@ -80,12 +80,12 @@ const MyBets: React.FC<StoreProps> = (props) => {
   ];
   // TODO: check if need to move this logic to select template.
   const betStatusOptions = [
-    { value: "All", name: langData?.["all"] },
-    { value: "Open", name: langData?.["open"] },
-    { value: "Settled", name: langData?.["settled"] },
-    { value: "Won", name: langData?.["won"] },
-    { value: "Lost", name: langData?.["lost"] },
-    { value: "Voided", name: langData?.["void"] },
+    // { value: "All", name: langData?.["all"] },
+    { value: "unsettle", name: langData?.["open"] },
+    { value: "settled", name: langData?.["settled"] },
+    // { value: "Won", name: langData?.["won"] },
+    // { value: "Lost", name: langData?.["lost"] },
+    // { value: "Voided", name: langData?.["void"] },
   ];
   const sportOptions = [
     {
@@ -171,7 +171,7 @@ const MyBets: React.FC<StoreProps> = (props) => {
   ];
   const defaultFilters: Filters = {
     selectedGame: "SPORTS",
-    status: "Open",
+    status: "unsettle",
     startDate: moment().subtract(7, "d"),
     endDate: moment(),
     pageToken: [],
@@ -311,19 +311,27 @@ const MyBets: React.FC<StoreProps> = (props) => {
 
       const page = filters.pageToken?.length ? filters.pageToken.length + 1 : 1;
 
-      const search: Record<string, any> = {
-        delete_status: 0,
-        is_matched: 1,
-      };
-
+      const search: Record<string, any> = {};
       if (filters.sport !== "All") {
         search.sport_id = filters.sport;
       }
 
-      const response = await USABET_API.post("/bet/openBets", {
-        limit: 100,
+      const fromDate = filters.startDate
+        ? moment(filters.startDate).startOf("day").toISOString()
+        : moment().subtract(30, "days").startOf("day").toISOString();
+      const toDate = filters.endDate
+        ? moment(filters.endDate).endOf("day").toISOString()
+        : moment().endOf("day").toISOString();
+
+      const betType = filters.status ;
+
+      const response = await USABET_API.post("/bet/userSettledBetList", {
         page,
+        limit: pageSize,
+        type: betType,
         search,
+        from_date: fromDate,
+        to_date: toDate,
       });
 
       if (response?.data?.status === true && Array.isArray(response.data.data)) {
@@ -344,6 +352,12 @@ const MyBets: React.FC<StoreProps> = (props) => {
                 ? "MATCH_ODDS"
                 : (eventType as UserBet["marketType"]);
 
+              const outcomeResult = bet.is_result_declared
+                ? bet.winner_name != null && String(bet.winner_name) !== ""
+                  ? "Won"
+                  : "Lost"
+                : "Open";
+
               const mapped: UserBet & {
                 sportId?: string;
                 payOutAmount?: number;
@@ -360,7 +374,7 @@ const MyBets: React.FC<StoreProps> = (props) => {
                 marketType,
                 marketName: bet.market_name || "Match Odds",
                 outcomeDesc: bet.selection_name || "",
-                outcomeResult: bet.is_result_declared ? (bet.winner_name ? "Won" : "Lost") : "Open",
+                outcomeResult,
                 betType: (bet.is_back === 1 || bet.is_back === "1" ? "BACK" : "LAY") as UserBet["betType"],
                 sportId: bet.sport_id || "",
                 sessionRuns: isFancy ? bet.odds : null,
@@ -375,17 +389,12 @@ const MyBets: React.FC<StoreProps> = (props) => {
 
         let filteredBets = allBets;
 
-        if (filters.startDate || filters.endDate) {
-          const fromTs = filters.startDate
-            ? moment(filters.startDate).startOf("day").valueOf()
-            : 0;
-          const toTs = filters.endDate
-            ? moment(filters.endDate).endOf("day").valueOf()
-            : Infinity;
-          filteredBets = allBets.filter((b) => {
-            const ts = new Date(b.betPlacedTime || 0).getTime();
-            return ts >= fromTs && ts <= toTs;
-          });
+        if (filters.status === "Won") {
+          filteredBets = filteredBets.filter((b) => b.outcomeResult === "Won");
+        } else if (filters.status === "Lost") {
+          filteredBets = filteredBets.filter((b) => b.outcomeResult === "Lost");
+        } else if (filters.status === "Voided") {
+          filteredBets = filteredBets.filter((b) => b.outcomeResult === "Voided" || b.outcomeResult === "Abandoned");
         }
 
         filteredBets.sort((a, b) => {
@@ -397,7 +406,7 @@ const MyBets: React.FC<StoreProps> = (props) => {
         setBets(filteredBets);
 
         const total = metadata?.total || 0;
-        const hasMore = page * 100 < total;
+        const hasMore = page * pageSize < total;
         setNextPageToken(hasMore ? String(page + 1) : null);
       } else {
         setBets([]);

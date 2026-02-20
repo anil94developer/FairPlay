@@ -25,6 +25,7 @@ import {
   SET_TRENDING_GAMES,
   SET_WHATSAPP_DETAILS,
   SET_DEMO_USER_WHATSAPP_DETAILS,
+  SET_SOCIAL_MEDIA_CONTENT,
   TOGGLE_DARK_MODE,
   TRIGGER_FETCH_BALANCE,
   TRIGGER_FETCH_NOTIFICATIONS,
@@ -39,6 +40,7 @@ import { DomainConfig } from "../../models/DomainConfig";
 import { CampaignInfoDataType } from "../../pages/Affiliate/affiliate.utils";
 import SVLS_API from "../../svls-api";
 import CATALOG_API from "../../catalog-api";
+import USABET_API from "../../api-services/usabet-api";
 
 export const activateReportsTab = (value: boolean) => {
   return {
@@ -230,6 +232,51 @@ export const setDemoUserWhatsappDetails = (details: string) => {
   return {
     type: SET_DEMO_USER_WHATSAPP_DETAILS,
     payload: details,
+  };
+};
+
+export const setSocialMediaContent = (content: Record<
+  string,
+  { title: string; url: string; is_active: boolean; image_url: string }
+> | null) => {
+  return {
+    type: SET_SOCIAL_MEDIA_CONTENT,
+    payload: content,
+  };
+};
+
+/** Fetch social media from content/get (guest) or content/getSocialMediaContent (logged in). Parses data.description and sets Whatsapp URL for backward compat. */
+export const fetchSocialMediaContent = (loggedIn: boolean) => {
+  return async (dispatch: Function) => {
+    try {
+      let res: any;
+      const slug = 'usabet9.com-social';//`${typeof window !== "undefined" ? window.location.hostname : ""}-social`;
+
+      if (loggedIn) {
+
+        res = await USABET_API.post("/content/getSocialMediaContent", {slug});
+      } else {
+         res = await USABET_API.post("/content/get", { slug });
+      }
+      const data = res?.data?.data;
+      const descStr = data?.description;
+      if (typeof descStr === "string") {
+        let parsed: Record<string, { title: string; url: string; is_active: boolean; image_url: string }> = {};
+        try {
+          parsed = JSON.parse(descStr);
+        } catch {
+          return;
+        }
+        dispatch(setSocialMediaContent(parsed));
+        const whatsapp = parsed?.Whatsapp;
+        if (whatsapp?.url) {
+          dispatch(setWhatsappDetails(whatsapp.url));
+          dispatch(setDemoUserWhatsappDetails(whatsapp.url));
+        }
+      }
+    } catch (err) {
+      // ignore
+    }
   };
 };
 

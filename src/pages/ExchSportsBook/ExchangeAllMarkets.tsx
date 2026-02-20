@@ -296,7 +296,10 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     useState<boolean>(false);
   const [premiumIframeFetched, setPremiumIframeFetched] =
     useState<boolean>(false);
+  const [scoreboardIframeUrl, setScoreboardIframeUrl] = useState<string>("");
+  const [tvUrl, setTvUrl] = useState<string>("");
   const [liveStreamChannelId, setLiveStreamChannelId] = useState<string>("");
+  const [streamAccordion, setStreamAccordion] = useState<boolean>(false);
   const [provider, sportId, competitionId, eventId, providerId] = atob(
     routeParams.eventInfo ? routeParams.eventInfo : "",
   ).split(":");
@@ -313,14 +316,17 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     useState<boolean>(false);
   const [loadingFancy, setLoadingFancy] = useState<boolean>(false);
   const [eventData, setEventData] = useState<EventDTO>();
-  /** Team position P/L from bet/getTeamPosition: match to runner by selectionId === selection_id */
+  /** Team position P/L from bet/getTeamPosition: keyed by market_id, each value is array of { selection_id, user_pl, ... } */
   const [teamPositionPL, setTeamPositionPL] = useState<
-    | {
-        selectionId?: string | number;
-        outcomeId?: string;
-        runnerId?: string;
-        profit: number;
-      }[]
+    | Record<
+        string,
+        Array<{
+          selection_id?: number;
+          selectionId?: number;
+          user_pl?: number;
+          profit?: number;
+        }>
+      >
     | null
   >(null);
   /** Fancy liability from bet/getFancyLiability: keys "match_id_fancy_id" -> user_pl; used to show Active Book for fancies in list */
@@ -713,7 +719,6 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
         });
         const data = response?.data;
         // API returns { "market_id": [ { selection_id, user_pl, ... }, ... ] } (or wrapped in { status, data })
-        let positionsArray: any[] = [];
         const byMarket =
           data?.status === true &&
           data?.data &&
@@ -724,25 +729,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
               ? (data as Record<string, any[]>)
               : null;
         if (byMarket) {
-          const marketIdToUse =
-            currentEventData?.matchOdds?.marketId || currentEventData?.marketId;
-          const firstArray = Object.values(byMarket).find((v) =>
-            Array.isArray(v),
-          ) as any[] | undefined;
-          positionsArray =
-            (marketIdToUse && Array.isArray(byMarket[marketIdToUse])
-              ? byMarket[marketIdToUse]
-              : firstArray) || [];
-        }
-        if (positionsArray && positionsArray.length > 0) {
-          setTeamPositionPL(
-            positionsArray.map((item: any) => ({
-              selectionId: item.selection_id ?? item.selectionId,
-              outcomeId: item.outcome_id ?? item.outcomeId,
-              runnerId: item.runner_id ?? item.runnerId,
-              profit: Number(item.user_pl) ?? Number(item.profit) ?? 0,
-            })),
-          );
+          setTeamPositionPL(byMarket);
         } else {
           setTeamPositionPL(null);
         }
@@ -950,6 +937,40 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
     ) {
       subscribeWsForScorecardUrl("/topic/rx_score/", currentEventData?.eventId);
     }
+  }, [currentEventData?.eventId]);
+
+  // Fetch scoreboard iframe URL from mamaexch API
+  useEffect(() => {
+    const matchId = currentEventData?.eventId;
+    if (!matchId || !IS_NEW_SCORECARD_ENABLED) {
+      setScoreboardIframeUrl("");
+      return;
+    }
+    let cancelled = false;
+    const fetchScoreboardUrl = async () => {
+      try {
+        const res = await fetch(
+          "https://mamaexch.net/api/v1/match/getTvUrlScoreboardUrl",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer 93d19207477621c33c22756cdaa10a1c4e9de87a` },
+            body: JSON.stringify({ match_id: matchId }),
+          },
+        );
+        if (cancelled) return;
+        const data = await res.json();
+        const url = data?.data?.match_scoreboard_url ?? "";
+        const tv=data?.data?.tv_url ?? "";
+        setScoreboardIframeUrl(url);
+        setTvUrl(tv);
+      } catch {
+        if (!cancelled) setScoreboardIframeUrl("");
+      }
+    };
+    fetchScoreboardUrl();
+    return () => {
+      cancelled = true;
+    };
   }, [currentEventData?.eventId]);
 
   useEffect(() => {
@@ -1545,7 +1566,7 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                                     title="sr-scorecard"
                                     id="scorecard-frame"
                                     allowFullScreen={false}
-                                    src={`https://play.winadda.co.in/?sportId=${currentEventData?.sportId}&eventId=${currentEventData?.eventId}`}
+                                    src={scoreboardIframeUrl}
                                     sandbox="allow-same-origin allow-forms allow-scripts allow-top-navigation allow-popups"
                                   ></iframe>
                                 ) : (
@@ -1653,14 +1674,15 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                       {currentEventData &&
                       currentEventData?.sportId == "4" &&
                       currentEventData?.providerName != "SportRadar" &&
-                      !srScorecardEnabled ? (
-                        <CricketScorecard />
-                      ) : IS_NEW_SCORECARD_ENABLED ? (
+                      // !srScorecardEnabled ? (
+                      //   <CricketScorecard />
+                      // ) : 
+                      IS_NEW_SCORECARD_ENABLED ? (
                         <iframe
                           title="sr-scorecard"
                           id="scorecard-frame"
                           allowFullScreen={false}
-                          src={`https://play.winadda.co.in/?sportId=${currentEventData?.sportId}&eventId=${currentEventData?.eventId}`}
+                          src={scoreboardIframeUrl}
                           sandbox="allow-same-origin allow-forms allow-scripts allow-top-navigation allow-popups"
                         ></iframe>
                       ) : (
@@ -1900,21 +1922,21 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
           {!isMobile ? (
             <IonCol className="stream-section">
               <div className="sticky-col">
-                {loggedIn &&
+                {/* {loggedIn &&
                 ((currentEventData &&
                   (currentEventData.status === "IN_PLAY" ||
                     currentEventData.status === "SUSPENDED")) ||
                   provider === "SportRadar") &&
-                !["99990"].includes(sportId) ? (
+                !["99990"].includes(sportId) ? ( */}
                   <div className="stream-accordion">
-                    <div className="stream-header" onClick={streamToast}>
-                      {langData?.["live_stream"]}
+                    <div className="stream-header" onClick={()=>{setStreamAccordion(!streamAccordion)}}>
+                      {langData?.["live_stream"]}  
                     </div>
                     <div className="stream-body">
-                      {/* {streamAccordion ? (
-                        <> */}
+                      {streamAccordion ? (
+                        <>  
                       <div className="live-stream-ctn">
-                        <CricketLiveStream
+                        {/* <CricketLiveStream
                           eventID={
                             currentEventData?.sportId === "99994"
                               ? secondaryMarkets?.bookmakers?.length > 0
@@ -1934,13 +1956,21 @@ const ExchAllMarkets: React.FC<StoreProps> = (props) => {
                               : liveStreamChannelId
                           }
                           clientIp={clientIp}
-                        />
+                        /> */}
+                    
+                        <iframe
+                          title="sr-scorecard"
+                          id="scorecard-frame"
+                          allowFullScreen={false}
+                          src={tvUrl}
+                          sandbox="allow-same-origin allow-forms allow-scripts allow-top-navigation allow-popups"
+                        ></iframe>
                       </div>
-                      {/* </>
-                      ) : null} */}
+                       </>
+                      ) : null}  
                     </div>
                   </div>
-                ) : null}
+                {/* ) : null} */}
 
                 <div
                   className="one-click-betting-container"

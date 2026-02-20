@@ -32,6 +32,8 @@ export {
   setDomainConfig,
   setWhatsappDetails,
   setDemoUserWhatsappDetails,
+  setSocialMediaContent,
+  fetchSocialMediaContent,
   setLangSelected,
   setLangData,
 } from "./common/commonActions";

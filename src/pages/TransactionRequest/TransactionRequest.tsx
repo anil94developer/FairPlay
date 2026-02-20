@@ -1,5 +1,7 @@
 import { IonButton, IonCol, IonRow } from "@ionic/react";
 import Backdrop from "@material-ui/core/Backdrop";
+import Dialog from "@material-ui/core/Dialog";
+import DialogContent from "@material-ui/core/DialogContent";
 import Drawer from "@material-ui/core/Drawer";
 import Paper from "@material-ui/core/Paper";
 import Table from "@material-ui/core/Table";
@@ -52,6 +54,7 @@ type TransactionProps = {
   setOpenDepositModal: Function;
   setOpenWithdrawModal: Function;
   whatsappDetails: string;
+  socialMediaContent: Record<string, { title: string; url: string; is_active: boolean; image_url: string }> | null;
   langData: any;
   fetchBalance: Function;
 };
@@ -66,6 +69,7 @@ const TransactionMap: Record<string, string> = {
   FAILED: "Failed",
   CANCELLED: "Cancelled",
   ACCEPTED: "Accepted",
+  HOLD: "Hold",
 };
 
 const TransactionRequest: React.FC<TransactionProps> = (props) => {
@@ -75,6 +79,7 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
     setOpenDepositModal,
     setOpenWithdrawModal,
     whatsappDetails,
+    socialMediaContent,
     langData,
     fetchBalance,
   } = props;
@@ -101,8 +106,14 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
   const [showWithdrawal, setShowWithdrawal] = useState<boolean>(true);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [totalExposure, setTotalExposure] = useState<number>(0);
+  const [imageModalOpen, setImageModalOpen] = useState<boolean>(false);
+  const [imageModalUrl, setImageModalUrl] = useState<string>("");
   const dispatch = useDispatch();
 
+  // const whatsappUrl = socialMediaContent?.Whatsapp?.url || whatsappDetails;
+  // const showWhatsappIcon = socialMediaContent?.Whatsapp?.is_active !== false;
+
+  
   const headerParams: HeaderParamsType[] = [
     {
       label: "Transaction Type",
@@ -205,37 +216,53 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
         ? moment(toDate).endOf("day").toISOString()
         : moment().endOf("day").toISOString();
 
-      const response = await USABET_API.post("/account/statements", {
+        const userId =sessionStorage.getItem("aid");
+
+      const response = await USABET_API.post("wallet/getwalletsummary", {
         from_date: fromDateStr,
         to_date: toDateStr,
         limit: 100,
+        user_id: userId,
       });
 
       const resData = response?.data;
       let items: TransactionsResponse[] = [];
 
-      if (resData?.status === true && Array.isArray(resData.data)) {
-        resData.data.forEach((group: any) => {
-          const rows = group?.data;
-          if (Array.isArray(rows)) {
-            rows.forEach((row: any) => {
-              const creditDebit = row.credit_debit ?? 0;
-              const txType = creditDebit >= 0 ? "DEPOSIT" : "WITHDRAW";
-              const amt = creditDebit / cFactor;
-              items.push({
-                transactionId: row._id || "",
-                transactionType: txType,
-                amount: amt,
-                approvedAmount: amt,
-                txStatus: "ACCEPTED",
-                startTime: row.date || "",
-                notes: row.remark || row.description || "-",
-                paymentMethod: row.sport_name || "-",
-                remarks: row.remark,
-              } as TransactionsResponse);
-            });
-          }
-        });
+      if (resData?.status === true && resData?.data) {
+        const data = resData.data;
+        const getData = data?.getData;
+        if (Array.isArray(getData)) {
+          getData.forEach((row: any) => {
+            const txType =
+              row.statement_type === "DEPOSIT_REQUEST" ? "DEPOSIT" : "WITHDRAW";
+            const amt = (row.amount ?? 0) / cFactor;
+            const paymentMethod =
+              row.payment_deatails?.[0]?.method_name || "-";
+            items.push({
+              transactionId: row._id || "",
+              transactionType: txType,
+              amount: amt,
+              approvedAmount: amt,
+              txStatus: row.status || "ACCEPTED",
+              startTime: row.generated_at || "",
+              notes: row.remark || "-",
+              paymentMethod,
+              remarks: row.remark,
+              images: row.images || "",
+            } as TransactionsResponse);
+          });
+        }
+        const pendingTotal = Array.isArray(getData)
+          ? getData
+              .filter(
+                (row: any) =>
+                  String(row?.status || "").toUpperCase() === "PENDING"
+              )
+              .reduce((sum: number, row: any) => sum + (Number(row?.amount) || 0), 0)
+          : 0;
+        setTotalExposure(Number(pendingTotal) / cFactor);
+      } else {
+        setTotalExposure(0);
       }
 
       if (transactionType !== "ALL") {
@@ -246,10 +273,10 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
       }
 
       setTransactionRequest(items);
-      setTotalExposure(0);
       setNextPageToken(null);
     } catch (err: any) {
       setTransactionRequest([]);
+      setTotalExposure(0);
       if (err?.response?.data?.error) {
         setErrorMsg(err.response.data.error);
       } else if (err?.response?.data?.msg) {
@@ -392,13 +419,10 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
 
   const TransactionStatusFilters = [
     { value: "ALL", name: langData?.["all"] },
-    { value: "APPROVAL_PENDING", name: langData?.["approval_pending"] },
-    { value: "IN_PROGRESS", name: langData?.["in_progress"] },
-    { value: "INITIATED", name: langData?.["initiated"] },
-    { value: "APPROVED", name: langData?.["approved"] },
+    { value: "PENDING", name: "Pending"},
+    { value: "ACCEPTED", name: langData?.["approved"] },
+    { value: "HOLD", name: "Hold" }, 
     { value: "REJECTED", name: langData?.["rejected"] },
-    { value: "SUCCEEDED", name: langData?.["succeeded"] },
-    { value: "FAILED", name: langData?.["failed"] },
   ];
 
   return (
@@ -414,7 +438,7 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
               onSelect: () => window.open(whatsappDetails, "_blank"),
               className: "whatsapp-tr-btn web-view",
               icon: <WhatsApp className="whatsapp-icon" />,
-              cond: true,
+              cond: socialMediaContent?.Whatsapp?.is_active !== false,
             },
             {
               label: langData?.["withdraw"],
@@ -515,7 +539,7 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
             {
               element: (
                 <>
-                  {domainConfig.b2cEnabled && (
+                  {domainConfig.b2cEnabled && socialMediaContent?.Whatsapp?.is_active !== false && (
                     <button
                       className={"whatsapp-tr-btn mob-view"}
                       onClick={() => window.open(whatsappDetails, "_blank")}
@@ -564,9 +588,9 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
                                 {langData?.["transaction_type"]}
                               </TableCell>
                               <TableCell>{langData?.["amount"]}</TableCell>
-                              <TableCell>
+                              {/* <TableCell>
                                 {langData?.["approved_amount"]}
-                              </TableCell>
+                              </TableCell> */}
                               <TableCell>
                                 {langData?.["transaction_status"]}
                               </TableCell>
@@ -617,11 +641,11 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
                                       <TableCell align="left">
                                         {(row.amount ?? 0).toFixed(2)}
                                       </TableCell>
-                                      <TableCell>
+                                      {/* <TableCell>
                                         {row?.approvedAmount != null
                                           ? Number(row.approvedAmount).toFixed(2)
                                           : "-"}
-                                      </TableCell>
+                                      </TableCell> */}
                                       <TableCell align="left">
                                         {TransactionMap[row.txStatus]
                                           ? TransactionMap[row.txStatus]
@@ -630,7 +654,7 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
                                         {TransactionMap[row.txStatus] ===
                                         "Rejected" ? (
                                           <Tooltip
-                                            title={row?.remarks}
+                                            title={row?.remark}
                                             open={showTooltip}
                                             onOpen={() => setShowTooltip(true)}
                                             onClose={() =>
@@ -652,23 +676,33 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
                                         {row?.paymentMethod == "UNRECOGNIZED"
                                           ? "-"
                                           : row?.paymentMethod}
+
+                                         
                                       </TableCell>
                                       <TableCell align="left">
-                                        {row.txStatus === "INITIATED" ? (
-                                          <span
-                                            className="cancel-btn"
-                                            onClick={() =>
-                                              cancelTx(
-                                                parseInt(row?.transactionId),
-                                                row.paymentGatewayProvider
-                                              )
+                                      {/* {row.transactionType} */}
+                                      { 
+                                          row.transactionType == "WITHDRAW" ? (
+                                            <span
+                                              className="eye-btn"
+                                              onClick={() => {
+                                                if (row?.images) {
+                                                  setImageModalUrl(row.images);
+                                                  setImageModalOpen(true);
+                                                }
+                                              }}
+                                            >
+                                              - 
+                                            </span>
+                                          ) : <span className="info-icon" onClick={() => {
+                                            if (row?.images) {
+                                              setImageModalUrl(row.images);
+                                              setImageModalOpen(true);
                                             }
-                                          >
-                                            {langData?.["cancel"]}
-                                          </span>
-                                        ) : (
-                                          "-"
-                                        )}
+                                          }}>
+                                          <img src={row.images} className="img-thumbnail" alt="example" height={20} width={20} />
+                                        </span>
+                                         }  
                                       </TableCell>
                                     </TableRow>
                                   </>
@@ -761,6 +795,49 @@ const TransactionRequest: React.FC<TransactionProps> = (props) => {
                 <Withdrawal />
               </Drawer>
             </Backdrop>
+
+            <Dialog
+              open={imageModalOpen}
+              onClose={() => setImageModalOpen(false)}
+              maxWidth={false}
+              PaperProps={{
+                style: {
+                  backgroundColor: "transparent",
+                  boxShadow: "none",
+                  maxWidth: "90vw",
+                },
+              }}
+              BackdropProps={{ style: { backgroundColor: "rgba(0,0,0,0.85)" } }}
+            >
+              <DialogContent
+                style={{ padding: 0, overflow: "hidden", textAlign: "center" }}
+              >
+                <div
+                  className="transaction-image-modal-close cursor"
+                  onClick={() => setImageModalOpen(false)}
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    zIndex: 1,
+                    color: "#fff",
+                  }}
+                >
+                  <CloseOutlined />
+                </div>
+                {imageModalUrl ? (
+                  <img
+                    src={imageModalUrl}
+                    alt="Transaction"
+                    style={{ maxWidth: "100%", maxHeight: "85vh", objectFit: "contain" }}
+                  />
+                ) : (
+                  <span style={{ color: "#fff" }}>
+                    {langData?.["no_image"] || "No image"}
+                  </span>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         </IonCol>
       </IonRow>
@@ -778,6 +855,7 @@ const mapStateToProps = (state: RootState) => {
     whatsappDetails: demoUser()
       ? state.common.demoUserWhatsappDetails
       : state.common.whatsappDetails,
+    socialMediaContent: state.common.socialMediaContent,
     langData: state.common.langData,
   };
 };

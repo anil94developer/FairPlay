@@ -801,6 +801,7 @@ const Ledger: React.FC<LedgerProps> = (props) => {
   // };
 
   const fetchRecords = async () => {
+  
     setLoading(true);
     setErrorMsg(null);
     try {

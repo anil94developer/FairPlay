@@ -5,8 +5,7 @@ import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
 import { FormControl, MenuItem, Select } from "@material-ui/core";
 import React, { lazy, useEffect, useRef, useState } from "react";
-import { connect, useDispatch } from "react-redux";
-import FEATURE_API from "../../api-services/feature-api";
+import { connect, useDispatch } from "react-redux"; 
 import USABET_API from "../../api-services/usabet-api";
 import { RootState } from "../../models/RootState";
 import "./Payment.scss";
@@ -253,14 +252,10 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
     try {
       const payload = {
         amount: withdrawAmount,
-        notes: withdrawNotes,
-        payment_method_id: selectedAccountId,
-        payment_method: "BANK_TRANSFER",
-        currency_type: "INR",
-        mobile_number: "9000900099",
+        remark: withdrawNotes,
+        bank_account_id: selectedAccountId, 
       };
-      const response = await FEATURE_API.post(
-        `/agpay/v2/${selectedPayment}/transactions/:withdraw`,
+      const response = await USABET_API.post('/wallet/WithdrawRequestInit',
         payload,
         {
           headers: {
@@ -268,14 +263,14 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
           },
         }
       );
-      if (response.status === 200) {
+      if (response?.data?.status) {
         successToast(langData?.["txn_saved_success_txt"]);
         setOpenWithdrawModal(false);
         history.push("/my_transactions");
       } else {
         setAlertMsg({
           type: "error",
-          message: langData?.["general_err_txt"],
+          message: response?.data?.msg,
         });
       }
       setLoading(false);
@@ -309,8 +304,7 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
         network_id: selectedWalletDetails.networkId,
         wallet_address: selectedWalletDetails.walletAddress,
       };
-      const response = await FEATURE_API.post(
-        `/agpay/v2/${selectedPayment}/transactions/:withdraw`,
+      const response = await USABET_API.post('/wallet/WithdrawRequestInit',
         payload,
         {
           headers: {
@@ -350,8 +344,7 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
         // paymentMethod: accountDetails[0].paymentMethod,
       };
       setLoading(true);
-      const response = await FEATURE_API.post(
-        `/agpay/v1/online/:payout`,
+      const response = await USABET_API.post('/wallet/WithdrawRequestInit',
         payload,
         {
           headers: {
@@ -394,8 +387,7 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
         payment_method_id: selectedAccountId,
         // paymentMethod: accountDetails[0].paymentMethod,
       };
-      const response = await FEATURE_API.post(
-        `/agpay/v2/pgman/transactions/:withdraw`,
+      const response = await USABET_API.post('/wallet/WithdrawRequestInit',
         payload,
         {
           headers: {
@@ -437,7 +429,7 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
         notes: withdrawNotes,
         payment_method_id: selectedAccountId,
       };
-      const response = await FEATURE_API.post(
+      const response = await USABET_API.post(
         `/agpay/v2/xenon-pay/transactions/:withdraw`,
         payload,
         {
@@ -573,7 +565,7 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
         otp: otp,
       };
 
-      const response = await FEATURE_API.post(
+      const response = await USABET_API.post(
         `/agpay/v2/pgman/payment-methods`,
         paymentOption === "PAYTM_WALLET"
           ? payTMPayload
@@ -894,13 +886,14 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
 
   const submitWalletUpiAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!holderName?.trim()) {
-      setAlertMsg({
-        type: "error",
-        message: langData?.["account_name"] || "Please enter account name",
-      });
-      return;
-    }
+    // if (!holderName?.trim()) {
+    //   setAlertMsg({
+    //     type: "error",
+    //     message: langData?.["account_name"] || "Please enter account name",
+    //   });
+    //   return;
+    // }
+    
     if (!accountNumber?.trim()) {
       setAlertMsg({
         type: "error",
@@ -1052,7 +1045,7 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
         upiId: "",
       };
 
-      const response = await FEATURE_API.post(
+      const response = await USABET_API.post(
         `/agpay/v2/xenon-pay/payment-methods`,
         payload,
         {
@@ -1581,6 +1574,7 @@ const Withdrawal: React.FC<StoreProps> = (props) => {
             withdrawAmount={withdrawAmount}
             setWithdrawAmount={setWithdrawAmount}
             langData={langData}
+            pgProvider="zenpay-upi"
           />
         );
 

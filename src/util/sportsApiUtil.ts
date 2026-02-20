@@ -140,7 +140,25 @@ export const fetchSportsFromAPI = async (): Promise<SportApiData[]> => {
     return [];
   }
 };
+export interface NewsItem {
+  user_id?: string;
+  heading?: string;
+  user_type_id?: number;
+  message?: string;
+}
 
+export const getNews = async (): Promise<NewsItem[]> => {
+  try {
+    const response = await USABET_API.post("/news/getNews");
+    if (response?.data?.status === true && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching news:", error);
+    return [];
+  }
+};
 /**
  * Transform API sports data to tab format
  */

@@ -53,6 +53,7 @@ type StoreProps = {
   bonusEnabled: boolean;
   setAlertMsg: Function;
   langData: any;
+  socialMediaContent: Record<string, { title: string; url: string; is_active: boolean; image_url: string }> | null;
 };
 
 const SignUp: React.FC<StoreProps> = (props) => {
@@ -64,6 +65,7 @@ const SignUp: React.FC<StoreProps> = (props) => {
     bonusEnabled,
     setAlertMsg,
     langData,
+    socialMediaContent,
   } = props;
   const [showPassword, setShowPassword] = useState(false);
   const [userErrorMsg, setUserErrorMsg] = useState<string>("");
@@ -594,13 +596,15 @@ const SignUp: React.FC<StoreProps> = (props) => {
                         <div className="label">
                           {langData?.["phone_number"]} /{" "}
                           {langData?.["whats_app"]}
-                          <img
-                            className="whatsapp-signup"
-                            src={WhatsupImg}
-                            height={18}
-                            width={18}
-                            alt="whatsapp"
-                          />
+                          {socialMediaContent?.Whatsapp?.is_active !== false && (
+                            <img
+                              className="whatsapp-signup"
+                              src={WhatsupImg}
+                              height={18}
+                              width={18}
+                              alt="whatsapp"
+                            />
+                          )}
                         </div>
                         <PhoneInput
                           country={"in"}
@@ -786,6 +790,7 @@ const mapStateToProps = (state: RootState) => {
     loading: state.auth.loading,
     bonusEnabled: state.common.domainConfig.bonus,
     langData: state.common.langData,
+    socialMediaContent: state.common.socialMediaContent,
   };
 };
 

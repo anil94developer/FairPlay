@@ -34,6 +34,7 @@ interface ZenPayUpiProps {
   editingAccountId?: string | null;
   updateWalletUpiAccount?: (e: React.FormEvent) => void;
   setAccountForEditUpi?: (acc: any) => void;
+  pgProvider: string;
 }
 
 const ZenPayUpi: React.FC<ZenPayUpiProps> = ({
@@ -62,6 +63,7 @@ const ZenPayUpi: React.FC<ZenPayUpiProps> = ({
   editingAccountId,
   updateWalletUpiAccount,
   setAccountForEditUpi,
+  pgProvider
 }) => {
   return (
     <TabPanel value={tabValue} index={index}>
@@ -206,19 +208,38 @@ const ZenPayUpi: React.FC<ZenPayUpiProps> = ({
       )}
 
       {paymentOption === "UPI" && selectedAccountId && (
-        <div className="account-inputs">
-          <div className="payment-option-title">
-            {langData?.["enter_payment_details"] || "Enter Payment Details"}
-          </div>
-          <InputTemplate
-            required
-            label={`${langData?.["enter_amount"] || "Enter Amount"} (INR)`}
-            value={withdrawAmount}
-            type="number"
-            placeholder={langData?.["enter_withdraw_amount"] || "Enter amount"}
-            onChange={(v) => setWithdrawAmount(v)}
-          />
-        </div>
+        <form
+        className="account-inputs"
+        onSubmit={(e) => {
+          submitWalletUpiAccount(e);
+        }}
+      >
+        
+        <InputTemplate
+          required={true}
+          label={langData?.["enter_amount"] + " (INR)"}
+          value={withdrawAmount}
+          type={"number"}
+          placeholder={langData?.["enter_withdraw_amount"]}
+          onChange={(e) => setWithdrawAmount(e)}
+        />
+        <InputTemplate 
+          label={langData?.["enter_notes"]}
+          value={""}
+          placeholder={langData?.["enter_notes"]}
+          onChange={(e) =>  {}}
+        />
+        
+         
+        <Button
+          className="submit-payment-btn"
+          type="submit"
+          disabled={loading ? true : false}
+          endIcon={loading ? <IonSpinner name="lines-small" /> : ""}
+        >
+          {langData?.["submit"]}
+        </Button>
+      </form>
       )}
     </TabPanel>
   );
